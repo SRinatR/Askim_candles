@@ -1,4 +1,3 @@
-
 "use client";
 import { ProductList } from '@/components/products/ProductList';
 import { ProductFilters } from '@/components/products/ProductFilters';
@@ -8,19 +7,20 @@ import type { Product } from '@/lib/types';
 import { useSearchParams, useParams } from 'next/navigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash, SlidersHorizontal, X } from 'lucide-react';
-import type { Locale } from '@/lib/i18n-config';
+import type { Locale } from '@/lib/i1n-config';
 import type { ProductCardDictionary } from '@/components/products/ProductCard';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetTrigger } from '@/components/ui/sheet'; // Added SheetTrigger
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import React, { useState, useMemo, useEffect } from 'react';
 
+// Simulating dictionary loading for client component
 import enMessages from '@/dictionaries/en.json';
 import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type FullDictionary = typeof enMessages;
-const PRICE_DIVISOR = 1; // Keep prices as integers for UZS
+const PRICE_DIVISOR = 1; 
 
 const dictionaries: Record<Locale, FullDictionary> = {
   en: enMessages,
@@ -38,7 +38,7 @@ const getCombinedDictionary = (locale: Locale) => {
       searchResultsTitle: "Search results for \"{searchTerm}\"",
       productsFound: "{count} product found",
       productsFound_plural: "{count} products found",
-      productsFound_few: "{count} products found", // For Russian
+      productsFound_few: "{count} products found", 
       noProductsFound: "No Products Found",
       searchNoMatch: "Your search for \"{searchTerm}\" did not match any products.",
       filterNoMatch: "We couldn't find products matching your current filters.",
@@ -75,43 +75,57 @@ const getCombinedDictionary = (locale: Locale) => {
 
 
 export default function ProductsPage() {
-  const searchParams = useSearchParams();
+  const searchParamsHook = useSearchParams();
   const routeParams = useParams();
   const locale = routeParams.locale as Locale || 'uz';
-  const combinedDict = getCombinedDictionary(locale);
+  
+  const [combinedDict, setCombinedDict] = useState(() => getCombinedDictionary(locale));
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+  
+  useEffect(() => {
+    if (isClient) { // Ensure this runs only on client after initial mount
+        setCombinedDict(getCombinedDictionary(locale));
+    }
+  }, [locale, isClient]);
+  
   const dictionary = combinedDict.productsPage;
   const filtersDictionary = combinedDict.productFilters;
   const sortDictionary = combinedDict.productSort;
   const productCardDictionaryForList = combinedDict.productCard as ProductCardDictionary;
 
-  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
-  
-  // Filter products to only active ones for filter generation and initial display
   const allActiveProducts = useMemo(() => mockProducts.filter(p => p.isActive), []);
 
   const { minProductPrice, maxProductPrice } = useMemo(() => {
     if (!allActiveProducts || allActiveProducts.length === 0) {
-      return { minProductPrice: 0, maxProductPrice: 500000 }; // Sensible default
+      return { minProductPrice: 0, maxProductPrice: 500000 }; 
     }
-    const prices = allActiveProducts.map(p => p.price / PRICE_DIVISOR);
-    const min = Math.floor(Math.min(...prices));
-    const max = Math.ceil(Math.max(...prices));
+    const prices = allActiveProducts.map(p => p.price / PRICE_DIVISOR).filter(p => !isNaN(p));
+    if (prices.length === 0) {
+        return { minProductPrice: 0, maxProductPrice: 500000 };
+    }
     return {
-      minProductPrice: (isNaN(min) || min < 0) ? 0 : min,
-      maxProductPrice: (isNaN(max) || max <= 0) ? 500000 : max,
+      minProductPrice: Math.floor(Math.min(...prices)),
+      maxProductPrice: Math.ceil(Math.max(...prices)),
     };
   }, [allActiveProducts]);
 
   const [filteredAndSortedProducts, setFilteredAndSortedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
-    const searchTerm = searchParams.get('search')?.toLowerCase();
-    const categories = searchParams.getAll('category');
-    const scents = searchParams.getAll('scent');
-    const materials = searchParams.getAll('material');
-    const minPriceParam = searchParams.get('minPrice');
-    const maxPriceParam = searchParams.get('maxPrice');
-    const sortOption = searchParams.get('sort') || 'relevance';
+    if (!isClient || !combinedDict.productsPage.homeBreadcrumb) return;
+
+    const searchTerm = searchParamsHook.get('search')?.toLowerCase();
+    const categoriesParams = searchParamsHook.getAll('category');
+    const scentsParams = searchParamsHook.getAll('scent');
+    const materialsParams = searchParamsHook.getAll('material');
+    const minPriceParam = searchParamsHook.get('minPrice');
+    const maxPriceParam = searchParamsHook.get('maxPrice');
+    const sortOption = searchParamsHook.get('sort') || 'relevance';
 
     const minPrice = minPriceParam !== null && !isNaN(Number(minPriceParam)) ? Number(minPriceParam) : minProductPrice;
     const maxPrice = maxPriceParam !== null && !isNaN(Number(maxPriceParam)) ? Number(maxPriceParam) : maxProductPrice;
@@ -121,12 +135,28 @@ export default function ProductsPage() {
       const description = product.description[locale] || product.description.en || '';
       
       const matchesSearch = searchTerm ? name.toLowerCase().includes(searchTerm) || description.toLowerCase().includes(searchTerm) : true;
-      const productCategorySlug = product.category.toLowerCase().replace(/\s+/g, '-'); // Assuming category stored as name, need slugification
-      const matchesCategory = categories.length > 0 ? categories.includes(productCategorySlug) : true;
-      const matchesScent = scents.length > 0 && product.scent ? scents.includes(product.scent) : scents.length === 0;
-      const matchesMaterial = materials.length > 0 && product.material ? materials.includes(product.material) : materials.length === 0;
+      
+      const matchesCategory = categoriesParams.length > 0
+        ? categoriesParams.some(selectedCatSlug => {
+            const productCategoryNameTrimmedLower = product.category?.trim().toLowerCase();
+            const productCategoryObject = mockCategories.find(
+              cat => cat.name?.trim().toLowerCase() === productCategoryNameTrimmedLower
+            );
+            return productCategoryObject ? productCategoryObject.slug === selectedCatSlug : false;
+          })
+        : true;
+
+      const matchesScent = scentsParams.length > 0 && product.scent 
+        ? scentsParams.map(s => s.toLowerCase().trim()).includes(product.scent.toLowerCase().trim()) 
+        : scentsParams.length === 0;
+      
+      const matchesMaterial = materialsParams.length > 0 && product.material 
+        ? materialsParams.map(m => m.toLowerCase().trim()).includes(product.material.toLowerCase().trim())
+        : materialsParams.length === 0;
+      
       const productPrice = product.price / PRICE_DIVISOR;
       const matchesPrice = productPrice >= minPrice && productPrice <= maxPrice;
+      
       return matchesSearch && matchesCategory && matchesScent && matchesMaterial && matchesPrice;
     });
 
@@ -143,24 +173,26 @@ export default function ProductsPage() {
         case 'name-desc':
           return nameB.localeCompare(nameA);
         case 'newest':
-           // Assuming product.id is a string like "1", "2", "prod-xyz"
-           // For numeric IDs, this works:
            const idA = parseInt(a.id.replace (/[^0-9]/g, ""), 10);
            const idB = parseInt(b.id.replace (/[^0-9]/g, ""), 10);
            if (!isNaN(idA) && !isNaN(idB)) {
-             return idB - idA; // Higher ID means newer
+             return idB - idA;
            }
-           // Fallback for non-numeric or mixed IDs
            return b.id.localeCompare(a.id);
-        default: // 'relevance' or unknown
+        default: 
           return 0;
       }
     });
     setFilteredAndSortedProducts(tempProducts);
-  }, [searchParams, minProductPrice, maxProductPrice, allActiveProducts, locale]);
+  }, [searchParamsHook, minProductPrice, maxProductPrice, allActiveProducts, locale, combinedDict, isClient]);
 
 
-  const searchTerm = searchParams.get('search')?.toLowerCase();
+  const searchTerm = searchParamsHook.get('search')?.toLowerCase();
+  
+  if (!isClient || !combinedDict.productsPage.homeBreadcrumb) { 
+    return <div>Loading products page...</div>;
+  }
+  
   const pageTitle = searchTerm ? dictionary.searchResultsTitle.replace('{searchTerm}', searchTerm) : dictionary.allProductsTitle;
   const productsCount = filteredAndSortedProducts.length;
 
@@ -171,7 +203,7 @@ export default function ProductsPage() {
     productsCountText = (dictionary.productsFound_few).replace('{count}', String(productsCount));
   } else if (dictionary.productsFound_plural) {
      productsCountText = (dictionary.productsFound_plural).replace('{count}', String(productsCount));
-  } else if (dictionary.productsFound) { // Fallback if plural/few keys are missing
+  } else if (dictionary.productsFound) { 
     productsCountText = dictionary.productsFound.replace('{count}', String(productsCount));
   }
 
@@ -195,7 +227,6 @@ export default function ProductsPage() {
       <div className="flex flex-col items-center justify-between gap-4 border-b border-border/60 pb-6 sm:flex-row">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
-          {/* Use dangerouslySetInnerHTML to render <strong> for count */}
           <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: productsCountText.replace(String(productsCount), `<strong>${productsCount}</strong>`) }} />
         </div>
         <div className="flex items-center gap-4">
@@ -214,12 +245,12 @@ export default function ProductsPage() {
                      <Button variant="ghost" size="icon"><X className="h-5 w-5"/></Button>
                   </SheetClose>
                 </SheetHeader>
-                <ScrollArea className="flex-1 overflow-y-auto p-1"> {/* Ensure padding for content inside scroll area */}
+                <ScrollArea className="flex-1 overflow-y-auto p-1"> 
                   <ProductFilters
                     dictionary={filtersDictionary}
                     categoriesData={mockCategories.map(cat => ({...cat, name: combinedDict.categories[cat.slug as keyof typeof combinedDict.categories] || cat.name}))}
-                    allProducts={allActiveProducts} // Pass only active products
-                    onApplyFilters={() => setIsMobileFiltersOpen(false)} // Pass handler to close sheet
+                    allProducts={allActiveProducts} 
+                    onApplyFilters={() => setIsMobileFiltersOpen(false)} 
                   />
                 </ScrollArea>
               </SheetContent>
@@ -230,11 +261,11 @@ export default function ProductsPage() {
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
-        <div className="hidden lg:block lg:w-72 lg:sticky lg:top-24 self-start"> {/* Sticky for desktop */}
+        <div className="hidden lg:block lg:w-72 lg:sticky lg:top-24 self-start"> 
           <ProductFilters
             dictionary={filtersDictionary}
             categoriesData={mockCategories.map(cat => ({...cat, name: combinedDict.categories[cat.slug as keyof typeof combinedDict.categories] || cat.name}))}
-            allProducts={allActiveProducts} // Pass only active products
+            allProducts={allActiveProducts} 
           />
         </div>
         <div className="flex-1">
@@ -254,3 +285,5 @@ export default function ProductsPage() {
     </div>
   );
 }
+
+    
