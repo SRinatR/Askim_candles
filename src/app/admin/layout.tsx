@@ -18,8 +18,10 @@ import {
   LogOut,
   Menu,
   ShieldCheck,
-  ChevronDown,
-  ChevronUp,
+  Megaphone, // Added for Marketing
+  FileOutput, // Added for Reports
+  Landmark, // Added for Finances
+  Briefcase, // Placeholder for Management if Users icon is taken or for generic "Управление"
 } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
@@ -30,21 +32,26 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   adminOnly?: boolean;
-  managerOnly?: boolean; // If true, accessible by manager and admin
+  managerOnly?: boolean; 
 }
 
+// Updated NavItems based on user image and request
 const navItems: NavItem[] = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard, managerOnly: true },
-  { href: '/admin/products', label: 'Products', icon: Package, managerOnly: true },
-  { href: '/admin/orders', label: 'Orders', icon: ShoppingCart, managerOnly: true },
-  { href: '/admin/users', label: 'Users', icon: Users, adminOnly: true },
-  { href: '/admin/discounts', label: 'Discounts', icon: Percent, managerOnly: true },
-  { href: '/admin/content', label: 'Content', icon: FileText, managerOnly: true },
-  { href: '/admin/settings', label: 'Settings', icon: Settings, adminOnly: true },
+  { href: '/admin/dashboard', label: 'Главная панель', icon: LayoutDashboard, managerOnly: true },
+  { href: '/admin/products', label: 'Товары', icon: Package, managerOnly: true },
+  { href: '/admin/sales', label: 'Продажи', icon: ShoppingCart, managerOnly: true },
+  { href: '/admin/clients', label: 'Клиенты', icon: Users, managerOnly: true },
+  { href: '/admin/marketing', label: 'Маркетинг', icon: Megaphone, managerOnly: true },
+  { href: '/admin/reports', label: 'Отчеты', icon: FileOutput, managerOnly: true },
+  { href: '/admin/finances', label: 'Финансы', icon: Landmark, managerOnly: true },
+  { href: '/admin/discounts', label: 'Скидки и акции', icon: Percent, managerOnly: true },
+  { href: '/admin/content', label: 'Контент', icon: FileText, managerOnly: true },
+  { href: '/admin/settings', label: 'Настройки', icon: Settings, adminOnly: true },
+  { href: '/admin/users', label: 'Управление', icon: Briefcase, adminOnly: true }, // Changed icon to Briefcase for "Управление"
 ];
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
-  const { currentAdminUser, logout, isLoading, role, isAdmin, isManager } = useAdminAuth();
+  const { currentAdminUser, logout, isLoading, isAdmin, isManager } = useAdminAuth();
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -54,24 +61,22 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   if (!currentAdminUser && pathname !== '/admin/login') {
-    // This case should ideally be handled by AdminAuthProvider's useEffect,
-    // but as a fallback or for components rendered outside its immediate tree.
     if (typeof window !== 'undefined') router.replace('/admin/login');
     return <div className="flex h-screen items-center justify-center bg-muted"><p>Redirecting to login...</p></div>;
   }
   
   if (!currentAdminUser && pathname === '/admin/login') {
-    return <>{children}</>; // Allow login page to render
+    return <>{children}</>; 
   }
 
-  if (!currentAdminUser) { // Should not happen if protection works, but good for safety
+  if (!currentAdminUser) { 
       return null;
   }
   
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) return isAdmin;
-    if (item.managerOnly) return isManager; // Admin is also a manager
-    return true; // Default to visible if no specific role mentioned
+    if (item.managerOnly) return isManager;
+    return true; 
   });
 
 
@@ -100,7 +105,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-muted/40">
-      {/* Desktop Sidebar */}
       <aside className="hidden md:flex md:w-64 flex-col border-r bg-background fixed h-full">
         <div className="flex h-16 items-center border-b px-6">
           <Link href="/admin/dashboard">
@@ -124,7 +128,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       </aside>
 
       <div className="flex flex-1 flex-col md:pl-64">
-        {/* Mobile Header */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 md:hidden">
           <Link href="/admin/dashboard">
             <Logo className="h-7"/>
@@ -170,8 +173,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // The AdminAuthProvider needs to wrap the content only if it's not the login page itself,
-  // to avoid re-wrapping or context conflicts for the login page.
   if (pathname === '/admin/login') {
     return <AdminAuthProvider>{children}</AdminAuthProvider>;
   }
@@ -182,3 +183,5 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
     </AdminAuthProvider>
   );
 }
+
+    
