@@ -186,5 +186,4 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
     </AdminAuthProvider>
   );
 }
-
     
