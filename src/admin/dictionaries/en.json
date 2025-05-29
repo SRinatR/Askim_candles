@@ -86,7 +86,11 @@
     "managerBlockedToastTitle": "Manager Blocked",
     "managerUnblockedToastTitle": "Manager Unblocked",
     "managerStatusUpdatedToastDesc": "{name} status updated to {status}.",
-    "accountBlockedErrorDesc": "This account is blocked. Please contact an administrator."
+    "accountBlockedErrorDesc": "This account is blocked. Please contact an administrator.",
+    "managerDetailsUpdatedTitle": "Manager Updated (Simulated)",
+    "managerDetailsUpdatedDesc": "Details for {name} have been updated locally.",
+    "managerDeletedTitle": "Manager Deleted (Simulated)",
+    "managerDeletedDesc": "{name} has been deleted locally."
   },
   "adminManageCategoriesPage": {
     "title": "Manage Product Categories",
@@ -370,7 +374,24 @@
     "accessDeniedTitle": "Access Denied",
     "accessDeniedDesc": "You do not have permission to view this page.",
     "roleChangeSimulatedTitle": "Role Change (Simulated)",
-    "roleChangeSimulatedDesc": "Role for {name} 'changed' to {role}. Backend required for persistence and actual permission changes."
+    "roleChangeSimulatedDesc": "Role for {name} 'changed' to {role}. Backend required for persistence and actual permission changes.",
+    "viewProfileAction": "View Profile",
+    "editManagerAction": "Edit Manager",
+    "deleteManagerAction": "Delete Manager",
+    "viewProfileModalTitle": "User Profile: {name}",
+    "nameLabel": "Name:",
+    "emailLabel": "Email:",
+    "statusLabel": "Status:",
+    "editManagerModalTitle": "Edit Manager: {name}",
+    "editManagerModalDesc": "Modify the manager's information below.",
+    "saveChangesButton": "Save Changes",
+    "editManagerSuccessTitle": "Manager Updated (Simulated)",
+    "editManagerSuccessDesc": "Details for {name} have been updated.",
+    "deleteManagerConfirmTitle": "Confirm Manager Deletion",
+    "deleteManagerConfirmDesc": "Are you sure you want to delete manager {name}? This action is simulated and cannot be undone for this session.",
+    "deleteConfirmButton": "Delete",
+    "deleteManagerSuccessTitle": "Manager Deleted (Simulated)",
+    "deleteManagerSuccessDesc": "Manager {name} has been 'deleted'."
   },
   "adminSessionsPage": {
     "title": "Session Management",

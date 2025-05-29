@@ -86,7 +86,11 @@
     "managerBlockedToastTitle": "Менеджер заблокирован",
     "managerUnblockedToastTitle": "Менеджер разблокирован",
     "managerStatusUpdatedToastDesc": "Статус менеджера {name} обновлен на {status}.",
-    "accountBlockedErrorDesc": "Этот аккаунт заблокирован. Пожалуйста, свяжитесь с администратором."
+    "accountBlockedErrorDesc": "Этот аккаунт заблокирован. Пожалуйста, свяжитесь с администратором.",
+    "managerDetailsUpdatedTitle": "Менеджер обновлен (симуляция)",
+    "managerDetailsUpdatedDesc": "Данные {name} были обновлены локально.",
+    "managerDeletedTitle": "Менеджер удален (симуляция)",
+    "managerDeletedDesc": "{name} был удален локально."
   },
   "adminManageCategoriesPage": {
     "title": "Управление категориями товаров",
@@ -370,7 +374,24 @@
     "accessDeniedTitle": "Доступ запрещен",
     "accessDeniedDesc": "У вас нет прав для просмотра этой страницы.",
     "roleChangeSimulatedTitle": "Изменение Роли (Симуляция)",
-    "roleChangeSimulatedDesc": "Роль для {name} 'изменена' на {role}. Для сохранения и реального изменения прав требуется бэкенд."
+    "roleChangeSimulatedDesc": "Роль для {name} 'изменена' на {role}. Для сохранения и реального изменения прав требуется бэкенд.",
+    "viewProfileAction": "Просмотреть профиль",
+    "editManagerAction": "Редактировать менеджера",
+    "deleteManagerAction": "Удалить менеджера",
+    "viewProfileModalTitle": "Профиль пользователя: {name}",
+    "nameLabel": "Имя:",
+    "emailLabel": "Email:",
+    "statusLabel": "Статус:",
+    "editManagerModalTitle": "Редактировать менеджера: {name}",
+    "editManagerModalDesc": "Измените информацию о менеджере ниже.",
+    "saveChangesButton": "Сохранить изменения",
+    "editManagerSuccessTitle": "Менеджер обновлен (Симуляция)",
+    "editManagerSuccessDesc": "Данные для {name} были обновлены.",
+    "deleteManagerConfirmTitle": "Подтвердить удаление менеджера",
+    "deleteManagerConfirmDesc": "Вы уверены, что хотите удалить менеджера {name}? Это действие симулировано и не может быть отменено в этой сессии.",
+    "deleteConfirmButton": "Удалить",
+    "deleteManagerSuccessTitle": "Менеджер удален (Симуляция)",
+    "deleteManagerSuccessDesc": "Менеджер {name} был 'удален'."
   },
   "adminSessionsPage": {
     "title": "Управление Сессиями",
@@ -383,4 +404,7 @@
     "otherSessionsTitle": "Другие Активные Сессии",
     "otherSessionsInfo": "Просмотр и управление сессиями на всех устройствах (например, 'Выйти везде') — это функция, требующая интеграции с базой данных для централизованного отслеживания активных сессий. Эта функциональность будет реализована после настройки бэкенда.",
     "logoutOtherDevicesButton": "Выйти из Системы на Всех Других Устройствах (Требуется Бэкенд)",
-    "accessDeniedTitle": "Доступ За
+    "accessDeniedTitle": "Доступ Запрещен",
+    "accessDeniedDesc": "У вас нет разрешения на просмотр этой страницы."
+  }
+}
