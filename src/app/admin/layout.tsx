@@ -11,7 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import {
   LayoutDashboard, Package, ShoppingCart, Users as ClientsIcon, Megaphone, FileOutput, Landmark, Percent,
   FileText as ContentIcon, Settings, LogOut, Menu, ShieldCheck, UserCog as UserManagementIcon,
-  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Tags, Beaker, Wind, ChevronDown, FileText
+  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Tags, ChevronDown, FileText, Beaker, Wind
 } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
@@ -33,7 +33,7 @@ interface NavItem {
   adminOnly?: boolean;
   managerOrAdmin?: boolean;
   subItems?: NavItem[];
-  isAccordion?: boolean; // To identify accordion items
+  isAccordion?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -125,7 +125,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   if (isLoadingAuth || !dictionary) {
     return <div className="flex h-screen items-center justify-center bg-muted"><p>Loading Admin Panel...</p></div>;
   }
-
+  
   if (pathname !== '/admin/login' && isClient && isMobile && currentAdminUser) {
     return (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-8 text-center">
@@ -134,7 +134,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             <p className="text-muted-foreground mb-6 max-w-md">
                 For the best experience and full functionality, please access the Askim candles Admin Panel on a desktop or laptop computer.
             </p>
-            <Button onClick={() => router.push(`/${i18nAdmin.defaultLocale}`)} variant="outline">Go to Main Site</Button>
+            <Button onClick={() => router.push(`/${currentLocale}`)} variant="outline">Go to Main Site</Button>
             <p className="text-xs text-muted-foreground mt-8">
                 If you need to log in, you can still do so, but management features are optimized for larger screens.
                 <Link href="/admin/login" className="text-primary hover:underline ml-1">Admin Login</Link>
@@ -175,36 +175,26 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const renderNavItem = (item: NavItem, isMobileContext: boolean, isSidebarActuallyCollapsed: boolean) => {
     const label = dictionary[item.labelKey] || item.labelKey;
     const isActive = pathname === item.href || (item.href !== '/admin/dashboard' && item.href !== '#!' && pathname.startsWith(item.href));
-    
-    // Special handling for accordion items in desktop sidebar
-    if (item.isAccordion && !isMobileContext) {
+    const isParentOfActive = item.subItems?.some(subItem => pathname.startsWith(subItem.href));
+
+    // Case 1: Desktop Expanded View + Accordion Item
+    if (item.isAccordion && !isMobileContext && !isSidebarActuallyCollapsed) {
       return (
         <AccordionItem value={item.labelKey} key={item.labelKey} className="border-b-0">
-           <TooltipProvider delayDuration={isSidebarActuallyCollapsed ? 0 : 999999}>
-            <Tooltip>
-              <TooltipTrigger asChild className="w-full">
-                <AccordionTrigger
-                  className={cn(
-                    "w-full text-sm h-9 flex items-center group hover:bg-secondary/80 focus:bg-secondary/80 rounded-md transition-colors duration-100 ease-in-out",
-                    isSidebarActuallyCollapsed ? "justify-center px-2" : "justify-between px-2 py-1.5",
-                    isActive && !isSidebarActuallyCollapsed && "bg-secondary font-semibold", // Active style for parent when expanded
-                    pathname.startsWith("/admin/attributes") && !isSidebarActuallyCollapsed && "bg-secondary font-semibold" // Keep parent active if child is active
-                  )}
-                  title={isSidebarActuallyCollapsed ? label : undefined}
-                >
-                  <div className={cn("flex items-center", isSidebarActuallyCollapsed ? "" : "w-full")}>
-                    <item.icon className={cn("h-5 w-5 shrink-0", isSidebarActuallyCollapsed ? "" : "mr-3")} />
-                    {(!isSidebarActuallyCollapsed) && <span className="truncate flex-1 text-left">{label}</span>}
-                  </div>
-                </AccordionTrigger>
-              </TooltipTrigger>
-              {isSidebarActuallyCollapsed && (
-                <TooltipContent side="right" className="bg-foreground text-background ml-2">{label}</TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-          <AccordionContent className={cn("pt-0 pb-0 pl-2", isSidebarActuallyCollapsed ? "hidden" : "")}>
-            <div className="flex flex-col space-y-1 py-1 pl-5 border-l border-muted ml-2">
+          <AccordionTrigger
+            className={cn(
+              "w-full text-sm h-9 flex items-center group hover:bg-muted/80 focus:bg-muted/80 rounded-md transition-colors duration-100 ease-in-out justify-between px-2 py-1.5",
+              (isParentOfActive) && "bg-muted font-semibold" 
+            )}
+          >
+            <div className="flex items-center">
+              <item.icon className="h-5 w-5 shrink-0 mr-3" />
+              <span className="truncate flex-1 text-left">{label}</span>
+            </div>
+            {/* ChevronDown is part of AccordionTrigger by default */}
+          </AccordionTrigger>
+          <AccordionContent className="pt-0 pb-0 pl-2">
+            <div className="flex flex-col space-y-1 py-1 pl-5 border-l border-muted-foreground/30 ml-2">
               {item.subItems?.filter(subItem => subItem.adminOnly ? isAdmin : (subItem.managerOrAdmin ? (isManager || isAdmin) : true)).map(subItem => {
                 const subLabel = dictionary[subItem.labelKey] || subItem.labelKey;
                 const isSubActive = pathname === subItem.href;
@@ -213,7 +203,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                     <Button
                       variant={isSubActive ? 'secondary' : 'ghost'}
                       className={cn(
-                        "w-full text-xs h-8 justify-start px-2 py-1",
+                        "w-full text-xs h-8 justify-start px-2 py-1 hover:bg-muted/50",
                         isSubActive && "font-semibold"
                       )}
                     >
@@ -229,8 +219,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       );
     }
     
-    // Standard Dropdown for mobile or non-accordion items with subItems
-    if (item.subItems && (isMobileContext || !item.isAccordion)) {
+    // Case 2: Mobile View or Collapsed Desktop View + Item with SubItems
+    if (item.subItems && (isMobileContext || isSidebarActuallyCollapsed)) {
        return (
         <DropdownMenu key={item.href}>
           <TooltipProvider delayDuration={isMobileContext || !isSidebarActuallyCollapsed ? 999999 : 0}>
@@ -238,11 +228,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant={isActive ? 'secondary' : 'ghost'}
+                    variant={isActive || isParentOfActive ? 'secondary' : 'ghost'}
                     className={cn(
-                      "w-full text-sm h-9 flex items-center group",
+                      "w-full text-sm h-9 flex items-center group hover:bg-muted/80",
                       isSidebarActuallyCollapsed && !isMobileContext ? "justify-center px-2" : "justify-start px-2",
-                      isActive && "font-semibold"
+                      (isActive || isParentOfActive) && "font-semibold"
                     )}
                     title={isSidebarActuallyCollapsed && !isMobileContext ? label : undefined}
                   >
@@ -281,7 +271,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       );
     }
 
-    // Regular nav item
+    // Case 3: Regular Link
     return (
       <TooltipProvider key={item.href} delayDuration={isMobileContext || !isSidebarActuallyCollapsed ? 999999 : 0}>
         <Tooltip>
@@ -289,7 +279,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             <Link href={item.href} onClick={() => isMobileContext && setIsMobileMenuOpen(false)}>
               <Button
                 variant={isActive ? 'secondary' : 'ghost'}
-                className={cn("w-full text-sm h-9", isSidebarActuallyCollapsed && !isMobileContext ? "justify-center px-2" : "justify-start px-2")}
+                className={cn("w-full text-sm h-9 hover:bg-muted/80", isSidebarActuallyCollapsed && !isMobileContext ? "justify-center px-2" : "justify-start px-2")}
                 title={isSidebarActuallyCollapsed && !isMobileContext ? label : undefined}
               >
                 <item.icon className={cn("h-5 w-5 shrink-0", isSidebarActuallyCollapsed && !isMobileContext ? "" : "mr-3")} />
@@ -306,21 +296,23 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   };
 
   const SidebarNav = ({isMobileNav = false, isCollapsedNav = false} : {isMobileNav?: boolean, isCollapsedNav?: boolean}) => {
-      const accordionItems = filteredNavItems.filter(item => item.isAccordion && !isMobileNav);
-      const regularItems = filteredNavItems.filter(item => !item.isAccordion || isMobileNav);
+      const isDesktopExpanded = !isMobileNav && !isCollapsedNav;
 
-      return (
-        <nav className={cn("flex flex-col space-y-1 py-4", isCollapsedNav && !isMobileNav ? "px-2 items-center" : "px-2")}>
-          {/* Render regular items first */}
-          {regularItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav))}
-          {/* Then render accordion items for desktop sidebar */}
-          {accordionItems.length > 0 && !isMobileNav && (
-             <Accordion type="single" collapsible className="w-full">
-                {accordionItems.map((item) => renderNavItem(item, false, isCollapsedNav))}
-             </Accordion>
-          )}
-        </nav>
-      );
+      if (isDesktopExpanded) {
+        // For desktop expanded view, wrap all items (including accordions) in a single Accordion root
+        return (
+          <Accordion type="multiple" className="w-full px-2 py-4 space-y-0.5">
+            {filteredNavItems.map((item) => renderNavItem(item, false, false))}
+          </Accordion>
+        );
+      } else {
+        // For mobile or collapsed desktop, render items directly
+        return (
+          <nav className={cn("flex flex-col space-y-1 py-4", isCollapsedNav ? "px-2 items-center" : "px-2")}>
+            {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav))}
+          </nav>
+        );
+      }
   };
   
   const userRoleDisplay = currentAdminUser?.role ? dictionary.role.replace('{role}', currentAdminUser.role) : '';
@@ -344,7 +336,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <div className="flex-1 overflow-y-auto">
           <SidebarNav isCollapsedNav={isSidebarCollapsed} />
         </div>
-        <div className={cn("border-t shrink-0 px-2 py-3", isSidebarCollapsed ? "px-2 py-3" : "px-6 py-4")}>
+        <div className={cn("border-t shrink-0 px-2 py-3 mt-auto", isSidebarCollapsed ? "px-2 py-3" : "px-6 py-4")}>
             <div className={cn("leading-tight mb-2", isSidebarCollapsed ? "hidden" : "")}>
                 <p className="font-semibold truncate text-sm">{currentAdminUser?.name}</p>
                 <p className="text-xs text-muted-foreground flex items-center">
@@ -438,8 +430,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         
-        <div className="flex flex-col flex-1">
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <div className="flex flex-col flex-1"> {/* Added flex-col here */}
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto"> {/* main content */}
                 {children}
             </main>
             <footer className="border-t mt-auto bg-background/50 text-muted-foreground text-xs text-center p-3 shrink-0">
@@ -463,3 +455,5 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
   );
 }
 
+
+    
