@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet'; // Added SheetHeader, SheetTitle, SheetClose
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetTrigger } from '@/components/ui/sheet'; // Added SheetTrigger
 import {
   LayoutDashboard,
   Package,
@@ -24,7 +24,7 @@ import {
   Briefcase, 
   PanelLeftOpen,
   PanelRightOpen,
-  X // Added X import
+  X
 } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
