@@ -71,7 +71,9 @@
     "loginWelcomeMessage": "Welcome, {name}!",
     "loginErrorTitle": "Admin Login Failed",
     "loginErrorDescRequired": "Email and password are required.",
-    "loginErrorDescInvalid": "Invalid email or password."
+    "loginErrorDescInvalid": "Invalid email or password.",
+    "loginErrorDescBlockedStatus": "Blocked",
+    "loginSuccessDescActiveStatus": "Active"
   },
   "adminContextToasts": {
     "logoutSuccessTitle": "Logged Out",
@@ -338,12 +340,28 @@
     "statusBlocked": "Blocked",
     "blockUserAction": "Block",
     "unblockUserAction": "Unblock",
-    "changeRoleActionSimulated": "Change Role (Sim.)",
-    "permissionsActionPlaceholder": "Permissions (Soon)",
+    "changeRoleButton": "Change Role",
+    "changeRoleModalTitle": "Change Role for {name}",
+    "changeRoleModalDesc": "Select a new role for this user. This is a simulated action.",
+    "currentRoleLabel": "Current Role:",
+    "newRoleLabel": "New Role:",
+    "selectRolePlaceholder": "Select a role",
+    "roleAdmin": "Administrator",
     "roleManager": "Manager",
-    "roleUser": "User",
-    "predefinedUserText": "Predefined",
-    "currentUserAdminText": "Current Admin",
+    "roleUser": "User (Main Site)",
+    "saveRoleButton": "Save Role (Simulated)",
+    "cancelButton": "Cancel",
+    "closeButton": "Close",
+    "permissionsButton": "Permissions",
+    "permissionsButtonTitle": "Manage Permissions (Coming Soon)",
+    "permissionsModalTitle": "Permissions for {name}",
+    "permissionsModalDesc": "Granular permission management is a future feature.",
+    "permissionsFeatureComingSoon": "Full permission management requires backend integration and will be available in a future update.",
+    "manageProductsPermission": "Manage Products",
+    "manageOrdersPermission": "Manage Orders",
+    "manageDiscountsPermission": "Manage Discounts",
+    "predefinedUserBadge": "Predefined",
+    "currentUserAdminBadge": "Current Admin",
     "noManagersFound": "No managers found.",
     "mainSiteUserManagementNote": "Main site user management will require database integration.",
     "simulationNote": "Note: Manager additions and status changes are simulated via localStorage.",
@@ -351,6 +369,6 @@
     "accessDeniedTitle": "Access Denied",
     "accessDeniedDesc": "You do not have permission to view this page.",
     "roleChangeSimulatedTitle": "Role Change (Simulated)",
-    "roleChangeSimulatedDesc": "Role change UI demonstrated. Backend required for persistence and actual permission changes."
+    "roleChangeSimulatedDesc": "Role for {name} 'changed' to {role}. Backend required for persistence and actual permission changes."
   }
 }

@@ -71,7 +71,9 @@
     "loginWelcomeMessage": "Добро пожаловать, {name}!",
     "loginErrorTitle": "Ошибка входа в админ-панель",
     "loginErrorDescRequired": "Требуются email и пароль.",
-    "loginErrorDescInvalid": "Неверный email или пароль."
+    "loginErrorDescInvalid": "Неверный email или пароль.",
+    "loginErrorDescBlockedStatus": "Заблокирован",
+    "loginSuccessDescActiveStatus": "Активен"
   },
   "adminContextToasts": {
     "logoutSuccessTitle": "Выход выполнен",
@@ -338,12 +340,28 @@
     "statusBlocked": "Заблокирован",
     "blockUserAction": "Блок.",
     "unblockUserAction": "Разблок.",
-    "changeRoleActionSimulated": "Изменить Роль (Сим.)",
-    "permissionsActionPlaceholder": "Права (Скоро)",
+    "changeRoleButton": "Изменить роль",
+    "changeRoleModalTitle": "Изменить роль для {name}",
+    "changeRoleModalDesc": "Выберите новую роль для этого пользователя. Это симулированное действие.",
+    "currentRoleLabel": "Текущая роль:",
+    "newRoleLabel": "Новая роль:",
+    "selectRolePlaceholder": "Выберите роль",
+    "roleAdmin": "Администратор",
     "roleManager": "Менеджер",
-    "roleUser": "Пользователь",
-    "predefinedUserText": "Предопределенный",
-    "currentUserAdminText": "Текущий Админ",
+    "roleUser": "Пользователь (Основной сайт)",
+    "saveRoleButton": "Сохранить роль (Симуляция)",
+    "cancelButton": "Отмена",
+    "closeButton": "Закрыть",
+    "permissionsButton": "Права",
+    "permissionsButtonTitle": "Управлять правами (Скоро)",
+    "permissionsModalTitle": "Права для {name}",
+    "permissionsModalDesc": "Детальное управление правами доступа - будущая функция.",
+    "permissionsFeatureComingSoon": "Полное управление правами доступа требует интеграции с бэкендом и будет доступно в будущем обновлении.",
+    "manageProductsPermission": "Управление товарами",
+    "manageOrdersPermission": "Управление заказами",
+    "manageDiscountsPermission": "Управление скидками",
+    "predefinedUserBadge": "Предопределенный",
+    "currentUserAdminBadge": "Текущий Админ",
     "noManagersFound": "Менеджеры не найдены.",
     "mainSiteUserManagementNote": "Управление пользователями основного сайта потребует интеграции с базой данных.",
     "simulationNote": "Примечание: Добавление менеджеров и изменение их статуса симулируется через localStorage.",
@@ -351,6 +369,6 @@
     "accessDeniedTitle": "Доступ запрещен",
     "accessDeniedDesc": "У вас нет прав для просмотра этой страницы.",
     "roleChangeSimulatedTitle": "Изменение Роли (Симуляция)",
-    "roleChangeSimulatedDesc": "Показан UI для изменения роли. Для сохранения и реального изменения прав требуется бэкенд."
+    "roleChangeSimulatedDesc": "Роль для {name} 'изменена' на {role}. Для сохранения и реального изменения прав требуется бэкенд."
   }
 }

@@ -4,13 +4,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import { PlusCircle, AlertTriangle, UserCog, ShieldCheck, Mail, UserX, UserCheckIcon, Settings2 } from "lucide-react";
+import { PlusCircle, AlertTriangle, UserCog, ShieldCheck, Mail, UserX, UserCheckIcon, Settings2, Edit2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
-import type { AdminUser } from "@/lib/types";
+import React, { useEffect, useState, useMemo } from 'react';
+import type { AdminUser, AdminRole } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { AdminLocale } from '@/admin/lib/i18n-config-admin';
 import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
@@ -28,6 +29,13 @@ export default function AdminUsersPage() {
   const [allAdminUsers, setAllAdminUsers] = useState<AdminUser[]>([]);
   const [dict, setDict] = useState<AdminUsersPageDict | null>(null);
   const [isClient, setIsClient] = useState(false);
+
+  const [selectedUserForRoleChange, setSelectedUserForRoleChange] = useState<AdminUser | null>(null);
+  const [isRoleChangeModalOpen, setIsRoleChangeModalOpen] = useState(false);
+  const [selectedRoleInModal, setSelectedRoleInModal] = useState<AdminRole>('MANAGER');
+
+  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
+  const [selectedUserForPermissions, setSelectedUserForPermissions] = useState<AdminUser | null>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -49,32 +57,40 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     const combinedUsers: AdminUser[] = [
-      ...Object.values(predefinedUsers),
-      ...dynamicallyAddedManagers
+      ...Object.values(predefinedUsers).map(u => ({ ...u, isPredefined: true })),
+      ...dynamicallyAddedManagers.map(u => ({ ...u, isPredefined: false }))
     ];
     setAllAdminUsers(combinedUsers);
   }, [predefinedUsers, dynamicallyAddedManagers]);
 
   const handleToggleBlock = async (email: string) => {
     await toggleBlockManagerStatus(email);
-    // Re-fetch/re-combine users to reflect update
-    const updatedCombinedUsers: AdminUser[] = [
-        ...Object.values(predefinedUsers), // Predefined users don't change block status via this UI
-        ...dynamicallyAddedManagers.map(m => m.email === email ? {...m, isBlocked: !m.isBlocked} : m) 
-    ];
-     // The dynamicallyAddedManagers state in context will be updated, so we can rely on it.
-     // To ensure the local allAdminUsers state is also up-to-date immediately:
-    setAllAdminUsers(prev => prev.map(u => u.email === email ? {...u, isBlocked: !u.isBlocked} : u));
   };
 
-  const handleRoleChangeSimulated = () => {
-    if (dict) {
+  const openRoleChangeModal = (user: AdminUser) => {
+    setSelectedUserForRoleChange(user);
+    setSelectedRoleInModal(user.role);
+    setIsRoleChangeModalOpen(true);
+  };
+
+  const handleSimulatedRoleSave = () => {
+    if (dict && selectedUserForRoleChange) {
       toast({
         title: dict.roleChangeSimulatedTitle,
-        description: dict.roleChangeSimulatedDesc,
+        description: dict.roleChangeSimulatedDesc
+          .replace('{name}', selectedUserForRoleChange.name)
+          .replace('{role}', selectedRoleInModal),
       });
     }
+    setIsRoleChangeModalOpen(false);
+    setSelectedUserForRoleChange(null);
   };
+
+  const openPermissionsModal = (user: AdminUser) => {
+    setSelectedUserForPermissions(user);
+    setIsPermissionsModalOpen(true);
+  };
+
 
   if (isLoading || !isClient || !dict) {
     return <div className="flex h-screen items-center justify-center"><p>{dict?.loadingPage || "Loading User Management..."}</p></div>;
@@ -127,12 +143,15 @@ export default function AdminUsersPage() {
               </TableHeader>
               <TableBody>
                 {allAdminUsers.map((user) => {
-                  const isPredefined = Object.values(predefinedUsers).some(pu => pu.email === user.email);
                   const isCurrentUserAdmin = currentAdminUser?.email === user.email && user.role === 'ADMIN';
                   
                   return (
                     <TableRow key={user.id}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {user.name}
+                        {user.isPredefined && <Badge variant="outline" className="ml-2 text-xs">{dict.predefinedUserBadge}</Badge>}
+                        {isCurrentUserAdmin && <Badge variant="default" className="ml-2 text-xs">{dict.currentUserAdminBadge}</Badge>}
+                      </TableCell>
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.role}</TableCell>
                       <TableCell>
@@ -141,36 +160,32 @@ export default function AdminUsersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center space-x-1">
-                        {!isPredefined && !isCurrentUserAdmin && (
+                        {!user.isPredefined && !isCurrentUserAdmin && (
                           <>
                             <Button 
                               variant="outline" 
                               size="sm" 
                               onClick={() => handleToggleBlock(user.email)}
                               className="h-7 px-2 py-1 text-xs"
+                              title={user.isBlocked ? dict.unblockUserAction : dict.blockUserAction}
                             >
                               {user.isBlocked ? <UserCheckIcon className="mr-1 h-3 w-3" /> : <UserX className="mr-1 h-3 w-3" />}
                               {user.isBlocked ? dict.unblockUserAction : dict.blockUserAction}
                             </Button>
-                            <Select defaultValue={user.role} onValueChange={handleRoleChangeSimulated} disabled>
-                              <SelectTrigger className="h-7 px-2 py-1 text-xs w-[120px] inline-flex">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="MANAGER">{dict.roleManager}</SelectItem>
-                                <SelectItem value="USER" disabled>{dict.roleUser}</SelectItem>
-                              </SelectContent>
-                            </Select>
-                             <Button variant="outline" size="sm" disabled className="h-7 px-2 py-1 text-xs">
-                               <Settings2 className="mr-1 h-3 w-3" />{dict.permissionsActionPlaceholder}
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              onClick={() => openRoleChangeModal(user)}
+                              className="h-7 px-2 py-1 text-xs"
+                              title={dict.changeRoleButton}
+                            >
+                              <Edit2 className="mr-1 h-3 w-3" />
+                              {dict.changeRoleButton}
+                            </Button>
+                             <Button variant="outline" size="sm" onClick={() => openPermissionsModal(user)} className="h-7 px-2 py-1 text-xs" title={dict.permissionsButtonTitle}>
+                               <Settings2 className="mr-1 h-3 w-3" />{dict.permissionsButton}
                             </Button>
                           </>
-                        )}
-                        {isPredefined && (
-                           <span className="text-xs text-muted-foreground">{dict.predefinedUserText}</span>
-                        )}
-                         {isCurrentUserAdmin && (
-                           <span className="text-xs text-muted-foreground">{dict.currentUserAdminText}</span>
                         )}
                       </TableCell>
                     </TableRow>
@@ -189,6 +204,62 @@ export default function AdminUsersPage() {
        <p className="text-sm text-muted-foreground text-center">
           {dict.simulationNote}
         </p>
+
+        {/* Change Role Modal */}
+        {selectedUserForRoleChange && (
+            <Dialog open={isRoleChangeModalOpen} onOpenChange={setIsRoleChangeModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{dict.changeRoleModalTitle.replace('{name}', selectedUserForRoleChange.name)}</DialogTitle>
+                        <DialogDescription>{dict.changeRoleModalDesc}</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-2">
+                        <p className="text-sm">{dict.currentRoleLabel} <Badge>{selectedUserForRoleChange.role}</Badge></p>
+                        <div>
+                            <label htmlFor="role-select" className="text-sm font-medium">{dict.newRoleLabel}</label>
+                            <Select value={selectedRoleInModal} onValueChange={(value) => setSelectedRoleInModal(value as AdminRole)}>
+                                <SelectTrigger id="role-select" className="mt-1">
+                                    <SelectValue placeholder={dict.selectRolePlaceholder} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ADMIN" disabled={selectedUserForRoleChange.role === 'ADMIN' && !currentAdminUser?.email?.startsWith('superadmin@')}>{dict.roleAdmin}</SelectItem>
+                                    <SelectItem value="MANAGER">{dict.roleManager}</SelectItem>
+                                    {/* <SelectItem value="USER" disabled>User (Main Site)</SelectItem> */}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild><Button type="button" variant="outline">{dict.cancelButton}</Button></DialogClose>
+                        <Button type="button" onClick={handleSimulatedRoleSave}>{dict.saveRoleButton}</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )}
+
+        {/* Permissions Modal Placeholder */}
+        {selectedUserForPermissions && (
+            <Dialog open={isPermissionsModalOpen} onOpenChange={setIsPermissionsModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{dict.permissionsModalTitle.replace('{name}', selectedUserForPermissions.name)}</DialogTitle>
+                        <DialogDescription>{dict.permissionsModalDesc}</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 text-sm text-muted-foreground">
+                        <p>{dict.permissionsFeatureComingSoon}</p>
+                        <ul className="list-disc pl-5 mt-2 space-y-1">
+                            <li>{dict.manageProductsPermission} (Yes/No)</li>
+                            <li>{dict.manageOrdersPermission} (Yes/No)</li>
+                            <li>{dict.manageDiscountsPermission} (Yes/No)</li>
+                        </ul>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild><Button type="button" variant="outline">{dict.closeButton}</Button></DialogClose>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        )}
+
     </div>
   );
 }

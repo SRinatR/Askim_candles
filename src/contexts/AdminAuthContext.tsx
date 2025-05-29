@@ -41,6 +41,7 @@ const initialPredefinedUsers: Record<string, AdminUser> = {
     role: 'ADMIN',
     password: 'adminpass',
     isBlocked: false,
+    isPredefined: true,
   },
   'manager@scentsational.com': {
     id: 'manager001',
@@ -49,6 +50,7 @@ const initialPredefinedUsers: Record<string, AdminUser> = {
     role: 'MANAGER',
     password: 'managerpass',
     isBlocked: false,
+    isPredefined: true,
   },
 };
 
@@ -103,6 +105,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     setIsLoading(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -118,7 +121,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
 
     const lowerEmail = email.toLowerCase();
     let userToLogin = predefinedUsers[lowerEmail];
@@ -195,7 +198,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password: pass,
         role: 'MANAGER',
-        isBlocked: false, // Initialize as not blocked
+        isBlocked: false,
+        isPredefined: false,
     };
     const updatedManagers = [...dynamicallyAddedManagers, newManager];
     setDynamicallyAddedManagers(updatedManagers);
@@ -213,25 +217,27 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const toggleBlockManagerStatus = async (emailToToggle: string): Promise<void> => {
+    let toggledManager: AdminUser | undefined;
     const updatedManagers = dynamicallyAddedManagers.map(manager => {
         if (manager.email.toLowerCase() === emailToToggle.toLowerCase()) {
-            return { ...manager, isBlocked: !manager.isBlocked };
+            toggledManager = { ...manager, isBlocked: !manager.isBlocked };
+            return toggledManager;
         }
         return manager;
-    });
+    }).filter(m => m !== undefined) as AdminUser[]; // Ensure no undefined entries
+
     setDynamicallyAddedManagers(updatedManagers);
     localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
 
-    const manager = updatedManagers.find(m => m.email.toLowerCase() === emailToToggle.toLowerCase());
-    if (manager && currentAdminUser) {
-        const action = manager.isBlocked ? "Manager Blocked (Simulated)" : "Manager Unblocked (Simulated)";
-        logAdminAction(currentAdminUser.email, action, { managerEmail: manager.email, managerName: manager.name });
+    if (toggledManager && currentAdminUser) {
+        const action = toggledManager.isBlocked ? "Manager Blocked (Simulated)" : "Manager Unblocked (Simulated)";
+        logAdminAction(currentAdminUser.email, action, { managerEmail: toggledManager.email, managerName: toggledManager.name });
         toast({
-            title: manager.isBlocked ? (authStrings.contextToasts?.managerBlockedToastTitle || "Manager Blocked") 
+            title: toggledManager.isBlocked ? (authStrings.contextToasts?.managerBlockedToastTitle || "Manager Blocked") 
                                      : (authStrings.contextToasts?.managerUnblockedToastTitle || "Manager Unblocked"),
             description: (authStrings.contextToasts?.managerStatusUpdatedToastDesc || "{name} status updated to {status}.")
-                            .replace('{name}', manager.name)
-                            .replace('{status}', manager.isBlocked ? 'Blocked' : 'Active'),
+                            .replace('{name}', toggledManager.name)
+                            .replace('{status}', toggledManager.isBlocked ? (authStrings.login?.loginErrorDescBlockedStatus || 'Blocked') : (authStrings.login?.loginSuccessDescActiveStatus || 'Active')),
         });
     }
   };
