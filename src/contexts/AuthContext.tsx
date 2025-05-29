@@ -4,7 +4,7 @@
 import type { SimulatedUser } from '@/lib/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, useParams } from 'next/navigation'; // Added useParams
+import { useRouter, useParams } from 'next/navigation'; 
 import type { Locale } from '@/lib/i1n-config';
 
 interface AuthContextType {
@@ -24,6 +24,70 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const MOCK_USERS_STORAGE_KEY = 'scentSationalSimulatedUsers';
 const CURRENT_USER_STORAGE_KEY = 'scentSationalSimulatedCurrentUser';
 
+// Placeholder dictionary for AuthContext toasts
+const getAuthContextDictionary = (locale: Locale) => {
+  // This is a simplified version. In a real app, you might get these from a global i18n provider.
+  if (locale === 'uz') {
+    return {
+      loginSuccessful: "Muvaffaqiyatli kirildi",
+      welcomeBack: (name: string) => `Xush kelibsiz, ${name}!`,
+      loginFailed: "Kirish muvaffaqiyatsiz",
+      accountNotConfirmed: "Hisob tasdiqlanmagan. Ro'yxatdan o'tishni yakunlang.",
+      invalidEmailPassword: "Noto'g'ri email yoki parol.",
+      registrationFailed: "Ro'yxatdan o'tish muvaffaqiyatsiz",
+      emailExists: "Email allaqachon mavjud.",
+      registrationError: "Ro'yxatdan o'tishda xatolik",
+      prevStepDataMissing: "Oldingi qadam ma'lumotlari yo'q.",
+      confirmationError: "Tasdiqlashda xatolik",
+      noPendingReg: "Tasdiqlash uchun kutilayotgan ro'yxatdan o'tish topilmadi.",
+      confirmFailedUserNotFound: "Tasdiqlash uchun foydalanuvchi topilmadi.",
+      accountConfirmed: "Hisob tasdiqlandi!",
+      youCanNowLogin: "Endi tizimga kirishingiz mumkin.",
+      loggedOut: "Chiqib ketildi",
+      loggedOutSuccess: "Siz tizimdan muvaffaqiyatli chiqdingiz."
+    };
+  }
+  if (locale === 'ru') {
+    return {
+      loginSuccessful: "Вход выполнен",
+      welcomeBack: (name: string) => `С возвращением, ${name}!`,
+      loginFailed: "Ошибка входа",
+      accountNotConfirmed: "Аккаунт не подтвержден. Пожалуйста, завершите регистрацию.",
+      invalidEmailPassword: "Неверный email или пароль.",
+      registrationFailed: "Ошибка регистрации",
+      emailExists: "Email уже существует.",
+      registrationError: "Ошибка регистрации",
+      prevStepDataMissing: "Отсутствуют данные предыдущего шага.",
+      confirmationError: "Ошибка подтверждения",
+      noPendingReg: "Ожидающая подтверждения регистрация не найдена.",
+      confirmFailedUserNotFound: "Не удалось найти пользователя для подтверждения.",
+      accountConfirmed: "Аккаунт подтвержден!",
+      youCanNowLogin: "Теперь вы можете войти.",
+      loggedOut: "Выход выполнен",
+      loggedOutSuccess: "Вы успешно вышли из системы."
+    };
+  }
+  return { // en
+    loginSuccessful: "Login Successful",
+    welcomeBack: (name: string) => `Welcome back, ${name}!`,
+    loginFailed: "Login Failed",
+    accountNotConfirmed: "Account not confirmed. Please complete registration.",
+    invalidEmailPassword: "Invalid email or password.",
+    registrationFailed: "Registration Failed",
+    emailExists: "Email already exists.",
+    registrationError: "Registration Error",
+    prevStepDataMissing: "Previous step data missing.",
+    confirmationError: "Confirmation Error",
+    noPendingReg: "No pending registration found to confirm.",
+    confirmFailedUserNotFound: "Could not find user to confirm.",
+    accountConfirmed: "Account Confirmed!",
+    youCanNowLogin: "You can now log in.",
+    loggedOut: "Logged Out",
+    loggedOutSuccess: "You have been successfully logged out."
+  };
+};
+
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<SimulatedUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,21 +95,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
-  const locale = params.locale as Locale || 'uz'; // Get locale for redirects
+  const locale = params.locale as Locale || 'uz'; 
+  const dictionary = getAuthContextDictionary(locale);
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
     }
-    const storedRegData = localStorage.getItem('scentSationalSimulatedRegData'); // Persist reg data
+    const storedRegData = localStorage.getItem('scentSationalSimulatedRegData'); 
     if (storedRegData) {
       setRegistrationData(JSON.parse(storedRegData));
     }
     setIsLoading(false);
   }, []);
 
-  useEffect(() => { // Persist registration data
+  useEffect(() => { 
     if (registrationData) {
         localStorage.setItem('scentSationalSimulatedRegData', JSON.stringify(registrationData));
     } else {
@@ -72,14 +138,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user && user.password === pass && user.isConfirmed) { 
       setCurrentUser(user);
       localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(user));
-      toast({ title: "Login Successful", description: `Welcome back, ${user.name || user.email}!` });
+      toast({ title: dictionary.loginSuccessful, description: dictionary.welcomeBack(user.name || user.email) });
       setIsLoading(false);
-      // router.push(`/${locale}/account`); // Redirect handled by LoginPage useEffect
       return true;
     } else if (user && user.password === pass && !user.isConfirmed) {
-      toast({ title: "Login Failed", description: "Account not confirmed. Please complete registration.", variant: "destructive" });
+      toast({ title: dictionary.loginFailed, description: dictionary.accountNotConfirmed, variant: "destructive" });
     } else {
-      toast({ title: "Login Failed", description: "Invalid email or password.", variant: "destructive" });
+      toast({ title: dictionary.loginFailed, description: dictionary.invalidEmailPassword, variant: "destructive" });
     }
     setIsLoading(false);
     return false;
@@ -89,7 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     const users = getStoredUsers();
     if (users[email.toLowerCase()]) {
-      toast({ title: "Registration Failed", description: "Email already exists.", variant: "destructive" });
+      toast({ title: dictionary.registrationFailed, description: dictionary.emailExists, variant: "destructive" });
       setIsLoading(false);
       return false;
     }
@@ -101,7 +166,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const registerStep2 = async (firstName: string, lastName: string): Promise<boolean> => {
     setIsLoading(true);
     if (!registrationData || !registrationData.email || !registrationData.password) {
-      toast({ title: "Registration Error", description: "Previous step data missing.", variant: "destructive" });
+      toast({ title: dictionary.registrationError, description: dictionary.prevStepDataMissing, variant: "destructive" });
       setIsLoading(false);
       return false;
     }
@@ -118,7 +183,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const confirmAccount = async (): Promise<boolean> => {
     setIsLoading(true);
     if (!registrationData || !registrationData.email || !registrationData.isRegistered) {
-       toast({ title: "Confirmation Error", description: "No pending registration found or incomplete.", variant: "destructive" });
+       toast({ title: dictionary.confirmationError, description: dictionary.noPendingReg, variant: "destructive" });
        setIsLoading(false);
        return false;
     }
@@ -130,13 +195,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       users[registrationData.email] = userToConfirm;
       saveStoredUsers(users);
       setRegistrationData(null); 
-      localStorage.removeItem('scentSationalSimulatedRegData'); // Clean up
-      toast({ title: "Account Confirmed!", description: "You can now log in." });
+      localStorage.removeItem('scentSationalSimulatedRegData'); 
+      toast({ title: dictionary.accountConfirmed, description: dictionary.youCanNowLogin });
       router.push(`/${locale}/login`);
       setIsLoading(false);
       return true;
     }
-    toast({ title: "Confirmation Failed", description: "Could not find user to confirm.", variant: "destructive" });
+    toast({ title: dictionary.confirmationError, description: dictionary.confirmFailedUserNotFound, variant: "destructive" });
     setIsLoading(false);
     return false;
   };
@@ -146,8 +211,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
     setRegistrationData(null); 
     localStorage.removeItem('scentSationalSimulatedRegData');
-    toast({ title: "Logged Out", description: "You have been successfully logged out." });
-    router.push(`/${locale}/login`); // Redirect to localized login
+    toast({ title: dictionary.loggedOut, description: dictionary.loggedOutSuccess });
+    router.push(`/${locale}/login`); 
   };
 
   return (

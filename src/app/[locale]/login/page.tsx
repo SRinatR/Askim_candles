@@ -4,11 +4,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-// import { Label } from "@/components/ui/label"; // Not used by FormField
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter, useSearchParams, useParams } from "next/navigation"; // Added useParams
+import { useRouter, useSearchParams, useParams } from "next/navigation"; 
 import { Logo } from "@/components/icons/Logo";
 import { signIn, useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
@@ -38,6 +37,7 @@ const getLoginDictionary = (locale: Locale) => {
       termsAgree: "Kirish orqali siz bizning Foydalanish shartlari va Maxfiylik siyosatimizga rozilik bildirasiz.",
       loginFailedTitle: "Kirish muvaffaqiyatsiz",
       loginFailedDescGeneric: "Sizni tizimga kirita olmadik. Iltimos, qaytadan urinib ko'ring.",
+      accountNotConfirmedDesc: "Hisobingiz tasdiqlanmagan. Iltimos, ro'yxatdan o'tishni yakunlang yoki tasdiqlash xatini tekshiring.",
       loginComingSoonTitle: "Tez kunda!",
       loginComingSoonDesc: (provider: string) => `${provider} orqali kirish hozircha mavjud emas.`,
       loading: "Yuklanmoqda...",
@@ -63,6 +63,7 @@ const getLoginDictionary = (locale: Locale) => {
       termsAgree: "Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности.",
       loginFailedTitle: "Ошибка входа",
       loginFailedDescGeneric: "Не удалось войти. Пожалуйста, попробуйте еще раз.",
+      accountNotConfirmedDesc: "Аккаунт не подтвержден. Пожалуйста, завершите регистрацию или проверьте письмо с подтверждением.",
       loginComingSoonTitle: "Скоро!",
       loginComingSoonDesc: (provider: string) => `Вход через ${provider} пока недоступен.`,
       loading: "Загрузка...",
@@ -87,6 +88,7 @@ const getLoginDictionary = (locale: Locale) => {
     termsAgree: "By signing in, you agree to our Terms of Service and Privacy Policy.",
     loginFailedTitle: "Login Failed",
     loginFailedDescGeneric: "Could not sign you in. Please try again.",
+    accountNotConfirmedDesc: "Account not confirmed. Please complete registration or check your confirmation email.",
     loginComingSoonTitle: "Coming Soon!",
     loginComingSoonDesc: (provider: string) => `Sign in with ${provider} is not yet available.`,
     loading: "Loading...",
@@ -98,7 +100,7 @@ export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const routeParams = useParams(); // For locale
+  const routeParams = useParams(); 
   const locale = routeParams.locale as Locale || 'uz';
   const dictionary = getLoginDictionary(locale);
 
@@ -114,7 +116,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (nextAuthStatus === "authenticated" || simulatedUser) {
-      router.replace(callbackUrl); // callbackUrl should already be localized or handled by middleware
+      router.push(callbackUrl); 
     }
   }, [nextAuthStatus, simulatedUser, router, callbackUrl]);
 
@@ -129,9 +131,6 @@ export default function LoginPage() {
         setIsSubmittingSocial("");
         return;
       }
-      // NextAuth signIn will handle redirection.
-      // Callback URL is set in authOptions, or NextAuth will redirect to current page or homepage.
-      // We ensure callbackUrl is localized if it comes from query param.
       const result = await signIn(provider, { callbackUrl });
       if (result?.error) {
         toast({
@@ -155,10 +154,7 @@ export default function LoginPage() {
   const handleEmailPasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmittingEmail(true);
-    const success = await simulatedLogin(email, password); 
-    if (success) {
-      // useEffect will handle redirect because simulatedUser will be set
-    }
+    await simulatedLogin(email, password); 
     setIsSubmittingEmail(false);
   };
   

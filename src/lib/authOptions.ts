@@ -10,21 +10,25 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   pages: {
-    signIn: '/login', // This will be redirected to /[locale]/login by middleware
+    signIn: '/login', 
   },
   callbacks: {
     async session({ session, token }) {
-      // Add userId to session
-      if (token.sub && session.user) { // token.sub is usually the user's ID from the provider
-        session.user.id = token.sub;
+      if (session.user) {
+        if (token.userId) { 
+          session.user.id = token.userId as string;
+        } else if (token.sub) { 
+          session.user.id = token.sub;
+        }
       }
       return session;
     },
     async jwt({ token, user, account }) {
-      // Persist the OAuth access_token and or the user id to the token right after signin
       if (account && user) {
-        // token.accessToken = account.access_token; // If you need access token
-        if (user.id) token.userId = user.id; // Or account.providerAccountId
+        // For Google, user.id is available and is the Google ID
+        if (user.id) {
+          token.userId = user.id;
+        }
       }
       return token;
     }
