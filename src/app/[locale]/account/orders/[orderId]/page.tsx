@@ -109,7 +109,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
                     <Link href={`/${locale}/products/${item.id}`} className="font-medium hover:text-primary">{item.name}</Link>
                     <p className="text-sm text-muted-foreground">{dictionary.qty} {item.quantity}</p>
                   </div>
-                  <p className="text-sm font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="text-sm font-medium">{(item.price * item.quantity).toLocaleString('en-US')} UZS</p>
                 </li>
               ))}
             </ul>
@@ -118,11 +118,11 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           <div>
             <h3 className="text-lg font-semibold mb-3">{dictionary.orderSummary}</h3>
             <div className="space-y-1 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">{dictionary.subtotal}:</span><span>${order.totalAmount.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{dictionary.subtotal}:</span><span>{order.totalAmount.toLocaleString('en-US')} UZS</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">{dictionary.shipping}:</span><span>{dictionary.free}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">{dictionary.taxes}:</span><span>{dictionary.calculatedAtCheckout}</span></div>
               <Separator className="my-2" />
-              <div className="flex justify-between font-semibold text-base"><span>{dictionary.total}:</span><span>${order.totalAmount.toFixed(2)}</span></div>
+              <div className="flex justify-between font-semibold text-base"><span>{dictionary.total}:</span><span>{order.totalAmount.toLocaleString('en-US')} UZS</span></div>
             </div>
           </div>
           <Separator />
@@ -148,3 +148,4 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
     </div>
   );
 }
+

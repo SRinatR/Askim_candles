@@ -17,6 +17,8 @@ import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type Dictionary = typeof enMessages;
+type OrderHistoryPageDictionary = Dictionary['accountOrderHistoryPage'];
+
 
 const dictionaries: Record<Locale, Dictionary> = {
   en: enMessages,
@@ -24,7 +26,7 @@ const dictionaries: Record<Locale, Dictionary> = {
   uz: uzMessages,
 };
 
-const getOrderHistoryDictionary = (locale: Locale) => {
+const getOrderHistoryDictionary = (locale: Locale): OrderHistoryPageDictionary => {
   const dict = dictionaries[locale] || dictionaries.en;
   return dict.accountOrderHistoryPage;
 };
@@ -102,7 +104,7 @@ export default function OrderHistoryPage() {
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(order.status)}>{getTranslatedStatus(order.status, dictionary)}</Badge>
                     </TableCell>
-                    <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{order.totalAmount.toLocaleString('en-US')} UZS</TableCell>
                     <TableCell className="text-center">
                       <Button variant="ghost" size="sm" asChild>
                         <Link href={`/${locale}/account/orders/${order.id}`}>
@@ -120,3 +122,4 @@ export default function OrderHistoryPage() {
     </div>
   );
 }
+

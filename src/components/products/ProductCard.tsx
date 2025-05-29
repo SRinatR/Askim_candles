@@ -15,25 +15,26 @@ export interface ProductCardDictionary {
   addToCart: string;
   addedToCartTitle: string;
   addedToCartDesc: string; // Expects a string with {productName} placeholder
-}
-
-interface ProductCardProps {
-  product: Product;
-  locale: Locale;
-  dictionary?: ProductCardDictionary; // Make dictionary prop optional for now to test fallback
+  outOfStock?: string;
 }
 
 const defaultProductCardDictionary: ProductCardDictionary = {
   addToCart: "Add to Cart (Default Fallback)",
   addedToCartTitle: "Added to cart (Default Fallback)",
-  addedToCartDesc: "{productName} has been added (Default Fallback)."
+  addedToCartDesc: "{productName} has been added (Default Fallback).",
+  outOfStock: "Out of Stock (Default Fallback)"
 };
+
+interface ProductCardProps {
+  product: Product;
+  locale: Locale;
+  dictionary?: ProductCardDictionary;
+}
 
 export function ProductCard({ product, locale, dictionary }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
 
-  // Use provided dictionary or fallback to default
   const currentDictionary = dictionary || defaultProductCardDictionary;
 
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -66,7 +67,7 @@ export function ProductCard({ product, locale, dictionary }: ProductCardProps) {
             {product.name}
           </CardTitle>
           <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{product.description}</p>
-          <p className="text-lg font-bold text-foreground">${product.price.toFixed(2)}</p>
+          <p className="text-lg font-bold text-foreground">{product.price.toLocaleString('en-US')} UZS</p>
         </CardContent>
         <CardFooter className="p-4 border-t border-border/60 mt-auto">
           <Button
@@ -77,7 +78,7 @@ export function ProductCard({ product, locale, dictionary }: ProductCardProps) {
             disabled={product.stock === 0}
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
-            {product.stock === 0 ? ((dictionary as any)?.outOfStock || "Out of Stock (Fallback)") : currentDictionary.addToCart}
+            {product.stock === 0 ? (currentDictionary.outOfStock || "Out of Stock") : currentDictionary.addToCart}
           </Button>
         </CardFooter>
       </Link>

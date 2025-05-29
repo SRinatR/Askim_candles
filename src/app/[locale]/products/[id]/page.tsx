@@ -14,7 +14,7 @@ import Link from 'next/link';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
-import Image from 'next/image';
+import Image from 'next/image'; // Keep if used elsewhere, otherwise can be removed
 import { ProductCard, type ProductCardDictionary } from '@/components/products/ProductCard';
 
 
@@ -23,6 +23,8 @@ import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type Dictionary = typeof enMessages;
+type ProductDetailPageStrings = Dictionary['productDetailPage'];
+type ProductCardStrings = Dictionary['productCard'];
 
 const dictionaries: Record<Locale, Dictionary> = {
   en: enMessages,
@@ -33,11 +35,26 @@ const dictionaries: Record<Locale, Dictionary> = {
 const getProductDetailPageDictionaryBundle = (locale: Locale) => {
   const dict = dictionaries[locale] || dictionaries.en;
   return {
-    page: dict.productDetailPage,
-    productCard: dict.productCard || { // Fallback for productCard
+    page: dict.productDetailPage || { // Fallback for page strings
+      home: "Home (Fallback)",
+      products: "Products (Fallback)",
+      onlyLeftInStock: "Only {stock} left in stock! (Fallback)",
+      outOfStock: "Out of Stock (Fallback)",
+      categoryLabel: "Category: (Fallback)",
+      scentLabel: "Scent: (Fallback)",
+      materialLabel: "Material: (Fallback)",
+      dimensionsLabel: "Dimensions: (Fallback)",
+      outOfStockButton: "Out of Stock (Fallback)",
+      fastDispatch: "Fast Dispatch (Fallback)",
+      secureCheckout: "Secure Checkout (Fallback)",
+      easyReturns: "Easy Returns (Fallback)",
+      relatedProductsTitle: "You Might Also Like (Fallback)"
+    },
+    productCard: dict.productCard || { // Fallback for productCard strings
       addToCart: "Add to Cart (Detail Page Fallback)",
       addedToCartTitle: "Added to cart (Detail Page Fallback)",
-      addedToCartDesc: "{productName} has been added (Detail Page Fallback)."
+      addedToCartDesc: "{productName} has been added (Detail Page Fallback).",
+      outOfStock: "Out of Stock (Detail Page Fallback)"
     },
   };
 };
@@ -45,6 +62,7 @@ const getProductDetailPageDictionaryBundle = (locale: Locale) => {
 export default function ProductDetailPage({ params: routeParams }: { params: { id: string; locale: Locale } }) {
   const clientParams = useParams();
   const locale = routeParams.locale || clientParams.locale as Locale || 'uz';
+  
   const dictionaryBundle = getProductDetailPageDictionaryBundle(locale);
   const dictionary = dictionaryBundle.page;
   const productCardDict = dictionaryBundle.productCard as ProductCardDictionary;
@@ -93,7 +111,7 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
         <div className="space-y-6">
           <div className="space-y-2">
             <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">{product.name}</h1>
-            <p className="text-2xl font-semibold text-primary">${product.price.toFixed(2)}</p>
+            <p className="text-2xl font-semibold text-primary">{product.price.toLocaleString('en-US')} UZS</p>
             {product.stock > 0 && product.stock <= 5 && (
               <Badge variant="destructive" className="text-xs">{dictionary.onlyLeftInStock.replace('{stock}', String(product.stock))}</Badge>
             )}

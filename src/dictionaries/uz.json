@@ -48,7 +48,8 @@
   "productCard": {
     "addToCart": "Savatchaga qo'shish",
     "addedToCartTitle": "Savatchaga qo'shildi",
-    "addedToCartDesc": "{productName} savatchangizga qo'shildi."
+    "addedToCartDesc": "{productName} savatchangizga qo'shildi.",
+    "outOfStock": "Sotuvda yo'q"
   },
   "accountLayout": {
     "myAccountTitle": "Mening Hisobim",
@@ -122,7 +123,7 @@
     "orderIdHeader": "Buyurtma ID",
     "dateHeader": "Sana",
     "statusHeader": "Holat",
-    "totalHeader": "Jami",
+    "totalHeader": "Jami (UZS)",
     "actionsHeader": "Amallar",
     "viewDetailsButton": "Tafsilotlarni Ko'rish",
     "statusDelivered": "Yetkazildi",
@@ -255,7 +256,7 @@
     "expiryPlaceholder": "OO/YY",
     "cvcLabel": "CVC",
     "cvcPlaceholder": "•••",
-    "payButton": "To'lash {total}",
+    "payButton": "To'lash {amount} {currency}",
     "orderPlacedTitle": "Buyurtma qabul qilindi!",
     "orderPlacedDesc": "Xaridingiz uchun rahmat. Buyurtmangiz qayta ishlanmoqda.",
     "emptyCartTitle": "Savatingiz bo'sh.",
@@ -264,15 +265,12 @@
   "productDetailPage": {
     "home": "Bosh sahifa",
     "products": "Mahsulotlar",
-    "addedToCartTitle": "Savatchaga qo'shildi",
-    "addedToCartDesc": "{name} savatchangizga qo'shildi.",
     "onlyLeftInStock": "Faqat {stock} dona qoldi!",
     "outOfStock": "Sotuvda yo'q",
     "categoryLabel": "Turkum:",
     "scentLabel": "Xushbo'ylik:",
     "materialLabel": "Material:",
     "dimensionsLabel": "O'lchamlari:",
-    "addToCartButton": "Savatchaga qo'shish",
     "outOfStockButton": "Sotuvda Yo'q",
     "fastDispatch": "Tez jo'natish",
     "secureCheckout": "Xavfsiz to'lov",

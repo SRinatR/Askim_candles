@@ -48,7 +48,8 @@
   "productCard": {
     "addToCart": "Add to Cart",
     "addedToCartTitle": "Added to cart",
-    "addedToCartDesc": "{productName} has been added to your cart."
+    "addedToCartDesc": "{productName} has been added to your cart.",
+    "outOfStock": "Out of Stock"
   },
   "accountLayout": {
     "myAccountTitle": "My Account",
@@ -122,7 +123,7 @@
     "orderIdHeader": "Order ID",
     "dateHeader": "Date",
     "statusHeader": "Status",
-    "totalHeader": "Total",
+    "totalHeader": "Total (UZS)",
     "actionsHeader": "Actions",
     "viewDetailsButton": "View Details",
     "statusDelivered": "Delivered",
@@ -255,7 +256,7 @@
     "expiryPlaceholder": "MM/YY",
     "cvcLabel": "CVC",
     "cvcPlaceholder": "•••",
-    "payButton": "Pay {total}",
+    "payButton": "Pay {amount} {currency}",
     "orderPlacedTitle": "Order Placed!",
     "orderPlacedDesc": "Thank you for your purchase. Your order is being processed.",
     "emptyCartTitle": "Your cart is empty.",
@@ -264,15 +265,12 @@
   "productDetailPage": {
     "home": "Home",
     "products": "Products",
-    "addedToCartTitle": "Added to cart",
-    "addedToCartDesc": "{name} has been added to your cart.",
     "onlyLeftInStock": "Only {stock} left in stock!",
     "outOfStock": "Out of Stock",
     "categoryLabel": "Category:",
     "scentLabel": "Scent:",
     "materialLabel": "Material:",
     "dimensionsLabel": "Dimensions:",
-    "addToCartButton": "Add to Cart",
     "outOfStockButton": "Out of Stock",
     "fastDispatch": "Fast Dispatch",
     "secureCheckout": "Secure Checkout",

@@ -14,10 +14,14 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, usePathname } from 'next/navigation'; // Added usePathname
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
+import React, { useEffect } from 'react'; // Added React
+import { useSession } from 'next-auth/react';
+import { useAuth as useSimulatedAuth } from '@/contexts/AuthContext';
+
 
 import enMessages from '@/dictionaries/en.json';
 import ruMessages from '@/dictionaries/ru.json';
@@ -61,22 +65,52 @@ export default function CheckoutPage() {
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
+  const pathname = usePathname();
   const locale = params.locale as Locale || 'uz';
   const dictionary = getCheckoutDictionary(locale);
+
+  const { data: nextAuthSession } = useSession();
+  const { currentUser: simulatedUser } = useSimulatedAuth();
+  const isAuthenticated = !!nextAuthSession || !!simulatedUser;
+
+
+  useEffect(() => {
+    if (!isAuthenticated && cartItems.length > 0) {
+      router.push(`/${locale}/login?callbackUrl=${pathname}`);
+    } else if (cartItems.length === 0 && typeof window !== 'undefined') {
+      // Only redirect if not already on products page and cart is empty
+      if (pathname !== `/${locale}/products`) {
+        router.replace(`/${locale}/products`);
+      }
+    }
+  }, [isAuthenticated, cartItems, router, locale, pathname]);
 
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      email: "",
-      firstName: "",
-      lastName: "",
+      email: nextAuthSession?.user?.email || simulatedUser?.email || "",
+      firstName: simulatedUser?.firstName || (nextAuthSession?.user?.name?.split(' ')[0] || ""),
+      lastName: simulatedUser?.lastName || (nextAuthSession?.user?.name?.split(' ').slice(1).join(' ') || ""),
       address: "",
       city: "",
-      country: "United States", // TODO: Consider localizing default or making it dynamic
+      country: "Uzbekistan", 
       postalCode: "",
     },
   });
+  
+  useEffect(() => {
+        form.reset({
+            email: nextAuthSession?.user?.email || simulatedUser?.email || "",
+            firstName: simulatedUser?.firstName || (nextAuthSession?.user?.name?.split(' ')[0] || ""),
+            lastName: simulatedUser?.lastName || (nextAuthSession?.user?.name?.split(' ').slice(1).join(' ') || ""),
+            address: "",
+            city: "",
+            country: "Uzbekistan",
+            postalCode: "",
+        });
+  }, [nextAuthSession, simulatedUser, form, locale]);
+
 
   function onSubmit(data: CheckoutFormValues) {
     console.log("Checkout data:", data);
@@ -88,8 +122,12 @@ export default function CheckoutPage() {
     router.push(`/${locale}/account/orders`); 
   }
   
-  if (cartItems.length === 0 && typeof window !== 'undefined') { 
-     router.replace(`/${locale}/products`); 
+  if (!isAuthenticated && cartItems.length > 0) {
+     // Shows a loading/redirecting state while useEffect triggers redirect
+    return <div className="text-center py-12"><p>Redirecting to login...</p></div>;
+  }
+
+  if (cartItems.length === 0) { 
      return ( 
         <div className="text-center py-12">
           <h1 className="text-3xl font-semibold mb-4">{dictionary.emptyCartTitle}</h1>
@@ -137,13 +175,13 @@ export default function CheckoutPage() {
                       <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                     </div>
                   </div>
-                  <p className="text-sm font-medium">${(item.price * item.quantity).toFixed(2)}</p>
+                  <p className="text-sm font-medium">{(item.price * item.quantity).toLocaleString('en-US')} UZS</p>
                 </div>
               ))}
               <Separator />
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>{dictionary.subtotal}</span>
-                <span>${cartTotal.toFixed(2)}</span>
+                <span>{cartTotal.toLocaleString('en-US')} UZS</span>
               </div>
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>{dictionary.shipping}</span>
@@ -152,7 +190,7 @@ export default function CheckoutPage() {
               <Separator />
               <div className="flex justify-between text-lg font-semibold">
                 <span>{dictionary.total}</span>
-                <span>${cartTotal.toFixed(2)}</span>
+                <span>{cartTotal.toLocaleString('en-US')} UZS</span>
               </div>
             </CardContent>
           </Card>
@@ -209,7 +247,7 @@ export default function CheckoutPage() {
               </Card>
 
               <Button type="submit" size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                <Lock className="mr-2 h-4 w-4" /> {dictionary.payButton.replace('{total}', `$${cartTotal.toFixed(2)}`)}
+                <Lock className="mr-2 h-4 w-4" /> {dictionary.payButton.replace('{amount}', cartTotal.toLocaleString('en-US')).replace('{currency}', 'UZS')}
               </Button>
             </form>
           </Form>

@@ -48,7 +48,8 @@
   "productCard": {
     "addToCart": "В корзину",
     "addedToCartTitle": "Добавлено в корзину",
-    "addedToCartDesc": "{productName} добавлен в вашу корзину."
+    "addedToCartDesc": "{productName} добавлен в вашу корзину.",
+    "outOfStock": "Нет в наличии"
   },
   "accountLayout": {
     "myAccountTitle": "Мой аккаунт",
@@ -122,7 +123,7 @@
     "orderIdHeader": "ID Заказа",
     "dateHeader": "Дата",
     "statusHeader": "Статус",
-    "totalHeader": "Итого",
+    "totalHeader": "Итого (UZS)",
     "actionsHeader": "Действия",
     "viewDetailsButton": "Посмотреть детали",
     "statusDelivered": "Доставлен",
@@ -255,7 +256,7 @@
     "expiryPlaceholder": "ММ/ГГ",
     "cvcLabel": "CVC",
     "cvcPlaceholder": "•••",
-    "payButton": "Оплатить {total}",
+    "payButton": "Оплатить {amount} {currency}",
     "orderPlacedTitle": "Заказ размещен!",
     "orderPlacedDesc": "Спасибо за покупку. Ваш заказ обрабатывается.",
     "emptyCartTitle": "Ваша корзина пуста.",
@@ -264,15 +265,12 @@
   "productDetailPage": {
     "home": "Главная",
     "products": "Товары",
-    "addedToCartTitle": "Добавлено в корзину",
-    "addedToCartDesc": "{name} добавлен в вашу корзину.",
     "onlyLeftInStock": "Осталось всего {stock} шт.!",
     "outOfStock": "Нет в наличии",
     "categoryLabel": "Категория:",
     "scentLabel": "Аромат:",
     "materialLabel": "Материал:",
     "dimensionsLabel": "Размеры:",
-    "addToCartButton": "В корзину",
     "outOfStockButton": "Нет в Наличии",
     "fastDispatch": "Быстрая отправка",
     "secureCheckout": "Безопасная оплата",

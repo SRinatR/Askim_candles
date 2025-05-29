@@ -97,7 +97,7 @@ export default function CartPage() {
               </div>
               <div className="flex-grow space-y-1">
                 <Link href={`/${locale}/products/${item.id}`} className="text-lg font-medium hover:text-primary">{item.name}</Link>
-                <p className="text-sm text-muted-foreground">{dictionary.price} ${item.price.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">{dictionary.price} {item.price.toLocaleString('en-US')} UZS</p>
               </div>
               <div className="flex items-center space-x-3 shrink-0 mt-2 sm:mt-0">
                 <Input
@@ -113,7 +113,7 @@ export default function CartPage() {
                   <Trash2 className="h-5 w-5 text-destructive" />
                 </Button>
               </div>
-              <p className="sm:ml-auto text-lg font-semibold w-full sm:w-auto text-right sm:text-left mt-2 sm:mt-0">${(item.price * item.quantity).toFixed(2)}</p>
+              <p className="sm:ml-auto text-lg font-semibold w-full sm:w-auto text-right sm:text-left mt-2 sm:mt-0">{(item.price * item.quantity).toLocaleString('en-US')} UZS</p>
             </Card>
           ))}
           {cartItems.length > 0 && (
@@ -132,7 +132,7 @@ export default function CartPage() {
           <CardContent className="space-y-3 p-0">
             <div className="flex justify-between text-muted-foreground">
               <span>{dictionary.subtotal}</span>
-              <span>${cartTotal.toFixed(2)}</span>
+              <span>{cartTotal.toLocaleString('en-US')} UZS</span>
             </div>
             <div className="flex justify-between text-muted-foreground">
               <span>{dictionary.shipping}</span>
@@ -145,7 +145,7 @@ export default function CartPage() {
             <Separator className="my-3" />
             <div className="flex justify-between text-xl font-semibold">
               <span>{dictionary.total}</span>
-              <span>${cartTotal.toFixed(2)}</span>
+              <span>{cartTotal.toLocaleString('en-US')} UZS</span>
             </div>
           </CardContent>
           <CardFooter className="flex-col space-y-4 p-0 pt-6">
