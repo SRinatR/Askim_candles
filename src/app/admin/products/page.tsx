@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -47,7 +46,7 @@ export default function AdminProductsPage() {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    if (!dict) return []; // Ensure dict is loaded
+    if (!dict || !products) return []; 
     return products.filter(product => {
         const nameInAdminLocale = product.name[adminLocale] || product.name.en || '';
         const category = product.category || ''; 
@@ -61,18 +60,20 @@ export default function AdminProductsPage() {
   }, [products, searchTerm, adminLocale, dict]);
 
   const handleDeleteProduct = (productId: string, productNameObj: Product['name']) => {
+    if (!dict) return;
     const productName = productNameObj[adminLocale] || productNameObj.en;
     setProducts(prev => prev.filter(p => p.id !== productId));
     if (currentAdminUser?.email && dict) {
       logAdminAction(currentAdminUser.email, dict.logProductDeleted, { productId, productName });
     }
     toast({
-      title: dict?.deleteSuccessTitle || "Product Deleted (Simulated)",
-      description: `${dict?.deleteSuccessDescPrefix || ""}${productName}${dict?.deleteSuccessDescSuffix || " has been 'deleted'."}`,
+      title: dict.deleteSuccessTitle,
+      description: `${dict.deleteSuccessDescPrefix}${productName}${dict.deleteSuccessDescSuffix.replace('{productId}', productId)}`,
     });
   };
 
   const toggleProductStatus = (productId: string) => {
+    if (!dict) return;
     let productName = "Product";
     setProducts(prevProducts =>
       prevProducts.map(product => {
@@ -84,8 +85,8 @@ export default function AdminProductsPage() {
             logAdminAction(currentAdminUser.email, logAction, { productId: product.id, productName });
           }
           toast({
-            title: dict?.statusChangeSuccessTitle || `Product Status Changed (Simulated)`,
-            description: `${dict?.statusChangeDescPrefix || ""}${productName}${newStatus ? (dict?.statusChangeDescSuffixActive || " is now Active.") : (dict?.statusChangeDescSuffixInactive || " is now Inactive.")}`,
+            title: dict.statusChangeSuccessTitle,
+            description: `${dict.statusChangeDescPrefix}${productName}${newStatus ? dict.statusChangeDescSuffixActive : dict.statusChangeDescSuffixInactive}`,
           });
           return { ...product, isActive: newStatus };
         }
@@ -132,27 +133,27 @@ export default function AdminProductsPage() {
         </CardHeader>
         <CardContent>
           {filteredProducts.length > 0 ? (
-            <div className="overflow-x-auto"> {/* Added overflow-x-auto for better responsiveness */}
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[60px]">{dict.idHeader}</TableHead>
-                    <TableHead className="w-[70px]">{dict.imageHeader}</TableHead>
-                    <TableHead className="w-[100px]">{dict.skuHeader}</TableHead>
-                    <TableHead className="min-w-[200px]">{dict.nameHeader.replace('{locale}', adminLocale.toUpperCase())}</TableHead>
-                    <TableHead className="w-[150px]">{dict.categoryHeader}</TableHead>
-                    <TableHead className="text-right w-[100px]">{dict.priceHeader}</TableHead>
-                    <TableHead className="text-right w-[100px]">{dict.costPriceHeader}</TableHead>
-                    <TableHead className="text-center w-[70px]">{dict.stockHeader}</TableHead>
-                    <TableHead className="text-center w-[120px]">{dict.statusHeader}</TableHead>
-                    <TableHead className="text-center w-[160px]">{dict.actionsHeader}</TableHead>
+                    <TableHead className="w-[50px]">{dict.idHeader}</TableHead>
+                    <TableHead className="w-[60px]">{dict.imageHeader}</TableHead>
+                    <TableHead className="w-[80px]">{dict.skuHeader}</TableHead>
+                    <TableHead className="min-w-[150px]">{dict.nameHeader.replace('{locale}', adminLocale.toUpperCase())}</TableHead>
+                    <TableHead className="w-[120px]">{dict.categoryHeader}</TableHead>
+                    <TableHead className="text-right w-[90px]">{dict.priceHeader}</TableHead>
+                    <TableHead className="text-right w-[90px]">{dict.costPriceHeader}</TableHead>
+                    <TableHead className="text-center w-[60px]">{dict.stockHeader}</TableHead>
+                    <TableHead className="text-center w-[110px]">{dict.statusHeader}</TableHead>
+                    <TableHead className="text-center w-[140px]">{dict.actionsHeader}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProducts.map((product) => (
                     <TableRow key={product.id}>
-                      <TableCell className="text-xs">{product.id}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-xs align-top">{product.id}</TableCell>
+                      <TableCell className="align-top">
                         <div className="relative h-10 w-10 rounded-md overflow-hidden border">
                           <Image
                             src={product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : "https://placehold.co/100x100.png?text=No+Image")}
@@ -164,26 +165,26 @@ export default function AdminProductsPage() {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs">{product.sku || '-'}</TableCell>
-                      <TableCell className="font-medium">{product.name[adminLocale] || product.name.en}</TableCell>
-                      <TableCell>{product.category}</TableCell>
-                      <TableCell className="text-right">{product.price.toLocaleString('en-US')}</TableCell>
-                      <TableCell className="text-right">{product.costPrice?.toLocaleString('en-US') || '-'}</TableCell>
-                      <TableCell className="text-center">{product.stock}</TableCell>
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center space-x-2">
+                      <TableCell className="text-xs align-top">{product.sku || '-'}</TableCell>
+                      <TableCell className="font-medium align-top whitespace-normal">{product.name[adminLocale] || product.name.en}</TableCell>
+                      <TableCell className="align-top">{product.category}</TableCell>
+                      <TableCell className="text-right align-top">{product.price.toLocaleString('en-US')}</TableCell>
+                      <TableCell className="text-right align-top">{product.costPrice?.toLocaleString('en-US') || '-'}</TableCell>
+                      <TableCell className="text-center align-top">{product.stock}</TableCell>
+                      <TableCell className="text-center align-top">
+                        <div className="flex flex-col items-center justify-center space-y-1">
                           <Switch
                             id={`status-${product.id}`}
                             checked={product.isActive}
                             onCheckedChange={() => toggleProductStatus(product.id)}
                             aria-label={product.isActive ? dict.deactivateAction : dict.activateAction}
                           />
-                          <Badge variant={product.isActive ? "secondary" : "outline"}>
+                          <Badge variant={product.isActive ? "secondary" : "outline"} className="text-xs">
                             {product.isActive ? dict.statusActive : dict.statusInactive}
                           </Badge>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center space-x-1">
+                      <TableCell className="text-center align-top space-y-1 sm:space-y-0 sm:space-x-1">
                         <Button variant="outline" size="sm" asChild title={`${dict.editAction} ${product.name[adminLocale] || product.name.en}`}>
                           <Link href={`/admin/products/edit/${product.id}`}>
                             <Edit3 className="mr-1 h-3 w-3" /> {dict.editButton}
