@@ -2,14 +2,14 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation"; // Import useRouter
+import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { User, MapPin, ShoppingBag, LogOut } from "lucide-react"; // Removed Edit3 as it's not used
+import { User, MapPin, ShoppingBag, LogOut } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
-import React, { useEffect } from "react"; // Import React and useEffect
+import { useSession, signOut } from "next-auth/react";
+import React, { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const sidebarNavItems = [
@@ -33,23 +33,22 @@ const sidebarNavItems = [
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, loading, logout } = useAuth();
+  const { data: session, status } = useSession();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && !currentUser) {
-      router.replace("/login?redirect=/account"); // Redirect to login if not authenticated
+    if (status === "unauthenticated") {
+      router.replace(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
     }
-  }, [currentUser, loading, router]);
+  }, [status, router, pathname]);
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut({ callbackUrl: '/login' }); // Redirect to login after sign out
       toast({
         title: "Logged Out",
         description: "You have been successfully logged out.",
       });
-      // Router push to /login is handled by logout function in AuthContext
     } catch (error) {
       toast({
         title: "Logout Failed",
@@ -59,9 +58,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     }
   };
 
-  if (loading || !currentUser) {
-    // Display a loading state or null while checking auth status or if not authenticated
-    // This prevents a flash of the account page content before redirect
+  if (status === "loading" || !session) {
     return <div className="flex justify-center items-center min-h-[300px]"><p>Loading account...</p></div>;
   }
 
@@ -70,7 +67,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Account</h1>
-          {currentUser && <p className="text-muted-foreground">Welcome back, {currentUser.name || currentUser.email}!</p>}
+          {session?.user && <p className="text-muted-foreground">Welcome back, {session.user.name || session.user.email}!</p>}
         </div>
         <Button variant="outline" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" /> Logout

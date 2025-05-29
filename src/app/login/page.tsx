@@ -2,72 +2,59 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/icons/Logo";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
-import React from "react";
-
-const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(1, { message: "Password is required." }), // Min 1 for mock
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
+import { signIn, useSession } from "next-auth/react";
+import React, { useEffect } from "react";
+import { Chrome } from "lucide-react"; // Using Chrome icon for Google
 
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { login, currentUser, loading } = useAuth(); // Get login function from AuthContext
+  const searchParams = useSearchParams();
+  const { data: session, status } = useSession();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
-  });
-  
-  React.useEffect(() => {
-    if (!loading && currentUser) {
-      router.replace('/account');
+  const callbackUrl = searchParams.get("callbackUrl") || "/account";
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(callbackUrl);
     }
-  }, [currentUser, loading, router]);
+  }, [status, router, callbackUrl]);
 
-
-  async function onSubmit(data: LoginFormValues) {
+  const handleSignIn = async (provider: string) => {
     setIsSubmitting(true);
     try {
-      // For MVP, password is not checked, any name can be used for mock user
-      await login(data.email, "Logged In User"); 
-      toast({
-        title: "Login Successful",
-        description: "Welcome back!",
-      });
-      router.push("/account");
+      const result = await signIn(provider, { callbackUrl });
+      if (result?.error) {
+        toast({
+          title: "Login Failed",
+          description: result.error || "Could not sign you in. Please try again.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+      } else if (result?.ok) {
+        // Successful sign-in will trigger the useEffect to redirect
+        // No need to show toast here as user will be redirected
+      }
     } catch (error) {
-      console.error("Login failed:", error);
+      console.error("Sign in error", error);
       toast({
         title: "Login Failed",
-        description: "Invalid credentials or server error.",
+        description: "An unexpected error occurred.",
         variant: "destructive",
       });
       setIsSubmitting(false);
     }
-  }
+  };
   
-  if (loading || (!loading && currentUser)) {
+  if (status === "loading" || status === "authenticated") {
     return <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center"><p>Loading...</p></div>;
   }
-
 
   return (
     <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center py-12">
@@ -76,53 +63,33 @@ export default function LoginPage() {
           <Link href="/" className="inline-block mx-auto mb-4">
             <Logo />
           </Link>
-          <CardTitle className="text-2xl font-bold">Welcome Back!</CardTitle>
-          <CardDescription>Enter your credentials to access your account.</CardDescription>
+          <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+          <CardDescription>Choose a provider to sign in to your account.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="you@example.com" {...field} disabled={isSubmitting} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} disabled={isSubmitting} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={isSubmitting}>
-                {isSubmitting ? "Logging in..." : "Login"}
-              </Button>
-            </form>
-          </Form>
+        <CardContent className="space-y-4">
+          <Button 
+            onClick={() => handleSignIn("google")} 
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/90" 
+            disabled={isSubmitting}
+            variant="outline"
+          >
+            <Chrome className="mr-2 h-5 w-5" /> 
+            {isSubmitting ? "Signing in..." : "Sign in with Google"}
+          </Button>
+          {/* Add other providers like Telegram here when ready */}
+          {/* <Button 
+            onClick={() => handleSignIn("telegram")} 
+            className="w-full" 
+            disabled={isSubmitting}
+            variant="outline"
+          >
+            <Send className="mr-2 h-5 w-5" /> {}
+            {isSubmitting ? "Signing in..." : "Sign in with Telegram"}
+          </Button> */}
         </CardContent>
         <CardFooter className="flex flex-col items-center space-y-2 text-sm">
-           <Link href="#" passHref> {/* Assuming forgot password is not implemented for MVP */}
-             <Button variant="link" className="text-muted-foreground hover:text-primary p-0 h-auto">Forgot password?</Button>
-           </Link>
-          <p className="text-muted-foreground">
-            Don't have an account?{' '}
-            <Link href="/register" passHref>
-               <Button variant="link" className="text-primary hover:underline p-0 h-auto">Sign up</Button>
-            </Link>
+          <p className="text-muted-foreground text-xs px-4 text-center">
+            By signing in, you agree to our Terms of Service and Privacy Policy.
           </p>
         </CardFooter>
       </Card>

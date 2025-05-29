@@ -2,11 +2,11 @@
 "use client";
 
 import Link from 'next/link';
-import { ShoppingBag, User, Menu, Search, X } from 'lucide-react';
+import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
+import { useSession, signIn, signOut } from "next-auth/react";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import React, { useState } from 'react';
@@ -16,12 +16,14 @@ const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
   { href: '/about', label: 'About Us' },
-  // { href: '/contact', label: 'Contact' },
 ];
 
 export function Header() {
   const { cartCount } = useCart();
-  const { currentUser, loading: authLoading } = useAuth(); // Get currentUser and loading state
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === "authenticated";
+  const isLoadingAuth = status === "loading";
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
@@ -31,12 +33,12 @@ export function Header() {
     const searchQuery = formData.get('search') as string;
     if (searchQuery.trim()) {
       router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-      if (isMobileMenuOpen) setIsMobileMenuOpen(false); // Close mobile menu on search
+      if (isMobileMenuOpen) setIsMobileMenuOpen(false); 
     }
   };
 
-  const accountLink = currentUser ? "/account/profile" : "/login";
-  const accountLinkLabel = currentUser ? "My Account" : "Login / Sign Up";
+  const accountLink = isAuthenticated ? "/account/profile" : "/login";
+  const accountLinkLabel = isAuthenticated ? "My Account" : "Login";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -66,12 +68,20 @@ export function Header() {
             </Button>
           </form>
 
-          {!authLoading && (
-            <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex">
-              <Link href={accountLink} aria-label={accountLinkLabel}>
-                <User className="h-5 w-5" />
-              </Link>
-            </Button>
+          {!isLoadingAuth && (
+            <>
+              {isAuthenticated ? (
+                <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex" title="My Account">
+                  <Link href={accountLink}>
+                    <User className="h-5 w-5" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button variant="ghost" size="icon" onClick={() => signIn()} className="hidden md:inline-flex" title="Login">
+                   <LogIn className="h-5 w-5" />
+                </Button>
+              )}
+            </>
           )}
           <Button variant="ghost" size="icon" asChild>
             <Link href="/cart" className="relative" aria-label={`Shopping Cart, ${cartCount} items`}>
@@ -91,7 +101,7 @@ export function Header() {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full max-w-xs bg-background p-6">
-              <div className="flex flex-col space-y-6">
+              <div className="flex flex-col space-y-6 h-full">
                 <div className="flex justify-between items-center">
                    <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
                       <Logo className="h-7 w-auto" />
@@ -123,19 +133,41 @@ export function Header() {
                     </Link>
                   ))}
                 </nav>
-                {!authLoading && (
-                  <div className="border-t border-border pt-4">
-                    <Link
-                      href={accountLink}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
-                      aria-label={accountLinkLabel}
-                    >
-                      <User className="h-5 w-5" />
-                      <span>{accountLinkLabel}</span>
-                    </Link>
-                  </div>
-                )}
+                
+                <div className="mt-auto border-t border-border pt-4 space-y-3">
+                  {!isLoadingAuth && (
+                    <>
+                      {isAuthenticated ? (
+                        <>
+                          <Link
+                            href={accountLink}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
+                          >
+                            <User className="h-5 w-5" />
+                            <span>My Account</span>
+                          </Link>
+                          <Button variant="outline" 
+                            onClick={() => { signOut(); setIsMobileMenuOpen(false); }} 
+                            className="w-full text-lg"
+                          >
+                            <LogOut className="mr-2 h-5 w-5" />
+                            <span>Logout</span>
+                          </Button>
+                        </>
+                      ) : (
+                        <Button 
+                          variant="ghost" 
+                          onClick={() => { signIn(); setIsMobileMenuOpen(false); }}
+                          className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground w-full justify-start p-0"
+                        >
+                          <LogIn className="h-5 w-5" />
+                          <span>Login</span>
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
               </div>
             </SheetContent>
           </Sheet>

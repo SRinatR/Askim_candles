@@ -4,27 +4,27 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Label might not be needed if using FormLabel
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import { useSession } from "next-auth/react";
 import { Edit3 } from "lucide-react";
 import React, { useEffect } from "react";
 
+// This schema is for local updates if needed, NextAuth session might not be directly updatable client-side for all fields
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
-  phone: z.string().optional(),
+  phone: z.string().optional(), // Phone is not part of standard NextAuth session user, handle accordingly
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const { currentUser, loading: authLoading, login: updateUserProfile } = useAuth(); // Assuming login can also update user details for MVP
+  const { data: session, status, update: updateSession } = useSession(); // updateSession can be used if you configure writable session fields
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -36,57 +36,51 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    if (currentUser) {
+    if (session?.user) {
       form.reset({
-        name: currentUser.name || "",
-        email: currentUser.email,
-        phone: currentUser.phone || "", // Assuming User type might have phone
+        name: session.user.name || "",
+        email: session.user.email || "",
+        phone: "", // Phone is not typically in session.user from providers. This would need custom backend logic to store/retrieve.
       });
     }
-  }, [currentUser, form]);
+  }, [session, form]);
 
   async function onSubmit(data: ProfileFormValues) {
-    if (!currentUser) {
+    if (!session?.user) {
       toast({ title: "Error", description: "You are not logged in.", variant: "destructive" });
       return;
     }
-    console.log("Profile data:", data);
-    // Mock update logic: Re-use login function to update user in localStorage for MVP
-    try {
-      await updateUserProfile(data.email, data.name); // This will update the user in AuthContext and localStorage
-       // Optionally add phone to the user object if your User type supports it
-      // const updatedUser = { ...currentUser, name: data.name, email: data.email, phone: data.phone };
-      // localStorage.setItem('scentSationalUser', JSON.stringify(updatedUser));
-      // Manually trigger a state update in AuthContext if login doesn't cover all fields or if you want more granular control
-      
-      toast({
-        title: "Profile Updated",
-        description: "Your profile information has been successfully updated.",
-      });
-    } catch (error) {
-       toast({
-        title: "Update Failed",
-        description: "Could not update your profile.",
-        variant: "destructive",
-      });
-    }
+    console.log("Profile data to update (client-side only for now):", data);
+    
+    // Note: Updating NextAuth session directly from client for arbitrary fields like 'name' or 'phone'
+    // usually requires a backend call to update the user record in your database,
+    // and then potentially triggering a session update.
+    // The `updateSession()` function can update the session cookie if your backend strategy supports it.
+    // For this MVP, we'll just show a success toast for name/email changes. Phone requires DB.
+
+    // Example of how you might try to update session (if `name` is a field your JWT/session callback allows updating)
+    // await updateSession({ user: { ...session.user, name: data.name } });
+
+    toast({
+      title: "Profile " + (data.name !== session.user.name || data.email !== session.user.email ? "Changes Noted" : "Information"),
+      description: (data.name !== session.user.name || data.email !== session.user.email ? "Name/email updates would typically require backend interaction." : "Phone number field is for demonstration.") + " For a full update, backend integration is needed.",
+    });
   }
   
-  if (authLoading) {
+  if (status === "loading") {
     return <div className="flex justify-center items-center p-10"><p>Loading profile...</p></div>;
   }
 
-  if (!currentUser && !authLoading) {
-     // This case should ideally be handled by AccountLayout redirecting to login
+  if (status === "unauthenticated") {
+    // This case should ideally be handled by AccountLayout redirecting to login
     return <div className="flex justify-center items-center p-10"><p>Please log in to view your profile.</p></div>;
   }
-
 
   return (
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="text-2xl">Profile Information</CardTitle>
-        <CardDescription>View and update your personal details.</CardDescription>
+        <CardDescription>View and update your personal details. Email is managed by your login provider.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -111,9 +105,10 @@ export default function ProfilePage() {
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} />
+                    <Input type="email" {...field} disabled />
                   </FormControl>
                   <FormMessage />
+                  <p className="text-xs text-muted-foreground pt-1">Email is managed by your identity provider and cannot be changed here.</p>
                 </FormItem>
               )}
             />
@@ -124,16 +119,17 @@ export default function ProfilePage() {
                 <FormItem>
                   <FormLabel>Phone Number (Optional)</FormLabel>
                   <FormControl>
-                    <Input type="tel" {...field} />
+                    <Input type="tel" {...field} placeholder="e.g., +1 555-123-4567" />
                   </FormControl>
                   <FormMessage />
+                   <p className="text-xs text-muted-foreground pt-1">Storing phone numbers requires backend database integration.</p>
                 </FormItem>
               )}
             />
           </CardContent>
           <CardFooter>
             <Button type="submit" className="ml-auto bg-accent text-accent-foreground hover:bg-accent/90">
-              <Edit3 className="mr-2 h-4 w-4" /> Save Changes
+              <Edit3 className="mr-2 h-4 w-4" /> Save Changes (Client Demo)
             </Button>
           </CardFooter>
         </form>

@@ -5,8 +5,8 @@ import './globals.css';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import { CartProvider } from '@/contexts/CartContext';
-import { AuthProvider } from '@/contexts/AuthContext'; // Import AuthProvider
 import { Toaster } from "@/components/ui/toaster";
+import { SessionProvider } from "next-auth/react";
 
 const geistSans = Geist({ // Corrected: Geist to GeistSans
   variable: '--font-geist-sans',
@@ -31,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
-        <AuthProvider> {/* Wrap CartProvider and the rest with AuthProvider */}
+        <SessionProvider>
           <CartProvider>
             <Header />
             <main className="flex-grow container mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -40,7 +40,7 @@ export default function RootLayout({
             <Footer />
             <Toaster />
           </CartProvider>
-        </AuthProvider>
+        </SessionProvider>
       </body>
     </html>
   );
