@@ -6,7 +6,7 @@ This document outlines the key steps and considerations for deploying the Askim 
 ## 1. Prerequisites
 
 *   **VPS (Virtual Private Server):** You should have a VPS set up with SSH access and a Linux distribution (e.g., Ubuntu).
-*   **Domain Name:** (Optional but recommended for production) A registered domain name (e.g., `askimcandles.com` and potentially `admin.askimcandles.com`).
+*   **Domain Name:** (Optional but recommended for production) A registered domain name (e.g., `askimcandles.com`). An admin-specific subdomain like `admin.askimcandles.com` would require additional DNS and reverse proxy configuration. For now, the admin panel is accessed via `/admin`.
 *   **Node.js & npm/yarn:** Installed on your VPS.
 *   **PostgreSQL Database:** Installed and running on your VPS, or a managed PostgreSQL service.
 *   **NGINX (or similar reverse proxy):** Recommended for serving the Next.js app and handling SSL.
@@ -26,8 +26,8 @@ This document outlines the key steps and considerations for deploying the Askim 
     DATABASE_URL="postgresql://YOUR_DB_USER:YOUR_DB_PASSWORD@YOUR_DB_HOST:YOUR_DB_PORT/YOUR_DB_NAME?schema=public"
     ```
 4.  **Define Prisma Schema (`prisma/schema.prisma`):**
-    *   Define models for `User` (for both main site and admin/manager roles), `Product`, `Category`, `Order`, `OrderItem`, `Address`, `DiscountCode`, etc.
-    *   Example `User` and `Role` enum (as per your request):
+    *   Define models for `User` (for both main site and admin/manager roles), `Product`, `Category`, `Order`, `OrderItem`, `Address`, `DiscountCode`, `Client`, `AdminLog`, etc.
+    *   Example `User` and `Role` enum (as per your request for admin panel roles):
         ```prisma
         generator client {
           provider = "prisma-client-js"
@@ -43,19 +43,101 @@ This document outlines the key steps and considerations for deploying the Askim 
           email     String   @unique
           name      String?
           password  String   // Will store hashed passwords
-          role      Role     @default(USER)
+          role      Role     @default(USER) // For main site users and admin roles
+          isBlocked Boolean  @default(false)
           createdAt DateTime @default(now())
           updatedAt DateTime @updatedAt
-          // ... other fields like addresses, orders, etc.
+          
+          // Relations for main site user
+          orders    Order[]
+          addresses Address[]
+
+          // For admin/manager roles
+          // No specific fields needed here if role covers it
         }
 
         enum Role {
           ADMIN
           MANAGER
-          USER
+          USER // Main site customer
         }
 
-        // ... other models for Product, Order, etc.
+        model Product {
+          id            String    @id @default(cuid())
+          name          String
+          description   String    @db.Text
+          price         Int       // Store price in smallest currency unit (e.g., UZS tiyin or cents)
+          categoryName  String    // Or link to a Category model
+          // category   Category @relation(fields: [categoryName], references: [name])
+          images        String[]  // Array of image URLs
+          mainImage     String?   // URL of the main image
+          stock         Int       @default(0)
+          scent         String?
+          material      String?
+          dimensions    String?
+          // attributes Json?    // For flexible key-value attributes
+          createdAt     DateTime  @default(now())
+          updatedAt     DateTime  @updatedAt
+          orderItems    OrderItem[]
+        }
+        
+        model Category {
+          id String @id @default(cuid())
+          name String @unique
+          slug String @unique
+          description String?
+          // products Product[]
+        }
+
+        model Order {
+          id          String      @id @default(cuid())
+          orderNumber String      @unique
+          userId      String
+          user        User        @relation(fields: [userId], references: [id])
+          items       OrderItem[]
+          totalAmount Int         // Store in smallest currency unit
+          status      String      // e.g., PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
+          shippingAddress Json?   // Snapshot of shipping address
+          billingAddress  Json?   // Snapshot of billing address
+          createdAt   DateTime    @default(now())
+          updatedAt   DateTime    @updatedAt
+        }
+
+        model OrderItem {
+          id        String  @id @default(cuid())
+          orderId   String
+          order     Order   @relation(fields: [orderId], references: [id])
+          productId String
+          product   Product @relation(fields: [productId], references: [id])
+          quantity  Int
+          price     Int     // Price at the time of order, in smallest unit
+          name      String  // Product name snapshot
+          imageUrl  String? // Product image snapshot
+        }
+        
+        model Address {
+            id        String   @id @default(cuid())
+            userId    String
+            user      User     @relation(fields: [userId], references: [id])
+            street    String
+            city      String
+            state     String?
+            zipCode   String
+            country   String
+            isDefault Boolean  @default(false)
+            createdAt DateTime @default(now())
+            updatedAt DateTime @updatedAt
+        }
+
+        model AdminLog {
+          id        String   @id @default(cuid())
+          timestamp DateTime @default(now())
+          userEmail String   // Email of the admin/manager performing the action
+          action    String   // Description of the action
+          details   Json?    // Any additional details as JSON
+        }
+        
+        // ... other models for DiscountCode, Client (if distinct from User), etc.
         ```
 5.  **Database Migrations:**
     *   Create your first migration: `npx prisma migrate dev --name init` (this will also apply it).
@@ -69,35 +151,45 @@ This document outlines the key steps and considerations for deploying the Askim 
 1.  **Replace Simulated `AdminAuthContext`:**
     *   Remove `src/contexts/AdminAuthContext.tsx`.
     *   Update `src/app/admin/login/page.tsx` to use NextAuth's `signIn` with a `Credentials` provider.
-    *   You will need to create a `Credentials` provider in `src/lib/authOptions.ts`. This provider will:
+    *   You will need to create a `Credentials` provider in `src/lib/authOptions.ts` (or a separate admin auth options file). This provider will:
         *   Receive email and password from the login form.
         *   Use Prisma Client to query the `User` table for a user with the given email.
         *   Compare the provided password with the hashed password stored in the database (use a library like `bcryptjs` for hashing and comparison).
         *   Return user object if credentials are valid, otherwise throw an error or return null.
         *   Ensure only users with `ADMIN` or `MANAGER` roles can log into `/admin`.
+        *   The user object returned by the provider should include the `role`.
 2.  **Update Admin Layout (`src/app/admin/layout.tsx`):**
     *   Use `useSession` from `next-auth/react` to get the admin user's session.
-    *   Adapt role checks (`isAdmin`, `isManager`) based on the session user's role from the database.
+    *   Adapt role checks (`isAdmin`, `isManager`) based on the session user's role from the database (e.g., `session.user.role`).
+3.  **User Management for Admins:**
+    *   The "Add New Manager" form in `/admin/users/new-manager` will submit to a Server Action.
+    *   This Server Action will:
+        *   Verify the current user is an ADMIN.
+        *   Validate input.
+        *   Hash the new manager's password.
+        *   Create a new `User` in the database using Prisma Client with `role: MANAGER`.
 
-### 3.2. Main Site Authentication (Email/Password)
-1.  **Replace Simulated `AuthContext`:**
-    *   Remove `src/contexts/AuthContext.tsx`.
-    *   Update `src/app/[locale]/login/page.tsx` to use NextAuth `signIn` with the same `Credentials` provider (or a separate one if different logic is needed).
-    *   Update `src/app/[locale]/register/page.tsx`:
-        *   The form should submit to a Server Action or API Route.
-        *   This action/route will:
-            *   Validate input using Zod.
-            *   Hash the password.
-            *   Create a new `User` in the database using Prisma Client with `role: USER`.
-            *   (Optional) Implement email confirmation logic (sending an email with a unique token).
+### 3.2. Main Site Authentication (Email/Password) - Optional Migration
+1.  **Replace Simulated `AuthContext` (Main Site):**
+    *   If you choose to migrate main site email/password auth to the database as well:
+        *   Remove `src/contexts/AuthContext.tsx`.
+        *   Update `src/app/[locale]/login/page.tsx` to use NextAuth `signIn` with the same (or a new) `Credentials` provider.
+        *   Update `src/app/[locale]/register/page.tsx`:
+            *   The form should submit to a Server Action or API Route.
+            *   This action/route will:
+                *   Validate input using Zod.
+                *   Hash the password.
+                *   Create a new `User` in the database using Prisma Client with `role: USER`.
+                *   Implement email confirmation logic (sending an email with a unique token, verifying it).
 2.  **Update `SessionProvider`**: Ensure it's correctly wrapping the application in `src/app/providers.tsx`.
 
 ## 4. Data Management Transition
 
 *   **Replace Mock Data:**
-    *   For product listings, product details, categories, etc., replace fetching from `mock-data.ts` with Prisma Client queries.
-    *   This will involve creating Server Actions or API Route Handlers that use Prisma to fetch data from your PostgreSQL database.
-    *   Admin panel forms (add/edit product, add manager) will submit to these Server Actions/API Routes, which will then use Prisma to CUD (Create, Update, Delete) data.
+    *   For product listings (`/admin/products`, main site), product details, categories, etc., replace fetching from `mock-data.ts` with Prisma Client queries via Server Actions or API Route Handlers.
+    *   Admin panel forms (add/edit product) will submit to these Server Actions/API Routes, which will then use Prisma to CUD data.
+    *   Client list in `/admin/clients` will fetch from the `User` table (filtering by role or a separate `Client` model).
+    *   Log entries in `/admin/logs` will be written to and read from the `AdminLog` table.
 *   **Server Components:** Leverage Server Components for data fetching where possible to improve performance.
 
 ## 5. Environment Variables for Production
@@ -108,16 +200,16 @@ Ensure your `.env.production` (or server environment variables) are set correctl
 *   `GOOGLE_CLIENT_SECRET`
 *   `NEXTAUTH_SECRET` (a strong, unique secret)
 *   `NEXTAUTH_URL` (your production domain, e.g., `https://askimcandles.com`)
-*   Any other API keys or service credentials.
+*   Any other API keys or service credentials (e.g., for email sending, address lookup).
 
 ## 6. Building and Deploying to VPS
 
 1.  **Build the Next.js App:**
-    *   On your local machine or CI/CD pipeline: `npm run build` or `yarn build`.
+    *   On your local machine or CI/CD pipeline: `npm run build`.
 2.  **Deploy Files to VPS:**
-    *   Copy the `.next` folder (the build output), `public` folder, and `package.json` (and `yarn.lock` or `package-lock.json`) to your VPS.
+    *   Copy the `.next` folder (the build output), `public` folder, `package.json` (and `yarn.lock` or `package-lock.json`), and the `prisma` folder to your VPS.
 3.  **Install Production Dependencies on VPS:**
-    *   Navigate to the deployed directory on your VPS and run `npm install --omit=dev` or `yarn install --production`.
+    *   Navigate to the deployed directory on your VPS and run `npm install --omit=dev`.
 4.  **Run Prisma Migration for Production:**
     *   `npx prisma migrate deploy`
 5.  **Start the Next.js App:**
@@ -130,7 +222,7 @@ Ensure your `.env.production` (or server environment variables) are set correctl
         ```nginx
         server {
             listen 80;
-            server_name yourdomain.com www.yourdomain.com; # Add admin.yourdomain.com if setting up subdomain
+            server_name yourdomain.com www.yourdomain.com;
 
             location / {
                 proxy_pass http://localhost:3000; # Assuming Next.js runs on port 3000
@@ -143,12 +235,12 @@ Ensure your `.env.production` (or server environment variables) are set correctl
             # ... other configurations like SSL
         }
         ```
-    *   If setting up `admin.yourdomain.com`, you'll need a separate `server` block in NGINX for it, or handle routing within the same block if the admin panel is under `/admin`.
 
 ## 7. Post-Deployment
 
 *   **Testing:** Thoroughly test all functionalities in the production environment.
 *   **Monitoring:** Set up logging and monitoring for your application and server.
 *   **Backups:** Regularly back up your PostgreSQL database.
+*   **Address Auto-Suggestion API:** Integrate an address lookup API (e.g., Google Places API, or a local provider for Uzbekistan if available) for the checkout page. This will require API keys and frontend integration.
 
 This guide provides a high-level overview. Each step, especially backend integration and NGINX configuration, has its own complexities and requires careful attention to detail.

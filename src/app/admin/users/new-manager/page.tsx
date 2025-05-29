@@ -14,6 +14,7 @@ import Link from "next/link";
 import { ArrowLeft, Save, UserPlus } from "lucide-react";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import React, { useEffect } from 'react';
+// Removed: import { logAdminAction } from '@/admin/lib/admin-logger'; // Logging is handled within AdminAuthContext
 
 // TODO: Localize texts when admin i18n is fully implemented
 
@@ -28,7 +29,7 @@ type ManagerFormValues = z.infer<typeof managerSchema>;
 export default function NewManagerPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { isAdmin, addManager } = useAdminAuth(); // Assuming addManager is exposed
+  const { isAdmin, addManager, currentAdminUser } = useAdminAuth();
 
   const form = useForm<ManagerFormValues>({
     resolver: zodResolver(managerSchema),
@@ -38,7 +39,7 @@ export default function NewManagerPage() {
       password: "",
     },
   });
-  const { register, handleSubmit, formState: { errors } } = form;
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = form; // Get isSubmitting
 
   useEffect(() => {
     if (!isAdmin) {
@@ -48,7 +49,7 @@ export default function NewManagerPage() {
 
 
   const onSubmit = async (data: ManagerFormValues) => {
-    const success = await addManager(data.name, data.email, data.password);
+    const success = await addManager(data.name, data.email, data.password); // Logging is now inside addManager
     if (success) {
         toast({
             title: "Manager Added (Simulated)",
@@ -105,9 +106,9 @@ export default function NewManagerPage() {
           </CardContent>
         </Card>
         <div className="mt-6 flex justify-end">
-          <Button type="submit" disabled={form.formState.isSubmitting}>
+          <Button type="submit" disabled={isSubmitting}>
             <UserPlus className="mr-2 h-4 w-4" /> 
-            {form.formState.isSubmitting ? "Adding..." : "Add Manager (Simulated)"}
+            {isSubmitting ? "Adding..." : "Add Manager (Simulated)"}
           </Button>
         </div>
       </form>

@@ -1,4 +1,5 @@
-import type { Product, Category, Order } from '@/lib/types';
+
+import type { Product, Category, Order, AdminUser } from '@/lib/types'; // Added AdminUser
 
 export const mockCategories: Category[] = [
   { id: 'candles', name: 'Artisanal Candles', slug: 'artisanal-candles', description: 'Hand-poured artisanal candles with unique scents.' },
@@ -11,7 +12,7 @@ export const mockProducts: Product[] = [
     id: '1',
     name: 'Lavender Bliss Candle',
     description: 'Soothing lavender scented candle, perfect for relaxation. Made with natural soy wax.',
-    price: 22.99,
+    price: 229900, // Price in UZS smallest unit (e.g., 22.99 * 10000)
     category: 'Artisanal Candles',
     images: ['https://placehold.co/600x400.png?text=Lavender+Candle+1', 'https://placehold.co/600x400.png?text=Lavender+Candle+2', 'https://placehold.co/600x400.png?text=Lavender+Candle+3'],
     scent: 'Lavender',
@@ -24,7 +25,7 @@ export const mockProducts: Product[] = [
     id: '2',
     name: 'Vanilla Dream Candle',
     description: 'A warm and inviting vanilla bean fragrance that fills your home with comfort.',
-    price: 24.50,
+    price: 245000, // 24.50 * 10000
     category: 'Artisanal Candles',
     images: ['https://placehold.co/600x400.png?text=Vanilla+Candle+1', 'https://placehold.co/600x400.png?text=Vanilla+Candle+2'],
     scent: 'Vanilla Bean',
@@ -37,7 +38,7 @@ export const mockProducts: Product[] = [
     id: '3',
     name: 'Elegant Swan Wax Figure',
     description: 'A beautifully detailed wax figure of a swan, perfect as a centerpiece.',
-    price: 35.00,
+    price: 350000, // 35.00 * 10000
     category: 'Wax Figures',
     images: ['https://placehold.co/600x400.png?text=Swan+Wax+Figure'],
     material: 'Paraffin Wax',
@@ -49,7 +50,7 @@ export const mockProducts: Product[] = [
     id: '4',
     name: 'Geometric Gypsum Planter',
     description: 'Modern gypsum planter with a minimalist geometric design. Ideal for succulents.',
-    price: 18.75,
+    price: 187500, // 18.75 * 10000
     category: 'Gypsum Products',
     images: ['https://placehold.co/600x400.png?text=Gypsum+Planter'],
     material: 'Natural Gypsum',
@@ -61,7 +62,7 @@ export const mockProducts: Product[] = [
     id: '5',
     name: 'Rose Garden Candle',
     description: 'Experience the fragrance of a blooming rose garden with this exquisite candle.',
-    price: 26.00,
+    price: 260000, // 26.00 * 10000
     category: 'Artisanal Candles',
     images: ['https://placehold.co/600x400.png?text=Rose+Candle'],
     scent: 'Fresh Roses',
@@ -74,7 +75,7 @@ export const mockProducts: Product[] = [
     id: '6',
     name: 'Abstract Gypsum Coasters (Set of 4)',
     description: 'Protect your surfaces with style using these unique abstract design gypsum coasters.',
-    price: 29.99,
+    price: 299900, // 29.99 * 10000
     category: 'Gypsum Products',
     images: ['https://placehold.co/600x400.png?text=Gypsum+Coasters'],
     material: 'Reinforced Gypsum',
@@ -90,7 +91,7 @@ export const mockOrders: Order[] = [
     orderNumber: 'SCSS-001',
     date: '2023-10-26',
     status: 'Delivered',
-    totalAmount: 47.49,
+    totalAmount: 474900, // mockProducts[0].price + mockProducts[3].price
     items: [
       { ...mockProducts[0], quantity: 1, price: mockProducts[0].price },
       { ...mockProducts[3], quantity: 1, price: mockProducts[3].price },
@@ -101,7 +102,7 @@ export const mockOrders: Order[] = [
     orderNumber: 'SCSS-002',
     date: '2023-11-05',
     status: 'Shipped',
-    totalAmount: 24.50,
+    totalAmount: 245000,
     items: [{ ...mockProducts[1], quantity: 1, price: mockProducts[1].price }],
   },
   {
@@ -109,10 +110,29 @@ export const mockOrders: Order[] = [
     orderNumber: 'SCSS-003',
     date: '2023-11-10',
     status: 'Processing',
-    totalAmount: 64.99,
+    totalAmount: 649900, // mockProducts[2].price + mockProducts[5].price
     items: [
       { ...mockProducts[2], quantity: 1, price: mockProducts[2].price },
       { ...mockProducts[5], quantity: 1, price: mockProducts[5].price },
     ],
   },
+];
+
+// Mock client data for admin panel
+export interface MockAdminClient {
+  id: string;
+  name: string;
+  email: string;
+  registrationDate: string; // ISO Date string
+  totalOrders: number;
+  totalSpent: number; // in UZS
+  isBlocked: boolean;
+}
+
+export const mockAdminClients: MockAdminClient[] = [
+  { id: 'client-001', name: 'Alisher Usmanov', email: 'alisher.u@example.com', registrationDate: '2023-01-15T10:00:00Z', totalOrders: 5, totalSpent: 1250000, isBlocked: false },
+  { id: 'client-002', name: 'Gulnara Karimova', email: 'gulnara.k@example.com', registrationDate: '2023-03-22T14:30:00Z', totalOrders: 2, totalSpent: 450000, isBlocked: false },
+  { id: 'client-003', name: 'Timur Begaliev', email: 'timur.b@example.com', registrationDate: '2023-05-10T09:15:00Z', totalOrders: 8, totalSpent: 2100000, isBlocked: true },
+  { id: 'client-004', name: 'Dildora Ahmedova', email: 'dildora.a@example.com', registrationDate: '2023-07-01T11:00:00Z', totalOrders: 1, totalSpent: 229900, isBlocked: false },
+  { id: 'client-005', name: 'Rustam Qosimov', email: 'rustam.q@example.com', registrationDate: '2023-08-19T18:45:00Z', totalOrders: 12, totalSpent: 3500000, isBlocked: false },
 ];

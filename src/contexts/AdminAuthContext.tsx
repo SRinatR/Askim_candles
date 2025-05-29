@@ -5,9 +5,7 @@ import type { AdminUser, AdminRole } from '@/lib/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, usePathname } from 'next/navigation';
-
-// TODO: Localize toast messages if admin panel i18n is extended to context
-// For now, using English for internal AdminAuthContext toasts
+import { logAdminAction } from '@/admin/lib/admin-logger';
 
 interface AdminAuthContextType {
   currentAdminUser: AdminUser | null;
@@ -17,27 +15,27 @@ interface AdminAuthContextType {
   isAdmin: boolean;
   isManager: boolean;
   role: AdminRole | null;
-  predefinedUsers: Record<string, AdminUser>; // Expose for user listing
-  dynamicallyAddedManagers: AdminUser[]; // Expose for user listing
-  addManager: (name: string, email: string, pass: string) => Promise<boolean>; // For admin to add managers
+  predefinedUsers: Record<string, AdminUser>; 
+  dynamicallyAddedManagers: AdminUser[]; 
+  addManager: (name: string, email: string, pass: string) => Promise<boolean>; 
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
-const ADMIN_STORAGE_KEY = 'scentSationalAdminUser';
-const DYNAMIC_MANAGERS_STORAGE_KEY = 'scentSationalDynamicManagers';
+const ADMIN_STORAGE_KEY = 'askimAdminUser'; // Updated key
+const DYNAMIC_MANAGERS_STORAGE_KEY = 'askimDynamicManagers'; // Updated key
 
 const initialPredefinedUsers: Record<string, AdminUser> = {
-  'admin@scentsational.com': {
+  'admin@askim.com': { // Updated email domain
     id: 'admin001',
-    email: 'admin@scentsational.com',
+    email: 'admin@askim.com',
     name: 'Store Administrator',
     role: 'ADMIN',
     password: 'adminpass', 
   },
-  'manager@scentsational.com': {
+  'manager@askim.com': { // Updated email domain
     id: 'manager001',
-    email: 'manager@scentsational.com',
+    email: 'manager@askim.com',
     name: 'Store Manager',
     role: 'MANAGER',
     password: 'managerpass', 
@@ -56,7 +54,6 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
 
   useEffect(() => {
-    // Load current logged-in admin user
     const storedUser = localStorage.getItem(ADMIN_STORAGE_KEY);
     if (storedUser) {
       try {
@@ -72,7 +69,6 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    // Load dynamically added managers
     const storedDynamicManagers = localStorage.getItem(DYNAMIC_MANAGERS_STORAGE_KEY);
     if (storedDynamicManagers) {
         try {
@@ -95,18 +91,20 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     const lowerEmail = email.toLowerCase();
     let userToLogin = predefinedUsers[lowerEmail];
 
-    if (!userToLogin) { // Check dynamically added managers if not in predefined
+    if (!userToLogin) { 
         userToLogin = dynamicallyAddedManagers.find(manager => manager.email.toLowerCase() === lowerEmail);
     }
 
     if (userToLogin && userToLogin.password === pass) {
       setCurrentAdminUser(userToLogin);
       localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(userToLogin));
+      logAdminAction(userToLogin.email, "Admin Login Success");
       toast({ title: "Admin Login Successful", description: `Welcome, ${userToLogin.name}!` });
       setIsLoading(false);
       router.push('/admin/dashboard');
       return true;
     } else {
+      logAdminAction(email, "Admin Login Failed", { reason: "Invalid credentials" });
       toast({ title: "Admin Login Failed", description: "Invalid email or password.", variant: "destructive" });
     }
     setIsLoading(false);
@@ -114,6 +112,9 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
+    if (currentAdminUser?.email) {
+      logAdminAction(currentAdminUser.email, "Admin Logout");
+    }
     setCurrentAdminUser(null);
     localStorage.removeItem(ADMIN_STORAGE_KEY);
     toast({ title: "Logged Out", description: "You have been successfully logged out from the admin panel." });
@@ -124,18 +125,24 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     const lowerEmail = email.toLowerCase();
     if (predefinedUsers[lowerEmail] || dynamicallyAddedManagers.some(m => m.email.toLowerCase() === lowerEmail)) {
         toast({ title: "Failed to Add Manager", description: "Email already exists.", variant: "destructive" });
+        if (currentAdminUser?.email) {
+          logAdminAction(currentAdminUser.email, "Add Manager Failed", { managerEmail: email, reason: "Email exists" });
+        }
         return false;
     }
     const newManager: AdminUser = {
         id: `manager-${Date.now()}`,
         name,
         email,
-        password: pass, // In real app, password would be hashed
+        password: pass, 
         role: 'MANAGER',
     };
     const updatedManagers = [...dynamicallyAddedManagers, newManager];
     setDynamicallyAddedManagers(updatedManagers);
     localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
+    if (currentAdminUser?.email) {
+      logAdminAction(currentAdminUser.email, "Manager Added (Simulated)", { managerEmail: email, managerName: name });
+    }
     return true;
   };
   
@@ -159,8 +166,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         isAdmin, 
         isManager, 
         role,
-        predefinedUsers, // Provide for listing
-        dynamicallyAddedManagers, // Provide for listing
+        predefinedUsers, 
+        dynamicallyAddedManagers, 
         addManager 
     }}>
       {children}

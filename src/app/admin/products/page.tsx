@@ -4,35 +4,42 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockProducts } from "@/lib/mock-data"; // We'll use mock data for now
+import { mockProducts } from "@/lib/mock-data";
 import type { Product } from "@/lib/types";
-import { PlusCircle, Edit3, Trash2, Search } from "lucide-react";
+import { PlusCircle, Edit3, Trash2, Search, Eye } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
+import Image from "next/image";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { logAdminAction } from '@/admin/lib/admin-logger'; // Assuming logger path
 
 // TODO: Localize texts when admin i18n is fully implemented
-// For now, using English / simple placeholders
 
 export default function AdminProductsPage() {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [searchTerm, setSearchTerm] = useState("");
+  const { currentAdminUser } = useAdminAuth();
 
-  const handleDeleteProduct = (productId: string) => {
-    // Simulate deletion
-    setProducts(prev => prev.filter(p => p.id !== productId));
-    toast({
-      title: "Product Deleted (Simulated)",
-      description: `Product with ID ${productId} has been 'deleted'. This change is client-side only.`,
-    });
-  };
-
+  // Client-side filtering
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleDeleteProduct = (productId: string, productName: string) => {
+    // Simulate deletion
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    if (currentAdminUser?.email) {
+      logAdminAction(currentAdminUser.email, "Product Deleted (Simulated)", { productId, productName });
+    }
+    toast({
+      title: "Product Deleted (Simulated)",
+      description: `Product "${productName}" (ID: ${productId}) has been 'deleted'. This change is client-side only.`,
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -71,9 +78,10 @@ export default function AdminProductsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-[80px]">Image</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
+                  <TableHead className="text-right">Price (UZS)</TableHead>
                   <TableHead className="text-center">Stock</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
@@ -81,17 +89,35 @@ export default function AdminProductsPage() {
               <TableBody>
                 {filteredProducts.map((product) => (
                   <TableRow key={product.id}>
+                    <TableCell>
+                      <div className="relative h-12 w-12 rounded-md overflow-hidden border">
+                        <Image 
+                          src={product.images[0] || "https://placehold.co/100x100.png?text=No+Image"} 
+                          alt={product.name} 
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                          data-ai-hint="product thumbnail"
+                        />
+                      </div>
+                    </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.category}</TableCell>
-                    <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{product.price.toFixed(2)}</TableCell>
                     <TableCell className="text-center">{product.stock}</TableCell>
-                    <TableCell className="text-center space-x-2">
-                      <Button variant="outline" size="sm" asChild>
+                    <TableCell className="text-center space-x-1">
+                      <Button variant="outline" size="sm" asChild title={`Edit ${product.name}`}>
                         <Link href={`/admin/products/edit/${product.id}`}>
                           <Edit3 className="mr-1 h-3 w-3" /> Edit
                         </Link>
                       </Button>
-                      <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10" onClick={() => handleDeleteProduct(product.id)}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive" 
+                        onClick={() => handleDeleteProduct(product.id, product.name)}
+                        title={`Delete ${product.name}`}
+                      >
                         <Trash2 className="mr-1 h-3 w-3" /> Delete
                       </Button>
                     </TableCell>
