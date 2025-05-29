@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, PlusCircle, AlertTriangle } from "lucide-react";
+import { Trash2, PlusCircle } from "lucide-react"; // Removed AlertTriangle as it's not used directly here
 import { useToast } from "@/hooks/use-toast";
 import { mockCategories, mockProducts } from '@/lib/mock-data';
 import {
@@ -26,9 +26,12 @@ import type enAdminMessages from '@/admin/dictionaries/en.json';
 
 const LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES = "askimAdminCustomCategories";
 type ManageCategoriesDict = typeof enAdminMessages.adminManageCategoriesPage;
-type AlertDialogStrings = { // A subset for dialogs
+
+// This type is for the strings used within the AlertDialog component
+type AlertDialogStrings = {
   confirmDeleteTitle: string;
   confirmDeleteCategoryInUse: string;
+  confirmDeleteGeneral: string; // Added for general case
   cancelButton: string;
   deleteConfirmButton: string;
 };
@@ -49,9 +52,11 @@ export default function AdminManageCategoriesPage() {
     async function loadDictionary() {
       const fullDict = await getAdminDictionary(localeToLoad);
       setDictionary(fullDict.adminManageCategoriesPage);
-      setAlertStrings({ // Manually construct the strings for the dialog for simplicity
-        confirmDeleteTitle: fullDict.adminManageCategoriesPage.confirmDeleteTitle || "Are you sure?",
+      // Ensure all keys for alertStrings are present or provide fallbacks
+      setAlertStrings({
+        confirmDeleteTitle: fullDict.adminManageCategoriesPage.confirmDeleteTitle || "Confirm Deletion",
         confirmDeleteCategoryInUse: fullDict.adminManageCategoriesPage.confirmDeleteCategoryInUse || "The category '{attributeName}' is currently used by one or more products. Deleting it means these products will no longer be associated with this category and may need to be updated manually. Are you sure you want to delete it?",
+        confirmDeleteGeneral: fullDict.adminManageCategoriesPage.confirmDeleteGeneral || "Are you sure you want to delete the category \"{name}\"?",
         cancelButton: fullDict.adminManageCategoriesPage.cancelButton || "Cancel",
         deleteConfirmButton: fullDict.adminManageCategoriesPage.deleteConfirmButton || "Delete",
       });
@@ -70,8 +75,6 @@ export default function AdminManageCategoriesPage() {
   }, []);
 
   const baseCategories = useMemo(() => {
-    // These are the categories that were originally in mock-data.ts
-    // For display purposes, to show they are "fixed" or "base"
     return mockCategories.map(cat => cat.name);
   }, []);
 
@@ -169,7 +172,7 @@ export default function AdminManageCategoriesPage() {
                         <AlertDialogDescription>
                           {isCategoryInUse(cat) 
                             ? alertStrings.confirmDeleteCategoryInUse.replace('{attributeName}', cat)
-                            : dictionary.confirmDeleteGeneral.replace('{name}', cat)
+                            : alertStrings.confirmDeleteGeneral.replace('{name}', cat)
                           }
                         </AlertDialogDescription>
                       </AlertDialogHeader>
@@ -187,3 +190,7 @@ export default function AdminManageCategoriesPage() {
       </Card>
        <p className="text-sm text-muted-foreground text-center">
         {dictionary.note}
+      </p>
+    </div>
+  );
+}

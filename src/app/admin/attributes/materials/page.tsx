@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, PlusCircle, AlertTriangle } from "lucide-react";
+import { Trash2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { mockProducts } from '@/lib/mock-data';
 import {
@@ -26,9 +26,12 @@ import type enAdminMessages from '@/admin/dictionaries/en.json';
 
 const LOCAL_STORAGE_KEY_CUSTOM_MATERIALS = "askimAdminCustomMaterials";
 type ManageMaterialsDict = typeof enAdminMessages.adminManageMaterialsPage;
-type AlertDialogStrings = { 
+
+// This type is for the strings used within the AlertDialog component
+type AlertDialogStrings = {
   confirmDeleteTitle: string;
   confirmDeleteMaterialInUse: string;
+  confirmDeleteGeneral: string;
   cancelButton: string;
   deleteConfirmButton: string;
 };
@@ -40,7 +43,6 @@ export default function AdminManageMaterialsPage() {
   const [dictionary, setDictionary] = useState<ManageMaterialsDict | null>(null);
   const [alertStrings, setAlertStrings] = useState<AlertDialogStrings | null>(null);
 
-
   useEffect(() => {
     const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
     const localeToLoad = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
@@ -49,8 +51,9 @@ export default function AdminManageMaterialsPage() {
       const fullDict = await getAdminDictionary(localeToLoad);
       setDictionary(fullDict.adminManageMaterialsPage);
       setAlertStrings({
-        confirmDeleteTitle: fullDict.adminManageMaterialsPage.confirmDeleteTitle || "Are you sure?",
-        confirmDeleteMaterialInUse: fullDict.adminManageMaterialsPage.confirmDeleteMaterialInUse || "The material '{attributeName}' is currently used by one or more products. Deleting it means these products will no longer be associated with this material and may need to be updated manually. Are you sure you want to delete it?",
+        confirmDeleteTitle: fullDict.adminManageMaterialsPage.confirmDeleteTitle || "Confirm Deletion",
+        confirmDeleteMaterialInUse: fullDict.adminManageMaterialsPage.confirmDeleteMaterialInUse || "The material '{attributeName}' is currently used. Deleting it may affect products. Sure?",
+        confirmDeleteGeneral: fullDict.adminManageMaterialsPage.confirmDeleteGeneral || "Are you sure you want to delete the material \"{name}\"?",
         cancelButton: fullDict.adminManageMaterialsPage.cancelButton || "Cancel",
         deleteConfirmButton: fullDict.adminManageMaterialsPage.deleteConfirmButton || "Delete",
       });
@@ -96,7 +99,7 @@ export default function AdminManageMaterialsPage() {
   };
 
   const handleDeleteMaterial = (materialToDelete: string) => {
-     if (!dictionary) return;
+    if (!dictionary) return;
     const updatedMaterials = customMaterials.filter(mat => mat !== materialToDelete);
     setCustomMaterials(updatedMaterials);
     localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS, JSON.stringify(updatedMaterials));
@@ -141,7 +144,7 @@ export default function AdminManageMaterialsPage() {
                 ))}
             </ul>
           ) : (
-            <p className="text-muted-foreground text-sm mb-6">{dictionary.noBaseYet}</p>
+            <p className="text-muted-foreground text-sm mb-6">{dictionary.noBaseYet || "No base materials found in current products."}</p>
           )}
           
           <h3 className="font-semibold mb-2 text-lg">{dictionary.customMaterialsHeader}</h3>
@@ -164,7 +167,7 @@ export default function AdminManageMaterialsPage() {
                         <AlertDialogDescription>
                           {isMaterialInUse(mat) 
                             ? alertStrings.confirmDeleteMaterialInUse.replace('{attributeName}', mat)
-                            : dictionary.confirmDeleteGeneral.replace('{name}', mat)
+                            : alertStrings.confirmDeleteGeneral.replace('{name}', mat)
                           }
                         </AlertDialogDescription>
                       </AlertDialogHeader>
@@ -182,3 +185,7 @@ export default function AdminManageMaterialsPage() {
       </Card>
        <p className="text-sm text-muted-foreground text-center">
         {dictionary.note}
+      </p>
+    </div>
+  );
+}
