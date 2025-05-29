@@ -40,7 +40,10 @@ export default async function LocaleLayout({
   const dictionary = await getDictionary(locale);
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}>
+      <body 
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
+        suppressHydrationWarning={true}
+      >
         <Providers>
           <Header locale={locale} dictionary={dictionary.navigation} />
           <main className="flex-grow container mx-auto px-4 py-8 sm:px-6 lg:px-8">
