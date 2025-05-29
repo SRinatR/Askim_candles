@@ -47,43 +47,41 @@ body {
   }
 
   .dark {
-    --background: 224 71% 4%; /* Very dark, slightly blue */
-    --foreground: 210 20% 95%; /* Light gray, almost white */
+    /* Corporate-derived dark theme */
+    --background: 230 49% 10%; /* Dark Navy/Blue base (#162044) */
+    --foreground: 347 100% 93%; /* Light Pink variant for text */
 
-    --muted: 223 47% 11%; /* Dark blue-gray */
-    --muted-foreground: 215 16% 57%; /* Medium-light gray */
+    --muted: 230 49% 15%; /* Darker Navy, slightly lighter than background */
+    --muted-foreground: 216 61% 65%; /* Muted Light Blue */
 
-    --popover: 224 71% 4%; /* Same as background */
-    --popover-foreground: 210 20% 95%; /* Same as foreground */
+    --popover: 230 49% 8%; /* Even Darker Navy for popovers */
+    --popover-foreground: 347 100% 93%; /* Light Pink variant for text */
 
-    --card: 224 71% 7%; /* Slightly lighter than background for cards */
-    --card-foreground: 210 20% 95%; /* Same as foreground */
+    --card: 230 49% 13%; /* Slightly lighter Navy than background for cards */
+    --card-foreground: 347 100% 93%; /* Light Pink variant for text */
 
-    --border: 215 28% 17%; /* Darker blue-gray for borders */
-    --input: 215 28% 17%; /* Same as border for input backgrounds */
+    --border: 230 49% 20%; /* Dark Navy border, slightly lighter than cards */
+    --input: 230 49% 18%; /* Dark Navy input background */
 
-    /* Primary buttons in dark mode: Bright text on dark background */
-    --primary: 210 40% 98%; /* Bright, almost white text */
-    --primary-foreground: 222.2 84% 4.9%; /* Dark blue/black button background */
+    --primary: 348 84% 72%; /* Pink (#F37E92) */
+    --primary-foreground: 230 49% 5%; /* Very Dark Navy for text on Pink buttons */
 
-    /* Secondary buttons in dark mode: Subtler */
-    --secondary: 217 33% 17%; /* Dark muted blue-gray */
-    --secondary-foreground: 210 20% 95%; /* Light gray text */
+    --secondary: 216 61% 30%; /* Darker muted Light Blue */
+    --secondary-foreground: 216 61% 90%; /* Very Light Blue for text on dark secondary */
 
-    /* Accent for hover states, focus rings if not primary */
-    --accent: 217 33% 25%; /* A slightly lighter muted blue for hover/accent */
-    --accent-foreground: 210 20% 98%; /* Bright text on accent */
-
-    --destructive: 0 63% 31%; /* Dark red */
-    --destructive-foreground: 210 20% 98%; /* Light text on destructive */
-
-    --ring: 217 91% 59.8%; /* A brighter blue for focus rings if needed, or can use primary */
+    --accent: 348 84% 78%; /* Brighter Pink for hover/accent */
+    --accent-foreground: 230 49% 5%; /* Very Dark Navy for text on accent */
     
-    --chart-1: 210 80% 60%;
-    --chart-2: 160 70% 50%;
-    --chart-3: 340 80% 65%;
-    --chart-4: 40 75% 55%;
-    --chart-5: 280 70% 60%;
+    --destructive: 0 70% 50%; /* Adjusted destructive to be more visible on dark navy */
+    --destructive-foreground: 0 0% 98%;
+
+    --ring: 348 84% 72%; /* Pink (#F37E92) for focus rings */
+    
+    --chart-1: 348 80% 65%;
+    --chart-2: 216 55% 75%;
+    --chart-3: 347 100% 85%; /* Lighter Pink for contrast */
+    --chart-4: 348 70% 80%;
+    --chart-5: 216 50% 65%;
   }
 }
 

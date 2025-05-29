@@ -10,7 +10,7 @@
 *   **Styling:** Tailwind CSS.
     *   Theme colors defined in `src/app/globals.css` using HSL CSS variables.
     *   **Light Theme (Main Site & Admin):** Uses corporate color palette: Pink (#F37E92), Light Pink (#FFD2DA), Dark Navy/Blue (#162044), Light Blue (#B2C9ED).
-    *   **Dark Theme (Admin Panel):** Uses a more neutral, professional dark palette (dark blues, grays) for better usability in an admin context, distinct from the light theme's vibrant corporate colors.
+    *   **Dark Theme (Admin Panel):** Uses a dark theme derived from the corporate palette (Dark Navy/Blue as background, with corporate pinks/blues as accents/foregrounds). This was chosen over a more "standard professional black" theme as per user preference.
 *   **Frontend User Authentication (Main Site - Hybrid):**
     *   NextAuth.js (for social logins like Google).
     *   Client-side simulated email/password system using `AuthContext` and `localStorage` (with multi-step registration and password visibility toggles).
@@ -47,20 +47,20 @@
 *   **Genkit:** Adhere to v1.x API (when implemented).
 *   **ShadCN UI:** Prefer ShadCN components. Theme is in `src/app/globals.css`.
 *   **Icons:** Use `lucide-react`. Do not hallucinate icons.
-*   **Admin Panel Theme:** Supports Dark/Light mode toggle, managed client-side. Dark theme now uses a distinct, more neutral palette.
-*   **Product Attributes (Admin):** Forms for products now include fields for SKU, isActive, multilingual name/description, and selectable Category, Scent, Material. Other attributes like dimensions, burningTime are text inputs. Image uploads use `ImageUploadArea.tsx`.
+*   **Admin Panel Theme:** Supports Dark/Light mode toggle, managed client-side. Dark theme now uses a corporate-color-derived palette.
+*   **Product Attributes (Admin):** Forms for products now include fields for SKU, isActive, multilingual name/description, and selectable Category, Scent, Material. Other attributes like dimensions, burningTime are text inputs. Image uploads use `ImageUploadArea.tsx`. Attributes are fully dynamic (add/edit/delete) via `localStorage`.
 *   **Admin Panel Mobile Access:** Restricted (except login page).
 *   **Admin Panel Version Display:** Implemented in admin layout footer.
 
 ## 4. Key Project Files (Structure Overview)
 
 *   `src/app/[locale]/`: Main site localized routes.
-    *   `layout.tsx`, `page.tsx`, `products/`, `cart/`, `checkout/`, `account/`, `login/`, `register/`, `about/`, `info/`.
+    *   `layout.tsx`, `page.tsx`, `products/*`, `cart/`, `checkout/`, `account/*`, `login/`, `register/`, `about/`, `info/*`.
 *   `src/app/admin/`: Admin panel routes.
     *   `login/page.tsx`.
     *   `layout.tsx`: Admin panel layout.
     *   `dashboard/page.tsx`, `products/*`, `users/*`, `logs/page.tsx`, `clients/page.tsx`, `attributes/*`, `articles/*`, etc.
-*   `src/app/globals.css`: Global styles and ShadCN theme (light theme uses corporate palette, dark theme uses a professional neutral palette).
+*   `src/app/globals.css`: Global styles and ShadCN theme (light theme uses corporate palette, dark theme uses a corporate-derived palette).
 *   `src/app/providers.tsx`: Groups client-side context providers for the main site.
 *   `src/components/`: Reusable React components.
     *   `admin/ImageUploadArea.tsx`: Component for image uploads in admin.
@@ -74,3 +74,4 @@
 *   **Planned (but not yet existing in full):**
     *   `prisma/schema.prisma`: For database schema definition (basic structure outlined in `deployment_guide.md`).
     *   API routes in `src/app/api/` or Server Actions for backend interactions with Prisma.
+
