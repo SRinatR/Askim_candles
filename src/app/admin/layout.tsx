@@ -8,10 +8,10 @@ import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, Percent, FileText as ContentIcon, Settings, LogOut, Menu,
-  ShieldCheck, Megaphone, FileOutput, Landmark, Briefcase, PanelLeftOpen, PanelRightOpen, X,
-  Sun, Moon, Globe as GlobeIcon, History
-} from 'lucide-react'; // Added History for Logs
+  LayoutDashboard, Package, ShoppingCart, Users as ClientsIcon, Megaphone, FileOutput, Landmark, Percent,
+  FileText as ContentIcon, Settings, LogOut, Menu, ShieldCheck, Briefcase as UserManagementIcon,
+  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History
+} from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -19,31 +19,33 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { i18nAdmin, type AdminLocale } from '@/admin/lib/i18n-config-admin';
 import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
 import type enAdminMessages from '@/admin/dictionaries/en.json';
-import '../globals.css';
+import '../globals.css'; // Ensure global styles are applied
 
 type AdminDictionary = typeof enAdminMessages;
+type AdminLayoutStrings = AdminDictionary['adminLayout'];
 
 interface NavItem {
   href: string;
-  labelKey: keyof AdminDictionary['adminLayout'];
+  labelKey: keyof AdminLayoutStrings;
   icon: React.ElementType;
   adminOnly?: boolean;
-  managerOrAdmin?: boolean; // Changed from managerOnly for clarity
+  managerOrAdmin?: boolean;
 }
 
+// Define navigation items with refined access control
 const navItems: NavItem[] = [
   { href: '/admin/dashboard', labelKey: 'dashboard', icon: LayoutDashboard, managerOrAdmin: true },
   { href: '/admin/products', labelKey: 'products', icon: Package, managerOrAdmin: true },
-  { href: '/admin/sales', labelKey: 'sales', icon: ShoppingCart, managerOrAdmin: true }, // Placeholder "Sales" key
-  { href: '/admin/clients', labelKey: 'clients', icon: Users, managerOrAdmin: true }, // Placeholder "Clients" key
-  { href: '/admin/marketing', labelKey: 'marketing', icon: Megaphone, managerOrAdmin: true }, // Placeholder "Marketing" key
-  { href: '/admin/reports', labelKey: 'reports', icon: FileOutput, managerOrAdmin: true }, // Placeholder "Reports" key
-  { href: '/admin/finances', labelKey: 'finances', icon: Landmark, managerOrAdmin: true }, // Placeholder "Finances" key
+  { href: '/admin/sales', labelKey: 'sales', icon: ShoppingCart, managerOrAdmin: true },
+  { href: '/admin/clients', labelKey: 'clients', icon: ClientsIcon, managerOrAdmin: true },
+  { href: '/admin/marketing', labelKey: 'marketing', icon: Megaphone, managerOrAdmin: true },
+  { href: '/admin/reports', labelKey: 'reports', icon: FileOutput, managerOrAdmin: true },
+  { href: '/admin/finances', labelKey: 'finances', icon: Landmark, managerOrAdmin: true },
   { href: '/admin/discounts', labelKey: 'discounts', icon: Percent, managerOrAdmin: true },
   { href: '/admin/content', labelKey: 'content', icon: ContentIcon, managerOrAdmin: true },
-  { href: '/admin/logs', labelKey: 'logs', icon: History, adminOnly: true }, // New "Logs" item
+  { href: '/admin/logs', labelKey: 'logs', icon: History, adminOnly: true },
   { href: '/admin/settings', labelKey: 'settings', icon: Settings, adminOnly: true },
-  { href: '/admin/users', labelKey: 'management', icon: Briefcase, adminOnly: true },
+  { href: '/admin/users', labelKey: 'management', icon: UserManagementIcon, adminOnly: true },
 ];
 
 
@@ -53,7 +55,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [dictionary, setDictionary] = useState<AdminDictionary['adminLayout'] | null>(null);
+  const [dictionary, setDictionary] = useState<AdminLayoutStrings | null>(null);
   const [currentLocale, setCurrentLocale] = useState<AdminLocale>(i18nAdmin.defaultLocale);
   const [darkMode, setDarkMode] = useState(false);
 
@@ -103,12 +105,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   
-  if (!currentAdminUser) return null;
+  if (!currentAdminUser) return null; // Should not happen if above check works
 
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) return isAdmin;
-    if (item.managerOrAdmin) return isManager || isAdmin; // isManager already implies isAdmin check in context
-    return true;
+    if (item.managerOrAdmin) return isManager || isAdmin;
+    return true; // Should not happen with current navItems, but good for future-proofing
   });
 
   const AdminLanguageSwitcher = () => (
@@ -131,7 +133,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const SidebarNav = ({isMobile = false, isCollapsed = false} : {isMobile?: boolean, isCollapsed?: boolean}) => (
     <nav className={cn("flex flex-col space-y-1 py-4", isCollapsed && !isMobile ? "px-2 items-center" : "px-2")}>
       {filteredNavItems.map((item) => {
-        const label = dictionary[item.labelKey] || item.labelKey; // Fallback to key if translation missing
+        const label = dictionary[item.labelKey] || item.labelKey;
         return (
           <TooltipProvider key={item.href} delayDuration={isMobile || !isCollapsed ? 999999 : 0}>
             <Tooltip>
@@ -204,7 +206,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         )}
       >
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background px-4 md:px-6">
-          <div className="flex items-center"> {/* Container for toggle and mobile logo */}
+          <div className="flex items-center">
             <Button
               variant="ghost"
               size="icon"
@@ -220,7 +222,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </Link>
           </div>
           
-          <div className="flex items-center md:hidden"> {/* Mobile menu trigger only */}
+          <div className="flex items-center md:hidden ml-auto">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="outline" size="icon">
@@ -283,13 +285,17 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // For login page, wrap with provider but don't render full layout
   if (pathname === '/admin/login') { 
     return <AdminAuthProvider>{children}</AdminAuthProvider>;
   }
 
+  // For all other admin pages, render full layout with provider
   return (
     <AdminAuthProvider>
       <AdminLayoutContent>{children}</AdminLayoutContent>
     </AdminAuthProvider>
   );
 }
+
+    

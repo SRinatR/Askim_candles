@@ -4,9 +4,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import { PlusCircle, AlertTriangle, UserCog, ShieldCheck, Mail, KeyRound } from "lucide-react";
+import { PlusCircle, AlertTriangle, UserCog, ShieldCheck, Mail } from "lucide-react"; // Removed KeyRound as password not shown
 import Link from "next/link";
-import { useRouter } from 'next/navigation'; // Corrected import for useRouter
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import type { AdminUser } from "@/lib/types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,15 +14,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 // TODO: Localize texts when admin i18n is fully implemented
 
 export default function AdminUsersPage() {
-  const { isAdmin, predefinedUsers, dynamicallyAddedManagers } = useAdminAuth(); // Assuming these are exposed by context
+  const { isAdmin, predefinedUsers, dynamicallyAddedManagers, isLoading } = useAdminAuth();
   const router = useRouter();
   const [allManagers, setAllManagers] = useState<AdminUser[]>([]);
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isLoading && !isAdmin) { // Check isLoading to prevent premature redirect
       router.replace('/admin/dashboard'); 
     }
-  }, [isAdmin, router]);
+  }, [isAdmin, router, isLoading]);
 
   useEffect(() => {
     // Combine predefined managers and dynamically added ones
@@ -30,6 +30,10 @@ export default function AdminUsersPage() {
     setAllManagers([...managersFromPredefined, ...dynamicallyAddedManagers]);
   }, [predefinedUsers, dynamicallyAddedManagers]);
 
+  if (isLoading) {
+    return <div className="flex h-screen items-center justify-center"><p>Loading User Management...</p></div>;
+  }
+  
   if (!isAdmin) {
     return (
          <Card className="border-destructive">
@@ -105,3 +109,5 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
+    

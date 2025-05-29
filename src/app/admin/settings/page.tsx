@@ -6,17 +6,21 @@ import { Button } from "@/components/ui/button";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { AlertTriangle, Save } from "lucide-react";
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import React, { useEffect } from 'react'; // Import React for useEffect
 
 export default function AdminSettingsPage() {
-  const { isAdmin } = useAdminAuth();
+  const { isAdmin, isLoading } = useAdminAuth(); // Add isLoading from context
   const router = useRouter();
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isLoading && !isAdmin) { // Check isLoading before redirecting
       router.replace('/admin/dashboard');
     }
-  }, [isAdmin, router]);
+  }, [isAdmin, router, isLoading]);
+
+  if (isLoading) {
+    return <div className="flex h-screen items-center justify-center"><p>Loading Settings...</p></div>;
+  }
 
   if (!isAdmin) {
     return (
@@ -61,3 +65,5 @@ export default function AdminSettingsPage() {
     </div>
   );
 }
+
+    

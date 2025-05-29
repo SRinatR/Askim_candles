@@ -1,7 +1,7 @@
 
 # Progress: Askim candles
 
-## Date: 2024-08-01 (Simulated Date of Update)
+## Date: 2024-07-30 (Simulated Date of Update)
 
 ## 1. What Works (Implemented Features)
 
@@ -14,7 +14,7 @@
     *   Middleware (`middleware.ts`) for locale detection and redirection.
     *   Language switcher in Header (desktop dropdown, compact mobile list).
     *   Localized pages: Homepage, About, Cart, Checkout, Login, Register, Product Detail, Product List, Account section (Layout, Profile, Addresses, Orders, Order Detail, Linking). ProductCard localized.
-*   **Styling:** Tailwind CSS, ShadCN UI. Custom theme in `globals.css` (includes dark mode variables). Main site header/footer hidden on admin pages. Global CSS applied to admin panel.
+*   **Styling:** Tailwind CSS, ShadCN UI. Custom theme in `globals.css`. Main site header/footer hidden on admin pages. Global CSS applied to admin panel.
 *   **Main Site Pages (Localized):**
     *   Homepage (`/[locale]/`): Hero, category links, featured products, CTA.
     *   Product Listing (`/[locale]/products`): Displays products, client-side filtering/sorting (locale-aware), search.
@@ -31,48 +31,48 @@
     *   **Protected Routes:** All routes under `/admin` require admin/manager login.
     *   **Admin Layout (`src/app/admin/layout.tsx`):**
         *   Collapsible sidebar navigation.
-        *   Header with sidebar toggle, mobile menu trigger, theme toggle (Dark/Light), and language switcher (EN/RU - client-side).
-        *   Role display and role-based navigation item visibility.
-        *   Dark/Light theme implemented, preference stored in `localStorage`.
-        *   Client-side i18n for EN/RU implemented (admin dictionaries).
+        *   Header with sidebar toggle and mobile menu trigger.
+        *   Role display and role-based navigation item visibility (refined).
+        *   Basic UI elements for theme and language toggles (functionality to be fully implemented).
     *   **Page Stubs (Admin):**
-        *   Dashboard (`/admin/dashboard`): UI stubs for various statistics, uses admin dictionary.
+        *   Dashboard (`/admin/dashboard`): UI stubs for various statistics.
         *   Products (`/admin/products`): **UI for listing products (mock data), links to New/Edit (simulated).**
         *   Products - New/Edit (`/admin/products/new`, `/admin/products/edit/[id]`): **Forms for product CRUD (simulated).**
-        *   Users (`/admin/users`): **UI for listing managers (predefined + localStorage), link to Add Manager (simulated).**
-        *   Users - New Manager (`/admin/users/new-manager`): **Form for adding managers (simulated, saves to localStorage).**
-        *   Sales, Clients, Marketing, Reports, Finances, Discounts, Content, Settings (Admin only): Placeholder pages created/updated.
-        *   Logs (`/admin/logs`): **Placeholder page created.**
+        *   Users (`/admin/users`): **UI for listing managers (predefined + localStorage), link to Add Manager (simulated). Page access restricted to ADMIN.**
+        *   Users - New Manager (`/admin/users/new-manager`): **Form for adding managers (simulated, saves to localStorage). Page access restricted to ADMIN.**
+        *   Sales, Clients, Marketing, Reports, Finances, Discounts, Content: Placeholder pages created.
+        *   Settings (`/admin/settings`): Placeholder page, access restricted to ADMIN.
+        *   Logs (`/admin/logs`): **Placeholder page created, access restricted to ADMIN.**
 
 ## 2. What's Left to Build (Key Areas)
 
-*   **Full Admin Panel Functionality (Backend Integration - Prisma/PostgreSQL):**
-    *   Real CRUD operations for Products, Orders, Users, Discounts, Content, Settings.
+*   **Admin Panel - Full Functionality & UI:**
+    *   **Theme & i18n:** Fully implement Dark/Light theme toggle and EN/RU language switcher in Admin Layout. Translate all admin panel content.
+    *   **Product Image Management:** Drag & Drop upload, main image selection.
+    *   **Full CRUD UI for Orders, Discounts, Content, Settings.**
     *   Real data visualization on Dashboard.
-    *   Real session management for Admins/Managers.
-    *   Real log recording and display.
+    *   Advanced table features (pagination, server-side sort/filter) for Products, Orders, Users.
 *   **Backend Integration (Prisma/PostgreSQL):**
     *   Define full Prisma schema.
-    *   Implement all API routes or Server Actions.
+    *   Implement all API routes or Server Actions for data CUD.
     *   Migrate main site user authentication (email/password) to use the database.
-    *   Implement real NextAuth Credentials provider for admin login.
+    *   Implement real NextAuth Credentials provider for admin login using the database.
 *   **Full Content Localization (Main Site & Admin):**
     *   Translate all remaining text strings in all dictionary files.
     *   Localize dynamic content from `mock-data.ts` (or future DB).
     *   Localize Zod validation messages.
 *   **Payment Processing:** Stripe integration.
 *   **Genkit AI Features.**
-*   **Image Handling:** Replace placeholders with actual image uploads, implement File Manager.
-*   **Search/Filtering/Sorting:** Server-side implementation for main site. Enhanced admin table features.
+*   **Search/Filtering/Sorting:** Server-side implementation for main site.
 *   **Testing, Deployment, Email Notifications.**
 
 ## 3. Current Status
 
 *   **Main Site:** MVP with core e-commerce UI flows implemented and localized (UZ/RU/EN). Authentication is hybrid. Most data is mocked.
-*   **Admin Panel:** UI shell created with simulated authentication, navigation, dark/light theme toggle, and client-side EN/RU i18n.
+*   **Admin Panel:** UI shell created with simulated authentication, collapsible sidebar, and role-based navigation.
     *   Product management section has UI for listing, adding, and editing (all client-side simulated).
     *   User management section (for Admins) has UI for listing managers and form for adding new managers (client-side simulated via localStorage).
-    *   Other sections are mostly stubs or have basic translated UI.
+    *   Other sections are mostly stubs or placeholders.
 *   **Memory Bank system active.** `deployment_guide.md` created.
 
 ## 4. Known Issues/Previous Errors Addressed (Recent)
@@ -83,3 +83,4 @@
 *   Admin logout button visibility/usability (improved).
 *   Admin sidebar collapsibility implemented.
 *   Brand name updated to "Askim candles".
+
