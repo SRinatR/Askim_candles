@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { User, MapPin, ShoppingBag, LogOut } from "lucide-react";
+import { User, MapPin, ShoppingBag, LogOut, Link2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
@@ -27,6 +27,11 @@ const sidebarNavItems = [
     title: "Order History",
     href: "/account/orders",
     icon: ShoppingBag,
+  },
+  {
+    title: "Account Linking",
+    href: "/account/linking",
+    icon: Link2,
   },
 ];
 

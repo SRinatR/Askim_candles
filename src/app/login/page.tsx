@@ -9,14 +9,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/icons/Logo";
 import { signIn, useSession } from "next-auth/react";
 import React, { useEffect } from "react";
-import { Chrome } from "lucide-react"; // Using Chrome icon for Google
+import { Chrome, Send, Globe } from "lucide-react"; // Using Chrome for Google, Send for Telegram, Globe for Yandex
 
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(""); // Store which provider is submitting
 
   const callbackUrl = searchParams.get("callbackUrl") || "/account";
 
@@ -27,8 +27,17 @@ export default function LoginPage() {
   }, [status, router, callbackUrl]);
 
   const handleSignIn = async (provider: string) => {
-    setIsSubmitting(true);
+    setIsSubmitting(provider);
     try {
+      // For now, Telegram and Yandex are UI only.
+      if (provider !== "google") {
+        toast({
+          title: "Coming Soon!",
+          description: `Sign in with ${provider.charAt(0).toUpperCase() + provider.slice(1)} is not yet available.`,
+        });
+        setIsSubmitting("");
+        return;
+      }
       const result = await signIn(provider, { callbackUrl });
       if (result?.error) {
         toast({
@@ -36,10 +45,9 @@ export default function LoginPage() {
           description: result.error || "Could not sign you in. Please try again.",
           variant: "destructive",
         });
-        setIsSubmitting(false);
+        setIsSubmitting("");
       } else if (result?.ok) {
         // Successful sign-in will trigger the useEffect to redirect
-        // No need to show toast here as user will be redirected
       }
     } catch (error) {
       console.error("Sign in error", error);
@@ -48,7 +56,7 @@ export default function LoginPage() {
         description: "An unexpected error occurred.",
         variant: "destructive",
       });
-      setIsSubmitting(false);
+      setIsSubmitting("");
     }
   };
   
@@ -69,23 +77,31 @@ export default function LoginPage() {
         <CardContent className="space-y-4">
           <Button 
             onClick={() => handleSignIn("google")} 
-            className="w-full bg-primary text-primary-foreground hover:bg-primary/90" 
-            disabled={isSubmitting}
+            className="w-full" 
+            disabled={!!isSubmitting}
             variant="outline"
           >
             <Chrome className="mr-2 h-5 w-5" /> 
-            {isSubmitting ? "Signing in..." : "Sign in with Google"}
+            {isSubmitting === "google" ? "Signing in..." : "Sign in with Google"}
           </Button>
-          {/* Add other providers like Telegram here when ready */}
-          {/* <Button 
+           <Button 
             onClick={() => handleSignIn("telegram")} 
             className="w-full" 
-            disabled={isSubmitting}
+            disabled={!!isSubmitting}
             variant="outline"
           >
-            <Send className="mr-2 h-5 w-5" /> {}
-            {isSubmitting ? "Signing in..." : "Sign in with Telegram"}
-          </Button> */}
+            <Send className="mr-2 h-5 w-5" /> 
+            {isSubmitting === "telegram" ? "Processing..." : "Sign in with Telegram"}
+          </Button>
+          <Button 
+            onClick={() => handleSignIn("yandex")} 
+            className="w-full" 
+            disabled={!!isSubmitting}
+            variant="outline"
+          >
+            <Globe className="mr-2 h-5 w-5" /> 
+            {isSubmitting === "yandex" ? "Processing..." : "Sign in with Yandex"}
+          </Button>
         </CardContent>
         <CardFooter className="flex flex-col items-center space-y-2 text-sm">
           <p className="text-muted-foreground text-xs px-4 text-center">
