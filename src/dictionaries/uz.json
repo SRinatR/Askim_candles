@@ -386,6 +386,13 @@
     "loggedOutSuccess": "Siz tizimdan muvaffaqiyatli chiqdingiz.",
     "errorPasswordsDontMatch": "Parollar mos kelmadi."
   },
+  "usefulInfoPage": {
+    "title": "Foydali Ma'lumotlar",
+    "description": "Mahsulotlarimiz va ularga qanday g'amxo'rlik qilish haqida ko'proq bilib oling.",
+    "soyWaxTeaser": "Tabiiy soya mumining afzalliklarini va nima uchun u shamlar uchun ajoyib tanlov ekanligini bilib oling.",
+    "aromaSachetTeaser": "Aromasashelar nima ekanligini va ularni uyingizda va mashinangizda ijodiy usullarda qanday ishlatishni bilib oling.",
+    "readMoreButton": "Batafsil O'qish"
+  },
   "soyWaxPage": {
     "breadcrumbHome": "Bosh sahifa",
     "breadcrumbUsefulInfo": "Foydali",

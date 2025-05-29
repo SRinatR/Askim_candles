@@ -15,11 +15,14 @@ export default async function HomePage({ params: { locale } }: { params: { local
   const featuredProducts = activeProducts.slice(0, 4);
 
   const productCardStrings: ProductCardDictionary = dictionary.productCard || {
-    addToCart: "Add to Cart (HomePage Fallback)",
-    addedToCartTitle: "Added to cart (HomePage Fallback)",
-    addedToCartDesc: "{productName} has been added (HomePage Fallback).",
-    outOfStock: "Out of Stock (HomePage Fallback)"
+    addToCart: "Add to Cart (Default Fallback)",
+    addedToCartTitle: "Added to cart (Default Fallback)",
+    addedToCartDesc: "{productName} has been added (Default Fallback).",
+    outOfStock: "Out of Stock (Default Fallback)"
   };
+
+  // Filter categories to a maximum of 5 for the homepage grid
+  const displayedCategories = mockCategories.slice(0, 5);
 
   return (
     <div className="space-y-12">
@@ -46,20 +49,21 @@ export default async function HomePage({ params: { locale } }: { params: { local
       {/* Categories Section */}
       <section>
         <h2 className="text-3xl font-semibold tracking-tight text-center mb-8">{dictionary.homepage.categoriesTitle}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {mockCategories.map(category => (
-            <Link key={category.id} href={`/${locale}/products?category=${category.slug}`} className="group block">
-              <div className="relative aspect-[4/3] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 md:gap-6">
+          {displayedCategories.map(category => (
+            <Link key={category.id} href={`/${locale}/products?category=${category.slug}`} 
+                  className="group block rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 ease-in-out transform hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2">
+              <div className="relative aspect-[3/2] w-full"> {/* Consistent aspect ratio */}
                 <Image
                   src={`https://placehold.co/400x300.png?text=${encodeURIComponent(dictionary.categories[category.slug as keyof typeof dictionary.categories] || category.name)}`}
                   alt={dictionary.categories[category.slug as keyof typeof dictionary.categories] || category.name}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 300px"
+                  sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, (max-width: 1280px) 30vw, 20vw"
                   className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  data-ai-hint={`${category.slug} items`}
+                  data-ai-hint={`${category.slug.replace('-', ' ')}`}
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-10 transition-colors duration-300 flex items-center justify-center">
-                  <h3 className="text-2xl font-semibold text-white text-center p-4">{dictionary.categories[category.slug as keyof typeof dictionary.categories] || category.name}</h3>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-transparent flex flex-col items-center justify-end p-4">
+                  <h3 className="text-xl font-semibold text-white text-center drop-shadow-md">{dictionary.categories[category.slug as keyof typeof dictionary.categories] || category.name}</h3>
                 </div>
               </div>
             </Link>
@@ -91,3 +95,5 @@ export default async function HomePage({ params: { locale } }: { params: { local
     </div>
   );
 }
+
+    

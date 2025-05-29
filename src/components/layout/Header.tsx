@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut, Globe, ChevronDown, Info } from 'lucide-react';
+import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut, Globe, ChevronDown, Info, BookOpen } from 'lucide-react'; // Added BookOpen
 import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -20,9 +20,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
-  DropdownMenuGroup,
-  DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
@@ -31,9 +28,9 @@ interface HeaderProps {
     home: string;
     products: string;
     about: string;
-    usefulInfo: string;
-    soyWaxInfoTitle: string;
-    aromaSachetInfoTitle: string;
+    usefulInfo: string; // This will now be the link text for the main info page
+    soyWaxInfoTitle?: string; // Kept for potential direct links elsewhere, but not used in header dropdown
+    aromaSachetInfoTitle?: string; // Kept for potential direct links elsewhere
     cart: string;
     account: string;
     login: string;
@@ -58,12 +55,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
-  const currentPathWithoutLocale = pathname.startsWith(`/${locale}`) ? pathname.substring(`/${locale}`.length) : pathname;
-  if (currentPathWithoutLocale === "") {
-    // Ensures that the root path remains / and not //
-    // currentPathWithoutLocale = '/';
-  }
-
+  const currentPathWithoutLocale = pathname.startsWith(`/${locale}`) ? pathname.substring(`/${locale}`.length) || '/' : pathname;
 
   const isAdminPath = pathname.split('/').includes('admin');
   if (isAdminPath) {
@@ -74,11 +66,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
     { href: '/', label: dictionary.home },
     { href: '/products', label: dictionary.products },
     { href: '/about', label: dictionary.about },
-  ];
-
-  const usefulInfoLinks = [
-    { href: '/info/soy-wax', label: dictionary.soyWaxInfoTitle },
-    { href: '/info/aroma-sachet', label: dictionary.aromaSachetInfoTitle },
+    { href: '/info', label: dictionary.usefulInfo, icon: BookOpen }, // Changed "Полезное" to a direct link
   ];
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
@@ -96,7 +84,8 @@ export function Header({ locale, dictionary }: HeaderProps) {
       await nextAuthSignOut({ callbackUrl: `/${locale}/` });
     }
     if (simulatedUser) {
-      simulatedLogout();
+      simulatedLogout(); // This should handle its own redirect via AuthContext
+    } else { // If only NextAuth session existed, or if simulatedLogout doesn't redirect
       router.push(`/${locale}/`);
     }
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
@@ -125,7 +114,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Change language">
+          <Button variant="ghost" size="icon" aria-label="Change language" title={getLangName(locale)}>
             <Globe className="h-5 w-5" />
           </Button>
         </DropdownMenuTrigger>
@@ -133,7 +122,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
           {i18n.locales.map((loc) => (
             <DropdownMenuItem key={loc} asChild>
               <Link
-                href={`/${loc}${currentPathWithoutLocale || '/'}`}
+                href={`/${loc}${currentPathWithoutLocale}`}
                 className={cn(
                   "w-full flex items-center",
                   locale === loc ? "font-semibold text-primary" : ""
@@ -155,35 +144,24 @@ export function Header({ locale, dictionary }: HeaderProps) {
           <Logo className="h-8 w-auto" />
         </Link>
 
-        <nav className="hidden items-center space-x-4 md:flex">
+        <nav className="hidden items-center space-x-1 md:space-x-2 lg:space-x-4 md:flex">
           {navLinks.map(link => (
             <Link
               key={link.href}
               href={`/${locale}${link.href}`}
-              className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
+              className={cn(
+                "text-sm font-medium text-foreground/80 transition-colors hover:text-foreground px-2 py-1 rounded-md",
+                (pathname === `/${locale}${link.href}` || (link.href === '/' && pathname === `/${locale}`)) && "bg-muted text-foreground"
+              )}
             >
               {link.label}
             </Link>
           ))}
-           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground p-0 h-auto">
-                {dictionary.usefulInfo} <ChevronDown className="ml-1 h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              {usefulInfoLinks.map(link => (
-                <DropdownMenuItem key={link.href} asChild>
-                  <Link href={`/${locale}${link.href}`}>{link.label}</Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
         </nav>
         
-        <div className="flex items-center space-x-1 sm:space-x-3">
+        <div className="flex items-center space-x-1 sm:space-x-2">
           <form onSubmit={handleSearch} className="hidden sm:flex items-center relative">
-            <Input type="search" name="search" placeholder={dictionary.searchPlaceholder} className="h-9 pr-10 w-32 sm:w-48 lg:w-64" />
+            <Input type="search" name="search" placeholder={dictionary.searchPlaceholder} className="h-9 pr-10 w-32 sm:w-40 lg:w-56" />
             <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-9 w-9">
               <Search className="h-4 w-4" />
               <span className="sr-only">Search</span>
@@ -199,7 +177,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
                   </Link>
                 </Button>
               ) : (
-                 <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex" title={dictionary.login}>
+                 <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex px-2" title={dictionary.login}>
                    <Link href={`/${locale}/login`}>
                      <LogIn className="mr-1 h-4 w-4" /> {dictionary.login}
                    </Link>
@@ -252,31 +230,21 @@ export function Header({ locale, dictionary }: HeaderProps) {
                     </Button>
                   </form>
 
-                  <nav className="flex flex-col space-y-3">
+                  <nav className="flex flex-col space-y-1">
                     {navLinks.map(link => (
                       <Link
                         key={link.href}
                         href={`/${locale}${link.href}`}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-base font-medium text-foreground/80 transition-colors hover:text-foreground"
+                        className={cn(
+                          "text-base font-medium text-foreground/80 transition-colors hover:text-foreground p-2 rounded-md hover:bg-muted",
+                          (pathname === `/${locale}${link.href}` || (link.href === '/' && pathname === `/${locale}`)) && "bg-muted text-foreground"
+                        )}
                       >
+                        {link.icon && <link.icon className="mr-2 h-4 w-4 inline-block" />}
                         {link.label}
                       </Link>
                     ))}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="text-base font-medium text-foreground/80 transition-colors hover:text-foreground p-0 h-auto justify-start">
-                          {dictionary.usefulInfo} <ChevronDown className="ml-1 h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-[calc(100%-2rem)] ml-4"> {/* Adjust width and margin as needed */}
-                        {usefulInfoLinks.map(link => (
-                          <DropdownMenuItem key={link.href} asChild>
-                            <Link href={`/${locale}${link.href}`} onClick={() => setIsMobileMenuOpen(false)}>{link.label}</Link>
-                          </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
                   </nav>
                   
                   <div className="pt-3 border-t md:hidden">
@@ -285,11 +253,11 @@ export function Header({ locale, dictionary }: HeaderProps) {
                         {i18n.locales.map((loc) => ( 
                           <Link
                             key={loc}
-                            href={`/${loc}${currentPathWithoutLocale || '/'}`}
+                            href={`/${loc}${currentPathWithoutLocale}`}
                             onClick={() => setIsMobileMenuOpen(false)}
                             className={cn(
                               "rounded-md px-2 py-1 text-xs hover:bg-muted flex-1 text-center",
-                              locale === loc ? "font-semibold text-primary bg-muted" : "text-foreground/80"
+                              locale === loc ? "font-semibold text-primary bg-primary/10 border border-primary/50" : "text-foreground/80 border border-transparent"
                             )}
                           >
                             {loc === 'uz' ? dictionary.langUz : loc === 'ru' ? dictionary.langRu : dictionary.langEn}
@@ -307,10 +275,10 @@ export function Header({ locale, dictionary }: HeaderProps) {
                           <Link
                             href={accountLink}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="flex items-center space-x-2 text-base font-medium text-foreground/80 transition-colors hover:text-foreground"
+                            className="flex items-center space-x-2 text-base font-medium text-foreground/80 transition-colors hover:text-foreground p-2 rounded-md hover:bg-muted"
                           >
                             <User className="h-5 w-5" />
-                            <span>{userName || dictionary.account}</span>
+                            <span className="truncate">{userName || dictionary.account}</span>
                           </Link>
                           <Button variant="outline" 
                             onClick={handleLogout}
@@ -321,14 +289,14 @@ export function Header({ locale, dictionary }: HeaderProps) {
                           </Button>
                         </>
                       ) : (
-                        <Button 
-                          variant="ghost" 
-                          onClick={() => { router.push(`/${locale}/login`); setIsMobileMenuOpen(false); }}
-                          className="flex items-center space-x-2 text-base font-medium text-foreground/80 transition-colors hover:text-foreground w-full justify-start p-0 h-auto"
+                        <Link
+                          href={`/${locale}/login`}
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className="flex items-center space-x-2 text-base font-medium text-foreground/80 transition-colors hover:text-foreground p-2 rounded-md hover:bg-muted"
                         >
                           <LogIn className="h-5 w-5" />
                           <span>{dictionary.login}</span>
-                        </Button>
+                        </Link>
                       )}
                     </>
                   )}

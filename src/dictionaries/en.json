@@ -48,8 +48,8 @@
     "wedding-favors": "Wedding Favors",
     "scented-candles": "Scented Candles",
     "home-fragrances": "Home Fragrances",
-    "gypsum-paradise": "Gypsum Paradise",
-    "tasty-home": "Home Fragrances"
+    "tasty-home": "Home Fragrances",
+    "gypsum-paradise": "Gypsum Paradise"
   },
   "productCard": {
     "addToCart": "Add to Cart",
@@ -385,6 +385,13 @@
     "loggedOut": "Logged Out",
     "loggedOutSuccess": "You have been successfully logged out.",
     "errorPasswordsDontMatch": "Passwords do not match."
+  },
+  "usefulInfoPage": {
+    "title": "Useful Information",
+    "description": "Learn more about our products and how to best care for them.",
+    "soyWaxTeaser": "Discover the benefits of natural soy wax and why it's a great choice for candles.",
+    "aromaSachetTeaser": "Find out what aroma sachets are and creative ways to use them around your home and car.",
+    "readMoreButton": "Read More"
   },
   "soyWaxPage": {
     "breadcrumbHome": "Home",
