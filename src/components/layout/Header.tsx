@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -13,7 +14,7 @@ import { useRouter } from 'next/navigation';
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/products', label: 'Products' },
-  // { href: '/about', label: 'About Us' },
+  { href: '/about', label: 'About Us' },
   // { href: '/contact', label: 'Contact' },
 ];
 
