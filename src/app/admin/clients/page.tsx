@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,7 +47,8 @@ import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 type AdminClientsPageDict = typeof enAdminMessages.adminClientsPage;
-type SortableClientKeys = keyof Pick<MockAdminClient, 'name' | 'email'> | 'registrationDate' | 'totalOrders' | 'totalSpent';
+type SortableClientKeys = keyof Pick<MockAdminClient, 'name' | 'email' | 'registrationDate' | 'totalOrders' | 'totalSpent'>;
+
 
 const ITEMS_PER_PAGE = 5;
 
@@ -66,7 +66,7 @@ export default function AdminClientsPage() {
   const [isClient, setIsClient] = useState(false);
 
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'blocked'>('all');
-  const [sortConfig, setSortConfig = useState<{ key: SortableClientKeys; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
+  const [sortConfig, setSortConfig] = useState<{ key: SortableClientKeys; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
 
   const [selectedClient, setSelectedClient] = useState<MockAdminClient | null>(null);
@@ -456,5 +456,3 @@ export default function AdminClientsPage() {
     </div>
   );
 }
-
-    

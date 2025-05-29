@@ -28,14 +28,16 @@ const defaultProductCardDictionary: ProductCardDictionary = {
 interface ProductCardProps {
   product: Product;
   locale: Locale;
-  dictionary?: ProductCardDictionary; // Made optional, will use default if not provided
+  dictionary: ProductCardDictionary;
 }
 
 export function ProductCard({ product, locale, dictionary }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
 
+  // Use provided dictionary or fallback to default
   const currentDictionary = dictionary || defaultProductCardDictionary;
+  
   const productName = product.name[locale] || product.name.en || "Product";
   const productDescription = product.description[locale] || product.description.en || "";
 
@@ -56,7 +58,7 @@ export function ProductCard({ product, locale, dictionary }: ProductCardProps) {
         <CardHeader className="p-0">
           <div className="aspect-square overflow-hidden relative">
             <Image
-              src={product.mainImage || product.images[0]}
+              src={product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : "https://placehold.co/600x400.png?text=No+Image")}
               alt={productName}
               fill
               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
@@ -65,23 +67,27 @@ export function ProductCard({ product, locale, dictionary }: ProductCardProps) {
             />
           </div>
         </CardHeader>
-        <CardContent className="p-4 flex-grow">
-          <CardTitle className="text-lg font-semibold leading-tight mb-1 group-hover:text-primary transition-colors">
-            {productName}
-          </CardTitle>
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{productDescription}</p>
-          <p className="text-lg font-bold text-foreground">{product.price.toLocaleString('en-US')} UZS</p>
+        <CardContent className="p-4 flex-grow flex flex-col"> {/* Modified: Added flex flex-col */}
+          <div> {/* Wrapper for title and description */}
+            <CardTitle className="text-lg font-semibold leading-tight mb-1 group-hover:text-primary transition-colors line-clamp-2"> {/* Added line-clamp-2 */}
+              {productName}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{productDescription}</p>
+          </div>
+          <p className="text-lg font-bold text-foreground mt-auto pt-2"> {/* Modified: Added mt-auto and pt-2 */}
+            {product.price.toLocaleString('en-US')} UZS
+          </p>
         </CardContent>
-        <CardFooter className="p-4 border-t border-border/60 mt-auto">
+        <CardFooter className="p-4 border-t border-border/60">
           <Button
             variant="outline"
             className="w-full hover:bg-accent hover:text-accent-foreground transition-colors"
             onClick={handleAddToCart}
             aria-label={`${currentDictionary.addToCart} ${productName}`}
-            disabled={product.stock === 0}
+            disabled={product.stock === 0 || !product.isActive}
           >
             <ShoppingCart className="mr-2 h-4 w-4" />
-            {product.stock === 0 ? (currentDictionary.outOfStock || "Out of Stock") : currentDictionary.addToCart}
+            {product.stock === 0 || !product.isActive ? (currentDictionary.outOfStock || "Out of Stock") : currentDictionary.addToCart}
           </Button>
         </CardFooter>
       </Link>
