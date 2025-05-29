@@ -35,7 +35,10 @@
   "footer": {
     "rightsReserved": "All rights reserved.",
     "privacyPolicy": "Privacy Policy",
-    "termsOfService": "Terms of Service"
+    "termsOfService": "Terms of Service",
+    "contactPagePath": "/contact",
+    "termsPagePath": "/terms",
+    "privacyPagePath": "/privacy"
   },
   "categories": {
     "artisanal-candles": "Artisanal Candles",
@@ -275,5 +278,35 @@
     "secureCheckout": "Secure Checkout",
     "easyReturns": "Easy Returns",
     "relatedProductsTitle": "You Might Also Like"
+  },
+  "productFilters": {
+    "filtersTitle": "Filters",
+    "clearAllButton": "Clear All",
+    "categoryTitle": "Category",
+    "priceRangeTitle": "Price Range",
+    "scentTitle": "Scent",
+    "materialTitle": "Material"
+  },
+  "productSort": {
+    "sortByLabel": "Sort by:",
+    "sortPlaceholder": "Sort by",
+    "relevanceOption": "Relevance",
+    "priceAscOption": "Price: Low to High",
+    "priceDescOption": "Price: High to Low",
+    "nameAscOption": "Name: A to Z",
+    "nameDescOption": "Name: Z to A",
+    "newestOption": "Newest Arrivals"
+  },
+  "productsPage": {
+    "homeBreadcrumb": "Home",
+    "productsBreadcrumb": "Products",
+    "allProductsTitle": "All Products",
+    "searchResultsTitle": "Search results for \"{searchTerm}\"",
+    "productsFound": "{count} product found",
+    "productsFound_plural": "{count} products found",
+    "noProductsFound": "No Products Found",
+    "searchNoMatch": "Your search for \"{searchTerm}\" did not match any products.",
+    "filterNoMatch": "We couldn't find products matching your current filters.",
+    "tryAdjusting": "Try adjusting your search or filters."
   }
 }

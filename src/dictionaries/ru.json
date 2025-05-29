@@ -35,7 +35,10 @@
   "footer": {
     "rightsReserved": "Все права защищены.",
     "privacyPolicy": "Политика конфиденциальности",
-    "termsOfService": "Условия использования"
+    "termsOfService": "Условия использования",
+    "contactPagePath": "/contact-ru",
+    "termsPagePath": "/terms-ru",
+    "privacyPagePath": "/privacy-ru"
   },
   "categories": {
     "artisanal-candles": "Авторские свечи",
@@ -275,5 +278,36 @@
     "secureCheckout": "Безопасная оплата",
     "easyReturns": "Легкий возврат",
     "relatedProductsTitle": "Вам также могут понравиться"
+  },
+  "productFilters": {
+    "filtersTitle": "Фильтры",
+    "clearAllButton": "Очистить все",
+    "categoryTitle": "Категория",
+    "priceRangeTitle": "Диапазон цен",
+    "scentTitle": "Аромат",
+    "materialTitle": "Материал"
+  },
+  "productSort": {
+    "sortByLabel": "Сортировать по:",
+    "sortPlaceholder": "Сортировать по",
+    "relevanceOption": "Релевантности",
+    "priceAscOption": "Цене: по возрастанию",
+    "priceDescOption": "Цене: по убыванию",
+    "nameAscOption": "Названию: А-Я",
+    "nameDescOption": "Названию: Я-А",
+    "newestOption": "Новинкам"
+  },
+  "productsPage": {
+    "homeBreadcrumb": "Главная",
+    "productsBreadcrumb": "Товары",
+    "allProductsTitle": "Все товары",
+    "searchResultsTitle": "Результаты поиска по запросу \"{searchTerm}\"",
+    "productsFound": "Найден {count} товар",
+    "productsFound_plural": "Найдено {count} товаров",
+    "productsFound_few": "Найдено {count} товара",
+    "noProductsFound": "Товары не найдены",
+    "searchNoMatch": "По вашему запросу \"{searchTerm}\" ничего не найдено.",
+    "filterNoMatch": "Мы не смогли найти товары, соответствующие вашим текущим фильтрам.",
+    "tryAdjusting": "Попробуйте изменить параметры поиска или фильтры."
   }
 }

@@ -35,7 +35,10 @@
   "footer": {
     "rightsReserved": "Barcha huquqlar himoyalangan.",
     "privacyPolicy": "Maxfiylik siyosati",
-    "termsOfService": "Foydalanish shartlari"
+    "termsOfService": "Foydalanish shartlari",
+    "contactPagePath": "/contact-uz",
+    "termsPagePath": "/terms-uz",
+    "privacyPagePath": "/privacy-uz"
   },
   "categories": {
     "artisanal-candles": "Qo'lda yasalgan shamlar",
@@ -275,5 +278,35 @@
     "secureCheckout": "Xavfsiz to'lov",
     "easyReturns": "Oson qaytarish",
     "relatedProductsTitle": "Sizga Yoqishi Mumkin Bo'lgan Mahsulotlar"
+  },
+  "productFilters": {
+    "filtersTitle": "Filtrlar",
+    "clearAllButton": "Hammasini Tozalash",
+    "categoryTitle": "Turkum",
+    "priceRangeTitle": "Narx Oralig'i",
+    "scentTitle": "Xushbo'ylik",
+    "materialTitle": "Material"
+  },
+  "productSort": {
+    "sortByLabel": "Saralash:",
+    "sortPlaceholder": "Saralash",
+    "relevanceOption": "Mosligi bo'yicha",
+    "priceAscOption": "Narx: arzonidan qimmatiga",
+    "priceDescOption": "Narx: qimmatidan arzoniga",
+    "nameAscOption": "Nomi: A-Z",
+    "nameDescOption": "Nomi: Z-A",
+    "newestOption": "Yangilari"
+  },
+  "productsPage": {
+    "homeBreadcrumb": "Bosh sahifa",
+    "productsBreadcrumb": "Mahsulotlar",
+    "allProductsTitle": "Barcha Mahsulotlar",
+    "searchResultsTitle": "\"{searchTerm}\" uchun qidiruv natijalari",
+    "productsFound": "{count} ta mahsulot topildi",
+    "productsFound_plural": "{count} ta mahsulot topildi",
+    "noProductsFound": "Mahsulotlar Topilmadi",
+    "searchNoMatch": "Sizning \"{searchTerm}\" qidiruvingiz hech qanday mahsulotga mos kelmadi.",
+    "filterNoMatch": "Joriy filtrlaringizga mos keladigan mahsulotlarni topa olmadik.",
+    "tryAdjusting": "Qidiruv yoki filtrlaringizni o'zgartirib ko'ring."
   }
 }

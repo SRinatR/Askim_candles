@@ -3,57 +3,37 @@
 import { ProductList } from '@/components/products/ProductList';
 import { ProductFilters } from '@/components/products/ProductFilters';
 import { ProductSort } from '@/components/products/ProductSort';
-import { mockProducts, mockCategories } from '@/lib/mock-data'; // mockCategories might be useful for filter labels
+import { mockProducts, mockCategories } from '@/lib/mock-data';
 import type { Product } from '@/lib/types';
-import { useSearchParams, useParams } from 'next/navigation'; // Added useParams
+import { useSearchParams, useParams } from 'next/navigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
 
-// Placeholder dictionary - in a real app, this would come from getDictionary or a client i18n solution
-const getProductsPageDictionary = (locale: Locale) => {
-  if (locale === 'uz') {
-    return {
-      home: "Bosh sahifa",
-      productsBreadcrumb: "Mahsulotlar",
-      allProductsTitle: "Barcha Mahsulotlar",
-      searchResultsTitle: (term: string) => `"${term}" uchun qidiruv natijalari`,
-      productsFound: (count: number) => `${count} ta mahsulot topildi`,
-      product: "mahsulot",
-      products: "mahsulotlar",
-      noProductsFound: "Mahsulotlar Topilmadi",
-      searchNoMatch: (term: string) => `Sizning "${term}" qidiruvingiz hech qanday mahsulotga mos kelmadi.`,
-      filterNoMatch: "Joriy filtrlaringizga mos keladigan mahsulotlarni topa olmadik.",
-      tryAdjusting: "Qidiruv yoki filtrlaringizni o'zgartirib ko'ring.",
-    };
-  }
-  if (locale === 'ru') {
-    return {
-      home: "Главная",
-      productsBreadcrumb: "Товары",
-      allProductsTitle: "Все товары",
-      searchResultsTitle: (term: string) => `Результаты поиска для "${term}"`,
-      productsFound: (count: number) => `Найдено ${count} товар(ов)`,
-      product: "товар",
-      products: "товаров",
-      noProductsFound: "Товары не найдены",
-      searchNoMatch: (term: string) => `По вашему запросу "${term}" ничего не найдено.`,
-      filterNoMatch: "Мы не смогли найти товары, соответствующие вашим текущим фильтрам.",
-      tryAdjusting: "Попробуйте изменить параметры поиска или фильтры.",
-    };
-  }
-  return { // en
-    home: "Home",
-    productsBreadcrumb: "Products",
-    allProductsTitle: "All Products",
-    searchResultsTitle: (term: string) => `Search results for "${term}"`,
-    productsFound: (count: number) => `${count} product${count !== 1 ? 's' : ''} found`,
-    product: "product",
-    products: "products",
-    noProductsFound: "No Products Found",
-    searchNoMatch: (term: string) => `Your search for "${term}" did not match any products.`,
-    filterNoMatch: "We couldn't find products matching your current filters.",
-    tryAdjusting: "Try adjusting your search or filters.",
+// Importing main dictionaries
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type FullDictionary = typeof enMessages; // Assuming en.json has all keys
+type ProductsPageDictionary = FullDictionary['productsPage'];
+type ProductFiltersDictionary = FullDictionary['productFilters'];
+type ProductSortDictionary = FullDictionary['productSort'];
+type ProductCardDictionary = FullDictionary['productCard']; // For ProductList -> ProductCard
+
+const dictionaries: Record<Locale, FullDictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
+const getCombinedDictionary = (locale: Locale) => {
+  const dict = dictionaries[locale] || dictionaries.en;
+  return {
+    productsPage: dict.productsPage,
+    productFilters: dict.productFilters,
+    productSort: dict.productSort,
+    productCard: dict.productCard, // Include strings for ProductCard
   };
 };
 
@@ -62,7 +42,12 @@ export default function ProductsPage() {
   const searchParams = useSearchParams();
   const params = useParams();
   const locale = params.locale as Locale || 'uz';
-  const dictionary = getProductsPageDictionary(locale);
+  const combinedDict = getCombinedDictionary(locale);
+  const dictionary = combinedDict.productsPage;
+  const filtersDictionary = combinedDict.productFilters;
+  const sortDictionary = combinedDict.productSort;
+  const productCardDictionary = combinedDict.productCard;
+
 
   const searchTerm = searchParams.get('search')?.toLowerCase();
   const categories = searchParams.getAll('category');
@@ -74,7 +59,6 @@ export default function ProductsPage() {
 
   const filteredProducts = mockProducts.filter(product => {
     const matchesSearch = searchTerm ? product.name.toLowerCase().includes(searchTerm) || product.description.toLowerCase().includes(searchTerm) : true;
-    // Assuming category in product is "Artisanal Candles" and slug is "artisanal-candles"
     const productCategorySlug = product.category.toLowerCase().replace(/\s+/g, '-');
     const matchesCategory = categories.length > 0 ? categories.includes(productCategorySlug) : true;
     const matchesScent = scents.length > 0 && product.scent ? scents.includes(product.scent) : scents.length === 0;
@@ -95,15 +79,23 @@ export default function ProductsPage() {
       case 'name-desc':
         return b.name.localeCompare(a.name);
       case 'newest': 
-         return parseInt(b.id) - parseInt(a.id); // Assuming higher ID is newer for mock data
-      default: // relevance or default
+         return parseInt(b.id) - parseInt(a.id);
+      default:
         return 0; 
     }
   });
   
-  const pageTitle = searchTerm ? dictionary.searchResultsTitle(searchTerm) : dictionary.allProductsTitle;
+  const pageTitle = searchTerm ? dictionary.searchResultsTitle.replace('{searchTerm}', searchTerm) : dictionary.allProductsTitle;
   const productsCount = sortedProducts.length;
-  const productsCountText = dictionary.productsFound(productsCount).replace(String(productsCount), `<strong>${productsCount}</strong>`);
+  
+  let productsCountText = "";
+  if (productsCount === 1) {
+    productsCountText = dictionary.productsFound.replace('{count}', String(productsCount));
+  } else if (locale === 'ru' && (productsCount % 10 >= 2 && productsCount % 10 <= 4) && !(productsCount % 100 >= 12 && productsCount % 100 <= 14) ) {
+    productsCountText = dictionary.productsFound_few!.replace('{count}', String(productsCount));
+  } else {
+     productsCountText = dictionary.productsFound_plural!.replace('{count}', String(productsCount));
+  }
 
 
   return (
@@ -111,7 +103,7 @@ export default function ProductsPage() {
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href={`/${locale}/`}>{dictionary.home}</BreadcrumbLink>
+            <BreadcrumbLink href={`/${locale}/`}>{dictionary.homeBreadcrumb}</BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator>
             <Slash />
@@ -125,21 +117,21 @@ export default function ProductsPage() {
       <div className="flex flex-col items-center justify-between gap-4 border-b border-border/60 pb-6 sm:flex-row">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
-          <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: productsCountText }} />
+          <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: productsCountText.replace(String(productsCount), `<strong>${productsCount}</strong>`) }} />
         </div>
-        <ProductSort /> {/* TODO: Localize Sort options */}
+        <ProductSort dictionary={sortDictionary} />
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
-        <ProductFilters /> {/* TODO: Localize Filter titles/options */}
+        <ProductFilters dictionary={filtersDictionary} categoriesData={mockCategories} />
         <div className="flex-1">
           {sortedProducts.length > 0 ? (
-            <ProductList products={sortedProducts} locale={locale} />
+            <ProductList products={sortedProducts} locale={locale} dictionary={productCardDictionary} />
           ) : (
             <div className="text-center py-10">
               <h2 className="text-2xl font-semibold mb-2">{dictionary.noProductsFound}</h2>
               <p className="text-muted-foreground">
-                {searchTerm ? dictionary.searchNoMatch(searchTerm) : dictionary.filterNoMatch}
+                {searchTerm ? dictionary.searchNoMatch.replace('{searchTerm}', searchTerm) : dictionary.filterNoMatch}
               </p>
               <p className="text-muted-foreground mt-2">{dictionary.tryAdjusting}</p>
             </div>
