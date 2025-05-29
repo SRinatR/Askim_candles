@@ -5,13 +5,13 @@
 
 ## 1. Current Focus
 
-*   **Admin Panel - Core Feature Implementation (Simulated):**
-    *   **Product Management:** Implementing UI for listing products from `mock-data.ts`, and forms for adding/editing products. All operations are client-side simulations for now, with toasts for feedback.
-    *   **Manager Management (Admin Role):** Implementing UI for Admins to "add" new managers. New manager data will be simulated by storing in `localStorage`. `AdminAuthContext` will be updated to check this `localStorage` in addition to its predefined users.
-    *   **Logs & Sessions Pages:** Creating placeholder pages for "Logs" and "Sessions" within the admin panel, acknowledging they will require backend integration for real functionality.
-*   **Documentation:**
-    *   Creating a `deployment_guide.md` in the Memory Bank to outline future steps for production deployment and transitioning from simulations to a real backend (Prisma/PostgreSQL).
-    *   Updating all Memory Bank files to reflect these new developments.
+*   **Admin Panel - Product Image Management (Simulated):**
+    *   Implementing a new reusable component `ImageUploadArea.tsx` for drag-and-drop image uploads, multiple image previews, main image selection, and image removal.
+    *   Integrating `ImageUploadArea.tsx` into:
+        *   `src/app/admin/products/new/page.tsx`: Replacing the old image URL input.
+        *   `src/app/admin/products/edit/[id]/page.tsx`: Displaying existing image URLs and allowing replacement via the new upload component.
+    *   Updating Zod schemas and form handling logic in both product forms to accommodate an array of image Data URLs and a main image identifier.
+    *   All "uploads" are client-side simulations (Data URLs in state), not actual server uploads.
 
 ## 2. Recent Changes (Leading to this state)
 
@@ -30,38 +30,31 @@
 *   **Admin Panel Foundation:**
     *   Separate login page (`/admin/login`) with simulated auth for 'ADMIN' and 'MANAGER' roles (`AdminAuthContext`, `localStorage`).
     *   Admin layout (`/admin/layout.tsx`) with route protection, collapsible sidebar, role-based navigation, role display, theme/language toggles, and logout.
-    *   Placeholder pages for Dashboard, Products, Sales, Clients, Marketing, Reports, Finances, Discounts, Content, Settings, Management (Users).
-*   **UI & Bug Fixes (General):**
-    *   Corrected main site header/footer appearing on admin pages.
-    *   Fixed icon and trigger import errors in `admin/layout.tsx`.
-    *   Addressed accessibility warning for `DialogContent` (used by `Sheet`).
-    *   Resolved duplicate close icons in mobile sheet menu.
-    *   Fixed `ProductCard` dictionary prop issues.
+    *   Product management section (`/admin/products`, `/new`, `/edit/[id]`) with UI for listing products (mock data), and forms for product CRUD (client-side simulated actions, basic text inputs for data).
+    *   User management section (`/admin/users`, `/new-manager`) for Admins with UI for listing managers (predefined + localStorage) and form for adding new managers (client-side simulated via localStorage).
+    *   Placeholder page for "Logs" (`/admin/logs`).
+    *   Other admin sections (Sales, Clients, Marketing, etc.) are mostly stubs.
+*   **Documentation:**
+    *   Created a `deployment_guide.md` in the Memory Bank.
+    *   Updated all Memory Bank files to reflect current project state.
 
 ## 3. Next Steps (Immediate for Me)
 
-1.  **Implement Product Management UI (Simulated):**
-    *   Create table view for products on `/admin/products`.
-    *   Create forms for `/admin/products/new` and `/admin/products/edit/[id]`.
-    *   Simulate Add/Edit/Delete actions with toasts.
-2.  **Implement Manager Addition UI (Simulated):**
-    *   Update `/admin/users` page to list managers.
-    *   Create form for `/admin/users/new-manager`.
-    *   Update `AdminAuthContext` to handle dynamically "added" managers via `localStorage`.
-3.  **Create Placeholder Admin Pages:** "Logs".
-4.  **Update Admin Navigation:** Add "Logs".
-5.  **Generate `memory-bank/deployment_guide.md`**.
-6.  **Update all other Memory Bank files.**
-7.  Present changes to the user.
+1.  **Implement `ImageUploadArea.tsx`** with drag & drop, previews, main image selection, and removal.
+2.  **Integrate `ImageUploadArea` into `admin/products/new/page.tsx`**. Update schema and form logic.
+3.  **Integrate `ImageUploadArea` into `admin/products/edit/[id]/page.tsx`**. Update schema, form logic, and handle display of existing image URLs alongside the new upload component.
+4.  Test product image management thoroughly.
+5.  Update all Memory Bank files.
+6.  Present changes to the user.
 
 ## 4. Active Decisions & Considerations
 
-*   **Admin Panel - Current Focus:** Product Management UI, Manager Addition UI (both simulated).
-*   **Admin Panel Auth:** Using `AdminAuthContext` with client-side `localStorage` simulation for ADMIN/MANAGER roles. New managers "added" by Admin will also be stored in `localStorage`.
-*   **Data Source (Admin):** Product data from `mock-data.ts` for display. CRUD operations simulated on client.
-*   **Future Backend:** Explicitly planning for Prisma/PostgreSQL. `deployment_guide.md` will document transition.
-*   **Logs/Sessions:** Placeholder pages for now. Real implementation requires backend.
+*   **Admin Panel - Image Uploads:** Client-side simulation using Data URLs. No actual backend storage.
+*   **Edit Product Images:** Existing images (URLs) will be displayed. New uploads via `ImageUploadArea` will replace the image list for the product in the form's state.
 *   **Brand Name:** "Askim candles".
 *   **Admin Panel i18n:** EN (default), RU. Client-side preference.
 *   **Admin Panel Theme:** Dark/Light toggle implemented.
 *   **Main Site i18n:** Path-based (UZ/RU/EN).
+*   **Backend Plan:** Prisma/PostgreSQL, documented in `deployment_guide.md`.
+
+```
