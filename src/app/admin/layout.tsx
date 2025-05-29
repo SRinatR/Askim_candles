@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet'; // Added SheetHeader, SheetTitle, SheetClose
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet'; // Added SheetHeader, SheetTitle, SheetClose
 import {
   LayoutDashboard,
   Package,
@@ -23,7 +23,8 @@ import {
   Landmark, 
   Briefcase, 
   PanelLeftOpen,
-  PanelRightOpen
+  PanelRightOpen,
+  X // Added X import
 } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
