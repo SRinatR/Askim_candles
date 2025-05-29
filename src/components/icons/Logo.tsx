@@ -1,3 +1,4 @@
+
 import type { SVGProps } from 'react';
 
 export function Logo(props: SVGProps<SVGSVGElement>) {
@@ -7,7 +8,7 @@ export function Logo(props: SVGProps<SVGSVGElement>) {
       viewBox="0 0 200 50"
       width="150"
       height="37.5"
-      aria-label="ScentSational Showcase Logo"
+      aria-label="Askim candles Logo"
       {...props}
     >
       <style>
@@ -24,11 +25,8 @@ export function Logo(props: SVGProps<SVGSVGElement>) {
         `}
       </style>
       <text x="10" y="35" className="logo-text">
-        Scent<tspan className="logo-highlight">S</tspan>ational
+        Askim<tspan className="logo-highlight"> </tspan>candles
       </text>
-      {/* <text x="55" y="35" className="logo-text">
-        Showcase
-      </text> */}
     </svg>
   );
 }

@@ -1,8 +1,8 @@
 
 {
   "metadata": {
-    "title": "ScentSational Showcase",
-    "description": "Discover artisanal candles, wax figures, and gypsum products."
+    "title": "Askim candles",
+    "description": "Discover artisanal candles, wax figures, and gypsum products from Askim candles."
   },
   "navigation": {
     "home": "Home",
@@ -29,7 +29,7 @@
     "featuredProductsTitle": "Featured Products",
     "viewAllButton": "View All",
     "ctaTitle": "Crafted with Passion, Designed for You",
-    "ctaSubtitle": "At ScentSational Showcase, we believe in the art of creation. Each piece is thoughtfully designed and meticulously crafted to bring warmth, beauty, and tranquility to your space.",
+    "ctaSubtitle": "At Askim candles, we believe in the art of creation. Each piece is thoughtfully designed and meticulously crafted to bring warmth, beauty, and tranquility to your space.",
     "learnMoreButton": "Learn More About Us"
   },
   "footer": {
@@ -163,7 +163,7 @@
     "title": "Account Linking",
     "description": "Manage your connected social accounts for easier sign-in.",
     "connectedAccountsTitle": "Connected Accounts",
-    "connectedAccountsDesc": "These accounts are currently linked to your ScentSational Showcase profile.",
+    "connectedAccountsDesc": "These accounts are currently linked to your Askim candles profile.",
     "google": "Google",
     "telegram": "Telegram",
     "yandex": "Yandex",
@@ -179,11 +179,12 @@
   },
   "aboutUsPage": {
     "pageTitle": "About Us",
+    "homeBreadcrumb": "Home",
     "heroTitleMain": "About",
-    "heroTitleHighlight": "ScentSational Showcase",
+    "heroTitleHighlight": "Askim candles",
     "heroSubtitle": "Discover the passion, craftsmanship, and inspiration behind every product we create.",
     "ourStoryTitle": "Our Story",
-    "ourStoryP1": "ScentSational Showcase was born from a love for artisanal craftsmanship and the transformative power of scent. We believe that everyday items can be sources of joy and tranquility. Our journey began with a simple desire: to create high-quality, handcrafted products that elevate your space and soothe your senses.",
+    "ourStoryP1": "Askim candles was born from a love for artisanal craftsmanship and the transformative power of scent. We believe that everyday items can be sources of joy and tranquility. Our journey began with a simple desire: to create high-quality, handcrafted products that elevate your space and soothe your senses.",
     "ourStoryP2": "From hand-poured candles with captivating fragrances to unique wax figures and elegant gypsum decor, each item is meticulously designed and crafted with care. We are dedicated to using quality materials and sustainable practices wherever possible.",
     "valuesTitle": "Our Values",
     "passionTitle": "Passion & Craftsmanship",

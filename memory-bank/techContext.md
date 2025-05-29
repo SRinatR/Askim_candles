@@ -1,4 +1,5 @@
-# Tech Context: ScentSational Showcase
+
+# Tech Context: Askim candles
 
 ## 1. Core Technologies
 
@@ -7,15 +8,18 @@
 *   **UI Library:** React
 *   **Component Library:** ShadCN UI
 *   **Styling:** Tailwind CSS
-*   **Frontend User Authentication:**
+*   **Frontend User Authentication (Main Site - Hybrid):**
     *   NextAuth.js (for social logins like Google).
-    *   Client-side simulated email/password system using `AuthContext` and `localStorage` (for main site users).
+    *   Client-side simulated email/password system using `AuthContext` and `localStorage`.
 *   **Admin Panel Authentication:**
     *   Client-side simulated email/password system using `AdminAuthContext` and `localStorage` for `/admin` access (roles: ADMIN, MANAGER).
 *   **Planned Backend (Future Integration):**
     *   **Database:** PostgreSQL
     *   **ORM:** Prisma
 *   **AI Integration (Planned):** Genkit
+*   **Internationalization (i18n):**
+    *   **Main Site:** Path-based (`/[locale]/...`) with UZ (default), RU, EN. Uses dictionary files in `src/dictionaries/`.
+    *   **Admin Panel:** Client-side preference (EN default, RU) using `localStorage`. Uses dictionary files in `src/admin/dictionaries/`.
 
 ## 2. Development Setup
 
@@ -39,40 +43,32 @@
 *   **Genkit:** Adhere to v1.x API for flows, prompts (Handlebars), image generation (Gemini 2.0 Flash experimental), and tool use (when implemented).
 *   **ShadCN UI:** Prefer ShadCN components. Theme is in `src/app/globals.css`.
 *   **Icons:** Use `lucide-react`. Do not hallucinate icons.
+*   **Admin Panel Theme:** Supports Dark/Light mode toggle, managed client-side.
 
 ## 4. Key Project Files (Structure Overview)
 
-*   `src/app/`: Main application routes and pages.
-    *   `layout.tsx`: Root layout for the main site.
-    *   `page.tsx`: Homepage.
-    *   `products/`: Product listing and detail pages.
-    *   `cart/`: Shopping cart page.
-    *   `checkout/`: Checkout page.
-    *   `account/`: Frontend user account pages.
-    *   `login/`, `register/`: Frontend user auth pages.
-    *   `about/`: About Us page.
-    *   `admin/`: Admin panel routes.
-        *   `login/page.tsx`: Admin login page.
-        *   `layout.tsx`: Admin panel layout.
-        *   `dashboard/page.tsx`, `products/page.tsx`, etc.: Admin panel sections.
-    *   `globals.css`: Global styles and ShadCN theme.
-    *   `providers.tsx`: Groups client-side context providers for the main site.
+*   `src/app/[locale]/`: Main site localized routes.
+    *   `layout.tsx`: Root layout for the localized main site.
+    *   `page.tsx`: Localized Homepage.
+    *   `products/`, `cart/`, `checkout/`, `account/`, `login/`, `register/`, `about/`: Localized pages.
+*   `src/app/admin/`: Admin panel routes (not path-localized yet, i18n is client-side).
+    *   `login/page.tsx`: Admin login page.
+    *   `layout.tsx`: Admin panel layout (manages theme and client-side language).
+    *   `dashboard/page.tsx`, `products/page.tsx`, etc.: Admin panel sections.
+*   `src/app/globals.css`: Global styles and ShadCN theme (including dark mode variables).
+*   `src/app/providers.tsx`: Groups client-side context providers for the main site.
 *   `src/components/`: Reusable React components.
     *   `ui/`: ShadCN UI components.
     *   `layout/`: Header, Footer for the main site.
-    *   `products/`: Product-specific components.
-    *   `icons/`: Custom icons (e.g., Logo).
-*   `src/contexts/`: React contexts.
-    *   `AuthContext.tsx`: For client-side simulated email/password auth for main site users.
-    *   `AdminAuthContext.tsx`: For client-side simulated email/password auth for admin panel users.
-    *   `CartContext.tsx`: For shopping cart functionality.
-*   `src/lib/`: Utility functions, mock data, type definitions.
+*   `src/contexts/`: React contexts (`AuthContext`, `AdminAuthContext`, `CartContext`).
+*   `src/lib/`: Utility functions, mock data, type definitions, main site i18n config.
     *   `authOptions.ts`: Configuration for NextAuth.js.
-    *   `mock-data.ts`: Used for products, categories, orders until backend is integrated.
-*   `src/ai/`: Genkit related files (genkit.ts, dev.ts) - not yet functionally integrated.
+*   `src/dictionaries/`: JSON translation files for the main site.
+*   `src/admin/dictionaries/`: JSON translation files for the admin panel.
+*   `src/admin/lib/`: Admin-specific i18n config and dictionary getter.
 *   `public/`: Static assets.
 *   Configuration files: `next.config.ts`, `tailwind.config.ts`, `components.json`, `tsconfig.json`, `package.json`, `apphosting.yaml`.
-*   `.env.local.example` & `.env.local`: For environment variables (Google Client ID/Secret, NextAuth Secret).
+*   `.env.local.example` & `.env.local`: For environment variables.
 *   `memory-bank/`: Contains these contextual documents.
 *   `.cursorrules`: Contains my project-specific operational rules.
 *   **Planned (but not yet existing):**

@@ -52,10 +52,9 @@ export function Header({ locale, dictionary }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
-  // Ensure currentPathWithoutLocale is defined at the top level of the Header component
   const currentPathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
 
-  const isAdminPath = pathname.startsWith(`/${locale}/admin`) || pathname.startsWith('/admin');
+  const isAdminPath = pathname.split('/').includes('admin');
   if (isAdminPath) {
     return null;
   }
@@ -101,7 +100,6 @@ export function Header({ locale, dictionary }: HeaderProps) {
   }
 
   const LanguageSwitcher = () => {
-    // currentPathWithoutLocale is available from the parent Header component scope
     const getLangName = (loc: Locale) => {
       if (loc === 'uz') return dictionary.langUz;
       if (loc === 'ru') return dictionary.langRu;
@@ -201,12 +199,12 @@ export function Header({ locale, dictionary }: HeaderProps) {
               </Button>
             </SheetTrigger>
             <SheetContent side="right" className="w-full max-w-xs bg-background p-0">
-              <div className="flex flex-col space-y-6 h-full">
-                <SheetHeader className="flex flex-row justify-between items-center border-b p-6">
+              <div className="flex flex-col h-full"> {/* Ensure flex-col and h-full for proper layout */}
+                <SheetHeader className="flex flex-row justify-between items-center border-b p-6 shrink-0">
                    <Link href={`/${locale}/`} onClick={() => setIsMobileMenuOpen(false)}>
                       <Logo className="h-7 w-auto" />
                    </Link>
-                   <SheetTitle className="sr-only">{dictionary.mainMenuTitle}</SheetTitle> {/* Added for accessibility */}
+                   <SheetTitle className="sr-only">{dictionary.mainMenuTitle}</SheetTitle>
                    <SheetClose asChild>
                       <Button variant="ghost" size="icon">
                          <X className="h-6 w-6" />
@@ -214,7 +212,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
                    </SheetClose>
                 </SheetHeader>
                 
-                <div className="px-6 space-y-6">
+                <div className="flex-1 overflow-y-auto px-6 space-y-6 py-6"> {/* Added py-6 for padding */}
                   <form onSubmit={handleSearch} className="flex items-center relative">
                     <Input type="search" name="search" placeholder={dictionary.searchPlaceholder} className="h-10 pr-12 w-full" />
                     <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10">
@@ -236,17 +234,17 @@ export function Header({ locale, dictionary }: HeaderProps) {
                     ))}
                   </nav>
                   
-                  <div className="pt-4 border-t md:hidden"> {/* Language switcher for mobile */}
+                  <div className="pt-4 border-t md:hidden">
                      <p className="text-sm text-muted-foreground mb-2">Language:</p>
-                     <div className="flex flex-col space-y-2">
+                     <div className="flex items-center justify-around space-x-1"> {/* Changed to flex for horizontal layout */}
                         {i18n.locales.map((loc) => ( 
                           <Link
                             key={loc}
-                            href={`/${loc}${currentPathWithoutLocale}`} // This line uses currentPathWithoutLocale
+                            href={`/${loc}${currentPathWithoutLocale}`}
                             onClick={() => setIsMobileMenuOpen(false)}
                             className={cn(
-                              "block p-2 rounded-md hover:bg-muted",
-                              locale === loc ? "font-semibold text-primary bg-muted" : ""
+                              "rounded-md px-2.5 py-1.5 text-sm hover:bg-muted", // Adjusted padding for compactness
+                              locale === loc ? "font-semibold text-primary bg-muted" : "text-foreground/80"
                             )}
                           >
                             {loc === 'uz' ? dictionary.langUz : loc === 'ru' ? dictionary.langRu : dictionary.langEn}
@@ -256,7 +254,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
                   </div>
                 </div>
                 
-                <div className="mt-auto border-t border-border p-6 space-y-3">
+                <div className="border-t border-border p-6 space-y-3 shrink-0"> {/* Added shrink-0 */}
                   {!isLoadingAuth && (
                     <>
                       {isAuthenticated ? (
@@ -298,5 +296,3 @@ export function Header({ locale, dictionary }: HeaderProps) {
     </header>
   );
 }
-
-    

@@ -1,32 +1,39 @@
-# Project Brief: ScentSational Showcase App Development
+
+# Project Brief: Askim candles App Development
 
 ## 1. Project Overview
 
-**Project Name:** ScentSational Showcase
+**Project Name:** Askim candles (formerly ScentSational Showcase)
 
 **My Role:** App Prototyper (Firebase Studio AI Coding Partner, "Cursor")
 
-**My Goal:** Assist the user in building and modifying the ScentSational Showcase app by making code changes based on conversational requests. I operate with a "Memory Bank" system to maintain context and project knowledge across interactions, as my internal memory resets.
+**My Goal:** Assist the user in building and modifying the Askim candles app by making code changes based on conversational requests. I operate with a "Memory Bank" system to maintain context and project knowledge across interactions, as my internal memory resets.
 
-**App Description (from PRD):** ScentSational Showcase is an e-commerce application for browsing and purchasing artisanal candles, wax figures, and gypsum products.
+**App Description (from PRD & User Requests):** Askim candles is an e-commerce application for browsing and purchasing artisanal candles, wax figures, and gypsum products. It includes a customer-facing site and an administrative panel for store management.
 
 ## 2. Core App Features (from PRD & User Requests):
 
-*   Product Catalog: Browse products with details, images, and pricing.
-*   Product Filtering: Filter and sort by category, price, scent, etc.
-*   Product Details Page: High-quality images and detailed information.
-*   Shopping Cart: Add products, proceed to simplified checkout.
-*   User Accounts (Frontend):
-    *   Registration (multi-step with simulated confirmation).
-    *   Login (email/password - simulated; Google - NextAuth).
-    *   Profile management (view/update basic info - simulated).
-    *   Order history (mock).
-    *   Address management (mock).
-    *   Account linking page (UI stub).
-*   Admin Panel (`/admin`):
-    *   Role-based access (ADMIN, MANAGER - simulated).
-    *   Dashboard with statistics (stubs).
-    *   Management sections for Products, Orders, Users (admin-only), Discounts, Content, Settings (admin-only), Sales, Clients, Marketing, Reports, Finances (currently stubs).
+*   **Main Site (i18n: UZ (default), RU, EN):**
+    *   Product Catalog: Browse products with details, images, and pricing.
+    *   Product Filtering & Sorting.
+    *   Product Details Page.
+    *   Shopping Cart.
+    *   Checkout.
+    *   User Accounts (Frontend - Hybrid Auth):
+        *   Registration (multi-step with simulated confirmation - email/password).
+        *   Login (email/password - simulated; Google - NextAuth).
+        *   Profile management.
+        *   Order history (mock).
+        *   Address management (mock).
+        *   Account linking page.
+    *   About Us page.
+    *   Language switcher.
+*   **Admin Panel (`/admin` - i18n: EN (default), RU - Dark Theme):**
+    *   Role-based access (ADMIN, MANAGER - simulated via AdminAuthContext).
+    *   Dashboard with statistics (UI stubs implemented).
+    *   Management sections: Products, Sales, Clients, Marketing, Reports, Finances, Discounts, Content, Settings (admin-only), Management (Users - admin-only) (UI stubs implemented).
+    *   Collapsible sidebar navigation.
+    *   Theme (Dark/Light) and Language (EN/RU) switchers.
 *   Payment Processing: Stripe integration (future goal).
 
 ## 3. Style Guidelines (from PRD):
@@ -43,7 +50,7 @@
     *   Minimalistic hierarchy, high readability.
     *   Use ShadCN UI components and TailwindCSS.
     *   Responsive.
-    *   (Dark/light theme is a future goal).
+    *   Dark/light theme implemented with toggle.
 
 ## 4. My Operational Guidelines:
 
@@ -55,3 +62,6 @@
 *   **Code Quality:** Follow NextJS best practices, image optimization, error handling, responsiveness, accessibility. Avoid hydration errors. Use functional components and modern React.
 *   **Genkit Usage:** Follow specific guidelines for Genkit v1.x API, flows, data passing, Handlebars, image generation, and tool use.
 *   **Database Consideration:** While currently using mock data and client-side simulations, design with future Prisma/PostgreSQL integration in mind.
+*   **i18n:**
+    *   Main site: UZ (default), RU, EN using `/[locale]/` path prefix and `next-intl`-like dictionary structure.
+    *   Admin panel: EN (default), RU. Current implementation is client-side preference, with dictionary files in `src/admin/dictionaries`.
