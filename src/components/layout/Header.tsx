@@ -11,7 +11,7 @@ import { useAuth as useSimulatedAuth } from "@/contexts/AuthContext"; // For sim
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -20,6 +20,7 @@ const navLinks = [
 ];
 
 export function Header() {
+  const pathname = usePathname();
   const { cartCount } = useCart();
   const { data: nextAuthSession, status: nextAuthStatus } = useSession();
   const { currentUser: simulatedUser, logout: simulatedLogout, isLoading: isLoadingSimulatedAuth } = useSimulatedAuth();
@@ -29,6 +30,10 @@ export function Header() {
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
+
+  if (pathname.startsWith('/admin')) {
+    return null; // Do not render the main site header on admin routes
+  }
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
