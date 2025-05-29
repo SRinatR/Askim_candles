@@ -14,7 +14,7 @@ import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { Locale, I18nConfig } from '@/lib/i1n-config'; // Assuming i18n config is here
 import { i18n } from '@/lib/i1n-config';
-
+import { cn } from '@/lib/utils'; // Ensure this import is present
 
 interface HeaderProps {
   locale: Locale;
@@ -46,9 +46,12 @@ export function Header({ locale, dictionary }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
-  if (pathname.startsWith('/admin')) {
+  // Correctly check for admin paths, considering locale might be present
+  const isAdminPath = pathname.startsWith(`/${locale}/admin`) || pathname.startsWith('/admin');
+  if (isAdminPath) {
     return null;
   }
+
 
   const navLinks = [
     { href: '/', label: dictionary.home },
