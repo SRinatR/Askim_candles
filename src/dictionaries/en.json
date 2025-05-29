@@ -304,6 +304,7 @@
     "searchResultsTitle": "Search results for \"{searchTerm}\"",
     "productsFound": "{count} product found",
     "productsFound_plural": "{count} products found",
+    "productsFound_few": "{count} products found",
     "noProductsFound": "No Products Found",
     "searchNoMatch": "Your search for \"{searchTerm}\" did not match any products.",
     "filterNoMatch": "We couldn't find products matching your current filters.",
@@ -378,3 +379,5 @@
     "errorPasswordsDontMatch": "Passwords do not match."
   }
 }
+
+    

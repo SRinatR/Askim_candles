@@ -304,6 +304,7 @@
     "searchResultsTitle": "\"{searchTerm}\" uchun qidiruv natijalari",
     "productsFound": "{count} ta mahsulot topildi",
     "productsFound_plural": "{count} ta mahsulot topildi",
+    "productsFound_few": "{count} ta mahsulot topildi",
     "noProductsFound": "Mahsulotlar Topilmadi",
     "searchNoMatch": "Sizning \"{searchTerm}\" qidiruvingiz hech qanday mahsulotga mos kelmadi.",
     "filterNoMatch": "Joriy filtrlaringizga mos keladigan mahsulotlarni topa olmadik.",
@@ -378,3 +379,5 @@
     "errorPasswordsDontMatch": "Parollar mos kelmadi."
   }
 }
+
+    

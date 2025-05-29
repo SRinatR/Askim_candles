@@ -21,6 +21,8 @@ import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type Dictionary = typeof enMessages;
+type ProductDetailPageDictionary = Dictionary['productDetailPage'];
+type ProductCardDictionary = Dictionary['productCard'];
 
 const dictionaries: Record<Locale, Dictionary> = {
   en: enMessages,
@@ -28,15 +30,21 @@ const dictionaries: Record<Locale, Dictionary> = {
   uz: uzMessages,
 };
 
-const getProductDetailPageDictionary = (locale: Locale) => {
+const getProductDetailPageDictionaryBundle = (locale: Locale) => {
   const dict = dictionaries[locale] || dictionaries.en;
-  return dict.productDetailPage;
+  return {
+    page: dict.productDetailPage,
+    productCard: dict.productCard,
+  };
 };
 
 export default function ProductDetailPage({ params: routeParams }: { params: { id: string; locale: Locale } }) { 
   const clientParams = useParams(); 
   const locale = routeParams.locale || clientParams.locale as Locale || 'uz';
-  const dictionary = getProductDetailPageDictionary(locale);
+  const dictionaryBundle = getProductDetailPageDictionaryBundle(locale);
+  const dictionary = dictionaryBundle.page;
+  const productCardDict = dictionaryBundle.productCard;
+
 
   const product = mockProducts.find(p => p.id === routeParams.id);
   const { addToCart } = useCart();
@@ -49,8 +57,8 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
   const handleAddToCart = () => {
     addToCart(product);
     toast({
-      title: dictionary.addedToCartTitle,
-      description: dictionary.addedToCartDesc.replace('{name}', product.name),
+      title: productCardDict.addedToCartTitle, // Use localized toast title
+      description: productCardDict.addedToCartDesc.replace('{productName}', product.name), // Use localized toast description
     });
   };
 
@@ -95,10 +103,10 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
           <Separator />
 
           <div className="space-y-3">
-            {product.category && <p><strong className="font-medium">{dictionary.categoryLabel}:</strong> <Link href={`/${locale}/products?category=${productCategorySlug}`} className="text-primary hover:underline">{product.category}</Link></p>}
-            {product.scent && <p><strong className="font-medium">{dictionary.scentLabel}:</strong> {product.scent}</p>}
-            {product.material && <p><strong className="font-medium">{dictionary.materialLabel}:</strong> {product.material}</p>}
-            {product.dimensions && <p><strong className="font-medium">{dictionary.dimensionsLabel}:</strong> {product.dimensions}</p>}
+            {product.category && <p><strong className="font-medium">{dictionary.categoryLabel}</strong> <Link href={`/${locale}/products?category=${productCategorySlug}`} className="text-primary hover:underline">{product.category}</Link></p>}
+            {product.scent && <p><strong className="font-medium">{dictionary.scentLabel}</strong> {product.scent}</p>}
+            {product.material && <p><strong className="font-medium">{dictionary.materialLabel}</strong> {product.material}</p>}
+            {product.dimensions && <p><strong className="font-medium">{dictionary.dimensionsLabel}</strong> {product.dimensions}</p>}
             {product.attributes && product.attributes.map(attr => (
               <p key={attr.key}><strong className="font-medium">{attr.key}:</strong> {attr.value}</p>
             ))}
@@ -135,15 +143,12 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
           <h2 className="text-2xl font-semibold tracking-tight mb-6">{dictionary.relatedProductsTitle}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {relatedProducts.map(related => (
-              <Link key={related.id} href={`/${locale}/products/${related.id}`} className="group block border rounded-lg overflow-hidden shadow hover:shadow-lg transition-shadow">
-                <div className="aspect-video relative">
-                  <Image src={related.images[0]} alt={related.name} fill objectFit="cover" className="group-hover:scale-105 transition-transform" data-ai-hint={`${related.category.toLowerCase().replace(' ', '-')} product`} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-medium text-lg group-hover:text-primary">{related.name}</h3>
-                  <p className="text-muted-foreground text-sm">${related.price.toFixed(2)}</p>
-                </div>
-              </Link>
+              <ProductCard 
+                key={related.id} 
+                product={related} 
+                locale={locale} 
+                dictionary={productCardDict} 
+              />
             ))}
           </div>
         </section>
@@ -151,3 +156,5 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
     </div>
   );
 }
+
+    

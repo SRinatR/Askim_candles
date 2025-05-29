@@ -20,6 +20,8 @@ import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type Dictionary = typeof enMessages;
+type CartPageDictionary = Dictionary['cartPage'];
+
 
 const dictionaries: Record<Locale, Dictionary> = {
   en: enMessages,
@@ -27,7 +29,7 @@ const dictionaries: Record<Locale, Dictionary> = {
   uz: uzMessages,
 };
 
-const getCartDictionary = (locale: Locale) => {
+const getCartDictionary = (locale: Locale): CartPageDictionary => {
   const dict = dictionaries[locale] || dictionaries.en;
   return dict.cartPage;
 };
@@ -95,7 +97,7 @@ export default function CartPage() {
               </div>
               <div className="flex-grow space-y-1">
                 <Link href={`/${locale}/products/${item.id}`} className="text-lg font-medium hover:text-primary">{item.name}</Link>
-                <p className="text-sm text-muted-foreground">{dictionary.price}: ${item.price.toFixed(2)}</p>
+                <p className="text-sm text-muted-foreground">{dictionary.price} ${item.price.toFixed(2)}</p>
               </div>
               <div className="flex items-center space-x-3 shrink-0 mt-2 sm:mt-0">
                 <Input
@@ -163,3 +165,5 @@ export default function CartPage() {
     </div>
   );
 }
+
+    

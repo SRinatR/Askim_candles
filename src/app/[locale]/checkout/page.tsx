@@ -4,7 +4,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-// import { Label } from '@/components/ui/label'; // Not used by FormField, but can be kept if used elsewhere
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
 import Image from 'next/image';
@@ -25,6 +24,7 @@ import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type Dictionary = typeof enMessages;
+type CheckoutPageDictionary = Dictionary['checkoutPage'];
 
 const dictionaries: Record<Locale, Dictionary> = {
   en: enMessages,
@@ -32,7 +32,7 @@ const dictionaries: Record<Locale, Dictionary> = {
   uz: uzMessages,
 };
 
-const getCheckoutDictionary = (locale: Locale) => {
+const getCheckoutDictionary = (locale: Locale): CheckoutPageDictionary => {
   const dict = dictionaries[locale] || dictionaries.en;
   return dict.checkoutPage;
 };
@@ -200,10 +200,10 @@ export default function CheckoutPage() {
                     <CardDescription>{dictionary.paymentDesc}</CardDescription>
                  </CardHeader>
                  <CardContent className="space-y-4">
-                    <FormField name="cardNumber" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.cardNumberLabel}</FormLabel><FormControl><Input placeholder={dictionary.cardPlaceholder || "•••• •••• •••• ••••"} {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField name="cardNumber" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.cardNumberLabel}</FormLabel><FormControl><Input placeholder={dictionary.cardPlaceholder} {...field} /></FormControl><FormMessage /></FormItem> )} />
                     <div className="grid grid-cols-2 gap-4">
-                       <FormField name="expiryDate" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.expiryDateLabel}</FormLabel><FormControl><Input placeholder={dictionary.expiryPlaceholder || "MM/YY"} {...field} /></FormControl><FormMessage /></FormItem> )} />
-                       <FormField name="cvc" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.cvcLabel}</FormLabel><FormControl><Input placeholder={dictionary.cvcPlaceholder || "•••"} {...field} /></FormControl><FormMessage /></FormItem> )} />
+                       <FormField name="expiryDate" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.expiryDateLabel}</FormLabel><FormControl><Input placeholder={dictionary.expiryPlaceholder} {...field} /></FormControl><FormMessage /></FormItem> )} />
+                       <FormField name="cvc" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.cvcLabel}</FormLabel><FormControl><Input placeholder={dictionary.cvcPlaceholder} {...field} /></FormControl><FormMessage /></FormItem> )} />
                     </div>
                  </CardContent>
               </Card>
@@ -218,3 +218,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+    
