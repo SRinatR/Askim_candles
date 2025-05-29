@@ -41,7 +41,8 @@
     "termsOfService": "Foydalanish shartlari",
     "contactPagePath": "/info/contact-uz",
     "termsPagePath": "/info/terms-uz",
-    "privacyPagePath": "/info/privacy-uz"
+    "privacyPagePath": "/info/privacy-uz",
+    "version": "Versiya"
   },
   "categories": {
     "corporate-sets": "Korporativ to'plamlar",
@@ -212,12 +213,12 @@
     "startShopping": "Xarid qilishni boshlash",
     "yourCartTitle": "Sizning savatingiz",
     "itemRemoved": "Mahsulot o'chirildi",
-    "itemRemovedDesc": "{name} savatingizdan o'chirildi.",
+    "itemRemovedDesc": "{productName} savatingizdan o'chirildi.",
     "cartCleared": "Savatcha tozalandi",
     "cartClearedDesc": "Barcha mahsulotlar savatingizdan o'chirildi.",
     "price": "Narx:",
-    "quantityFor": "{name} uchun miqdor",
-    "remove": "{name}ni savatdan olib tashlash",
+    "quantityFor": "{productName} uchun miqdor",
+    "remove": "{productName}ni savatdan olib tashlash",
     "clearCart": "Savatni tozalash",
     "orderSummary": "Buyurtma xulosasi",
     "subtotal": "Oraliq jami",
@@ -391,7 +392,8 @@
     "description": "Mahsulotlarimiz va ularga qanday g'amxo'rlik qilish haqida ko'proq bilib oling.",
     "soyWaxTeaser": "Tabiiy soya mumining afzalliklarini va nima uchun u shamlar uchun ajoyib tanlov ekanligini bilib oling.",
     "aromaSachetTeaser": "Aromasashelar nima ekanligini va ularni uyingizda va mashinangizda ijodiy usullarda qanday ishlatishni bilib oling.",
-    "readMoreButton": "Batafsil O'qish"
+    "readMoreButton": "Batafsil O'qish",
+    "noArticlesYet": "Hozircha maqolalar mavjud emas."
   },
   "soyWaxPage": {
     "breadcrumbHome": "Bosh sahifa",
@@ -406,5 +408,3 @@
     "placeholderContent": "Aromasashelar, ulardan foydalanish usullari va uyingizda yoki mashinangizda ularning hididan qanday qilib eng yaxshi bahramand bo'lish haqida hamma narsani bilib oling. Kontent tez orada!"
   }
 }
-
-    

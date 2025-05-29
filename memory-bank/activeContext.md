@@ -1,40 +1,45 @@
+
 # Active Context: Askim candles
 
 ## Date: 2024-07-30 (Simulated Date of Update)
 
 ## 1. Current Focus
-*   **Finalize Product Filters & "Last Updated" Date:**
-    *   Ensure product filters (`ProductFilters.tsx`, `ProductsPage.tsx`) are robust, especially dynamic price range from active products and handling of empty filter results.
-    *   Adjust main site footer (`Footer.tsx`) to only show version number to regular users. "Last Updated" date will be removed from public footer. Admin footer will keep its simulated date.
-*   **Implement Multilingual Product Name & Description:**
-    *   Update `Product` type for `name` and `description` to support UZ/RU/EN.
-    *   Update mock data.
-    *   Update admin product forms (`new`, `edit`) with inputs for each language.
-    *   Update main site components (`ProductCard`, `ProductDetailPage`, cart/checkout summaries, order history) to display localized names/descriptions.
-    *   Update admin product list to show name in admin's current language.
+*   **Finalize Article Management (Phase 2 - Images):**
+    *   Update `Article` type for image fields (`sharedMainImage`, `mainImage_en/ru/uz`, `useSharedImage`).
+    *   Update admin article form to include image upload areas (using `ImageUploadArea`):
+        *   A `Switch` to choose between a shared image or per-language images.
+        *   Conditional display of single shared image uploader or per-language image uploaders.
+    *   Update main site article display page (`/[locale]/info/[slug]/page.tsx`) to show the correct image based on `useSharedImage` and current locale.
+    *   Update mock article seeding in admin to include initial image data.
+*   **Review and Refine Memory Bank.**
 
 ## 2. Recent Changes (Leading to this state)
-*   **Admin Attributes CRUD:** Implemented UI and `localStorage` logic for managing custom Categories, Materials, and Scents. Product forms updated to use `Select` inputs for these.
-*   **Version Display in Main Footer:** Added simulated version and "Last Updated" date to the main site footer (this will be revised).
-*   **Dropdown Fix in Admin Layout:** Corrected `DropdownMenu` usage for sidebar items with sub-menus.
+*   **Admin CRUD for Articles (Text Content):**
+    *   Implemented admin section for managing articles (`/admin/articles`).
+    *   Articles stored in `localStorage` (key: `askimAdminArticles`).
+    *   Forms allow creating/editing articles with multilingual titles and content (EN/RU/UZ tabs).
+    *   Slug auto-generation and `isActive` toggle.
+*   **Main Site Article Display:**
+    *   `/[locale]/info` page lists active articles.
+    *   `/[locale]/info/[slug]` page dynamically displays article content with Tailwind `prose` styling.
+    *   Old static article pages removed. Header link for "Useful Info" updated.
+*   **Memory Bank Updated** (prior to this current request).
 
 ## 3. Next Steps (Immediate for Me - based on user's latest request)
-1.  **Refine Product Filters:**
-    *   Verify dynamic price range calculation in `ProductFilters.tsx` based on *active* products.
-    *   Handle edge cases like empty product lists for filter generation.
-2.  **Adjust "Last Updated" Date Display:**
-    *   Modify `src/components/layout/Footer.tsx` to remove "Last Updated" for regular users.
-3.  **Implement Multilingual Product Data:**
-    *   Update `src/lib/types.ts` (`Product` interface).
-    *   Update `src/lib/mock-data.ts` with multilingual names/descriptions.
-    *   Modify admin forms: `src/app/admin/products/new/page.tsx`, `src/app/admin/products/edit/[id]/page.tsx`.
-    *   Modify display components: `src/components/products/ProductCard.tsx`, `src/app/[locale]/products/[id]/page.tsx`, `src/app/[locale]/cart/page.tsx`, `src/app/[locale]/checkout/page.tsx`, `src/app/[locale]/account/orders/page.tsx`, `src/app/[locale]/account/orders/[id]/page.tsx`.
-    *   Modify admin product list: `src/app/admin/products/page.tsx`.
-4.  **Update Memory Bank:** Reflect all these changes.
+1.  **Implement Article Image Management:**
+    *   Update `src/lib/types.ts` for `Article` image fields.
+    *   Modify `src/app/admin/articles/form/[id]/page.tsx`:
+        *   Update Zod schema for new image fields.
+        *   Add `Switch` for `useSharedImage`.
+        *   Add conditional `ImageUploadArea` components for shared vs. per-language main images.
+    *   Modify `src/app/admin/articles/page.tsx` to update article seeding with initial image data.
+    *   Modify `src/app/[locale]/info/[slug]/page.tsx` to display the correct main image based on `useSharedImage` and locale.
+    *   Modify `src/app/[locale]/info/page.tsx` to display article images on the listing page.
+2.  **Update Memory Bank:** Reflect all these changes related to article image management.
 
 ## 4. Active Decisions & Considerations
-*   **Admin "Last Updated" Date:** The admin panel footer will continue to show its own simulated "Last Updated" date (current render date). The request to make this editable by admin for display in the admin footer will be a future consideration if needed.
-*   **Multilingual Product Input:** For `name` and `description`, admin forms will have separate inputs for UZ, RU, EN.
-*   **Selectable Attributes (Category, Scent, Material):** These will remain single-value fields on the product model. Their *labels* in the admin `Select` components will be translated based on the admin's current language, but the stored value will be a consistent key (e.g., English name or a slug).
-*   **Filter Robustness:** Ensure filters don't break if no products match or if price ranges are unusual.
-*   **Attribute Deletion Warning:** Admins are warned with a modal if they try to delete a category, material, or scent that is currently in use by any product (checked against `mockProducts`).
+*   **Article Images:** Will use `ImageUploadArea` (which handles Data URLs for now). `maxFiles={1}` for main image uploaders.
+*   **Fallback Logic for Images:** If `useSharedImage` is false and a language-specific image is missing, a fallback to the English image or a generic placeholder will be implemented.
+*   **Styling:** Main site article detail page (`prose` class) and article list page (`/info`) styling will be considered for image display.
+*   **Simulated Backend:** All article and attribute data is still client-side (`localStorage`) for now.
+*   **User's Next Priorities (from previous interaction):** After articles, potential focus could be on Sales, Clients, Marketing, Reports sections, or deeper log/session features if the backend was ready. For now, these are stubs or have basic simulated functionality.

@@ -41,7 +41,8 @@
     "termsOfService": "Условия использования",
     "contactPagePath": "/info/contact-ru",
     "termsPagePath": "/info/terms-ru",
-    "privacyPagePath": "/info/privacy-ru"
+    "privacyPagePath": "/info/privacy-ru",
+    "version": "Версия"
   },
   "categories": {
     "corporate-sets": "Корпоративные наборы",
@@ -212,12 +213,12 @@
     "startShopping": "Начать покупки",
     "yourCartTitle": "Ваша корзина",
     "itemRemoved": "Товар удален",
-    "itemRemovedDesc": "{name} был удален из вашей корзины.",
+    "itemRemovedDesc": "{productName} был удален из вашей корзины.",
     "cartCleared": "Корзина очищена",
     "cartClearedDesc": "Все товары были удалены из вашей корзины.",
     "price": "Цена:",
-    "quantityFor": "Количество для {name}",
-    "remove": "Удалить {name} из корзины",
+    "quantityFor": "Количество для {productName}",
+    "remove": "Удалить {productName} из корзины",
     "clearCart": "Очистить корзину",
     "orderSummary": "Сводка заказа",
     "subtotal": "Промежуточный итог",
@@ -391,7 +392,8 @@
     "description": "Узнайте больше о наших продуктах и о том, как лучше всего за ними ухаживать.",
     "soyWaxTeaser": "Откройте для себя преимущества натурального соевого воска и почему это отличный выбор для свечей.",
     "aromaSachetTeaser": "Узнайте, что такое аромасаше и как творчески использовать их дома и в машине.",
-    "readMoreButton": "Читать далее"
+    "readMoreButton": "Читать далее",
+    "noArticlesYet": "Статьи пока отсутствуют."
   },
   "soyWaxPage": {
     "breadcrumbHome": "Главная",
@@ -406,5 +408,3 @@
     "placeholderContent": "Узнайте все об аромасаше, их применении и как лучше всего наслаждаться их ароматом дома или в машине. Контент скоро появится!"
   }
 }
-
-    

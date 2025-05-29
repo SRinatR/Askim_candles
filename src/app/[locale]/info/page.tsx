@@ -1,58 +1,66 @@
 
 "use client";
 
+import React, { useEffect, useState }from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import type { Locale } from '@/lib/i1n-config';
+import type { Locale, Article } from '@/lib/types';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronRight, BookText, Leaf, Droplet } from 'lucide-react'; // Added icons
+import { ChevronRight, BookText } from 'lucide-react';
 import { Slash } from 'lucide-react';
+import Image from 'next/image';
 
-// Placeholder for dictionary loading
 import enMessages from '@/dictionaries/en.json';
 import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
-type Dictionary = typeof enMessages;
+type FullDictionary = typeof enMessages;
+type UsefulInfoPageDict = FullDictionary['usefulInfoPage'];
+type NavigationDict = FullDictionary['navigation'];
 
-const dictionaries: Record<Locale, Dictionary> = {
+
+const dictionaries: Record<Locale, FullDictionary> = {
   en: enMessages,
   ru: ruMessages,
   uz: uzMessages,
 };
 
-const getUsefulInfoPageDictionary = (locale: Locale) => {
+const getPageDictionaries = (locale: Locale) => {
+  const dict = dictionaries[locale] || dictionaries.en;
   return {
-    page: dictionaries[locale]?.usefulInfoPage || dictionaries.en.usefulInfoPage,
-    nav: dictionaries[locale]?.navigation || dictionaries.en.navigation,
-  }
+    page: dict.usefulInfoPage,
+    nav: dict.navigation,
+  };
 };
 
+const ARTICLES_STORAGE_KEY = "askimAdminArticles";
 
 export default function UsefulInfoPage() {
   const params = useParams();
   const locale = params.locale as Locale || 'uz';
-  const dictBundle = getUsefulInfoPageDictionary(locale);
-  const dictionary = dictBundle.page;
-  const navDictionary = dictBundle.nav;
+  
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [pageDicts, setPageDicts] = useState<{page: UsefulInfoPageDict, nav: NavigationDict} | null>(null);
 
-  const articles = [
-    { 
-      title: navDictionary.soyWaxInfoTitle, 
-      href: `/${locale}/info/soy-wax`,
-      description: dictionary.soyWaxTeaser, // Assuming you add these to your dictionary
-      icon: Leaf
-    },
-    { 
-      title: navDictionary.aromaSachetInfoTitle, 
-      href: `/${locale}/info/aroma-sachet`,
-      description: dictionary.aromaSachetTeaser, // Assuming you add these to your dictionary
-      icon: Droplet
-    },
-    // Add more articles here as needed
-  ];
+  useEffect(() => {
+    setPageDicts(getPageDictionaries(locale));
+    if (typeof window !== 'undefined') {
+      const storedArticlesRaw = localStorage.getItem(ARTICLES_STORAGE_KEY);
+      const allStoredArticles: Article[] = storedArticlesRaw ? JSON.parse(storedArticlesRaw) : [];
+      setArticles(allStoredArticles.filter(art => art.isActive));
+      setIsLoading(false);
+    }
+  }, [locale]);
+
+  if (isLoading || !pageDicts) {
+    return <div className="container mx-auto py-8 px-4 text-center">Loading useful information...</div>;
+  }
+  
+  const dictionary = pageDicts.page;
+  const navDictionary = pageDicts.nav;
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-8">
@@ -73,31 +81,60 @@ export default function UsefulInfoPage() {
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">{dictionary.description}</p>
       </header>
       
-      <div className="grid md:grid-cols-2 gap-6">
-        {articles.map((article) => {
-          const Icon = article.icon;
-          return (
-            <Card key={article.href} className="shadow-md hover:shadow-lg transition-shadow">
-              <CardHeader className="flex flex-row items-center space-x-3 pb-3">
-                 <div className="p-2 bg-primary/10 rounded-md">
-                    <Icon className="h-6 w-6 text-primary" />
-                 </div>
-                 <CardTitle className="text-xl">{article.title}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <CardDescription>{article.description}</CardDescription>
-                <Button variant="outline" asChild className="w-full sm:w-auto">
-                  <Link href={article.href}>
-                    {dictionary.readMoreButton} <ChevronRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {articles.length > 0 ? (
+        <div className="grid md:grid-cols-2 gap-6">
+          {articles.map((article) => {
+            const articleTitle = article.title[locale] || article.title.en;
+            // For teaser, we can take the first few words of the English content or create a dedicated teaser field later
+            const articleTeaser = (article.content[locale] || article.content.en).substring(0, 100) + "...";
+            
+            let imageUrlToDisplay: string | undefined = undefined;
+            if (article.useSharedImage && article.sharedMainImage) {
+              imageUrlToDisplay = article.sharedMainImage;
+            } else {
+              const langImageKey = `mainImage_${locale}` as keyof Article;
+              imageUrlToDisplay = article[langImageKey] as string | undefined;
+               if (!imageUrlToDisplay && article.mainImage_en) { 
+                  imageUrlToDisplay = article.mainImage_en;
+              }
+            }
+            if (!imageUrlToDisplay) imageUrlToDisplay = "https://placehold.co/600x400.png?text=Article";
+
+
+            return (
+              <Card key={article.id} className="shadow-md hover:shadow-lg transition-shadow flex flex-col">
+                {imageUrlToDisplay && (
+                  <div className="relative w-full h-48 rounded-t-lg overflow-hidden">
+                    <Image 
+                      src={imageUrlToDisplay} 
+                      alt={articleTitle} 
+                      fill 
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                      data-ai-hint="article preview"
+                    />
+                  </div>
+                )}
+                <CardHeader className="pb-3">
+                   <CardTitle className="text-xl">{articleTitle}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 flex-grow">
+                  <CardDescription className="line-clamp-3">{articleTeaser}</CardDescription>
+                </CardContent>
+                <CardContent className="pt-0">
+                   <Button variant="outline" asChild className="w-full sm:w-auto mt-auto">
+                    <Link href={`/${locale}/info/${article.slug}`}>
+                      {dictionary.readMoreButton} <ChevronRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="text-center text-muted-foreground">{dictionary.noArticlesYet || "No articles available yet."}</p>
+      )}
     </div>
   );
 }
-
-    

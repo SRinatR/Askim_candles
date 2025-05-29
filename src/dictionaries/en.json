@@ -41,7 +41,8 @@
     "termsOfService": "Terms of Service",
     "contactPagePath": "/info/contact",
     "termsPagePath": "/info/terms",
-    "privacyPagePath": "/info/privacy"
+    "privacyPagePath": "/info/privacy",
+    "version": "Version"
   },
   "categories": {
     "corporate-sets": "Corporate Sets",
@@ -212,12 +213,12 @@
     "startShopping": "Start Shopping",
     "yourCartTitle": "Your Shopping Cart",
     "itemRemoved": "Item Removed",
-    "itemRemovedDesc": "{name} has been removed from your cart.",
+    "itemRemovedDesc": "{productName} has been removed from your cart.",
     "cartCleared": "Cart Cleared",
     "cartClearedDesc": "All items have been removed from your cart.",
     "price": "Price:",
-    "quantityFor": "Quantity for {name}",
-    "remove": "Remove {name} from cart",
+    "quantityFor": "Quantity for {productName}",
+    "remove": "Remove {productName} from cart",
     "clearCart": "Clear Cart",
     "orderSummary": "Order Summary",
     "subtotal": "Subtotal",
@@ -391,7 +392,8 @@
     "description": "Learn more about our products and how to best care for them.",
     "soyWaxTeaser": "Discover the benefits of natural soy wax and why it's a great choice for candles.",
     "aromaSachetTeaser": "Find out what aroma sachets are and creative ways to use them around your home and car.",
-    "readMoreButton": "Read More"
+    "readMoreButton": "Read More",
+    "noArticlesYet": "No articles available yet."
   },
   "soyWaxPage": {
     "breadcrumbHome": "Home",
@@ -406,5 +408,3 @@
     "placeholderContent": "Learn all about aroma sachets, their uses, and how to best enjoy their fragrance in your home or car. Content coming soon!"
   }
 }
-
-    
