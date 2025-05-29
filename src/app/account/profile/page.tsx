@@ -9,22 +9,23 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { useSession } from "next-auth/react";
+import { useSession } from "next-auth/react"; // For NextAuth
+import { useAuth as useSimulatedAuth } from "@/contexts/AuthContext"; // For simulated Auth
 import { Edit3 } from "lucide-react";
 import React, { useEffect } from "react";
 
-// This schema is for local updates if needed, NextAuth session might not be directly updatable client-side for all fields
 const profileSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Invalid email address." }),
-  phone: z.string().optional(), // Phone is not part of standard NextAuth session user, handle accordingly
+  phone: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function ProfilePage() {
   const { toast } = useToast();
-  const { data: session, status, update: updateSession } = useSession(); // updateSession can be used if you configure writable session fields
+  const { data: nextAuthSession, status: nextAuthStatus, update: updateNextAuthSession } = useSession();
+  const { currentUser: simulatedUser, isLoading: isLoadingSimulatedAuth } = useSimulatedAuth();
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -36,43 +37,58 @@ export default function ProfilePage() {
   });
 
   useEffect(() => {
-    if (session?.user) {
-      form.reset({
-        name: session.user.name || "",
-        email: session.user.email || "",
-        phone: "", // Phone is not typically in session.user from providers. This would need custom backend logic to store/retrieve.
-      });
+    let name = "";
+    let email = "";
+
+    if (nextAuthSession?.user) {
+      name = nextAuthSession.user.name || "";
+      email = nextAuthSession.user.email || "";
+    } else if (simulatedUser) {
+      name = simulatedUser.name || "";
+      email = simulatedUser.email || "";
+      // Phone might be part of simulatedUser if we add it during registration
     }
-  }, [session, form]);
+    
+    form.reset({
+      name,
+      email,
+      phone: "", // Phone is not typically in session.user from providers. This would need custom backend logic or client-side state from simulated auth.
+    });
+  }, [nextAuthSession, simulatedUser, form]);
 
   async function onSubmit(data: ProfileFormValues) {
-    if (!session?.user) {
+    const currentEmail = nextAuthSession?.user?.email || simulatedUser?.email;
+    const currentName = nextAuthSession?.user?.name || simulatedUser?.name;
+
+    if (!currentEmail) {
       toast({ title: "Error", description: "You are not logged in.", variant: "destructive" });
       return;
     }
-    console.log("Profile data to update (client-side only for now):", data);
+    console.log("Profile data to update:", data);
     
-    // Note: Updating NextAuth session directly from client for arbitrary fields like 'name' or 'phone'
-    // usually requires a backend call to update the user record in your database,
-    // and then potentially triggering a session update.
-    // The `updateSession()` function can update the session cookie if your backend strategy supports it.
-    // For this MVP, we'll just show a success toast for name/email changes. Phone requires DB.
+    let updateMessage = "Profile information noted. ";
+    if (data.name !== currentName) {
+       updateMessage += "Name update would typically require backend interaction. ";
+       // For NextAuth, if name is updatable: await updateNextAuthSession({ user: { ...nextAuthSession.user, name: data.name } });
+       // For simulated auth, update would happen in AuthContext and localStorage if implemented.
+    }
+    if (data.email !== currentEmail) {
+        updateMessage += "Email for social logins is managed by provider. Email for email/pass login would require backend to change and re-verify. ";
+    }
+    updateMessage += "Phone number field is for demonstration and requires backend integration to save.";
 
-    // Example of how you might try to update session (if `name` is a field your JWT/session callback allows updating)
-    // await updateSession({ user: { ...session.user, name: data.name } });
 
     toast({
-      title: "Profile " + (data.name !== session.user.name || data.email !== session.user.email ? "Changes Noted" : "Information"),
-      description: (data.name !== session.user.name || data.email !== session.user.email ? "Name/email updates would typically require backend interaction." : "Phone number field is for demonstration.") + " For a full update, backend integration is needed.",
+      title: "Profile Update (Demo)",
+      description: updateMessage,
     });
   }
   
-  if (status === "loading") {
+  if (nextAuthStatus === "loading" || isLoadingSimulatedAuth) {
     return <div className="flex justify-center items-center p-10"><p>Loading profile...</p></div>;
   }
 
-  if (status === "unauthenticated") {
-    // This case should ideally be handled by AccountLayout redirecting to login
+  if (nextAuthStatus === "unauthenticated" && !simulatedUser) {
     return <div className="flex justify-center items-center p-10"><p>Please log in to view your profile.</p></div>;
   }
 
@@ -80,7 +96,7 @@ export default function ProfilePage() {
     <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="text-2xl">Profile Information</CardTitle>
-        <CardDescription>View and update your personal details. Email is managed by your login provider.</CardDescription>
+        <CardDescription>View and update your personal details. Email for social logins is managed by the provider.</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -105,10 +121,15 @@ export default function ProfilePage() {
                 <FormItem>
                   <FormLabel>Email Address</FormLabel>
                   <FormControl>
-                    <Input type="email" {...field} disabled />
+                    <Input type="email" {...field} disabled={!!nextAuthSession?.user?.email} />
                   </FormControl>
                   <FormMessage />
-                  <p className="text-xs text-muted-foreground pt-1">Email is managed by your identity provider and cannot be changed here.</p>
+                  <p className="text-xs text-muted-foreground pt-1">
+                    {nextAuthSession?.user?.email 
+                      ? "Email is managed by your identity provider and cannot be changed here."
+                      : "Email used for login."
+                    }
+                  </p>
                 </FormItem>
               )}
             />

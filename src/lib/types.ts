@@ -24,13 +24,16 @@ export interface Category {
   description?: string;
 }
 
-export interface User {
+// User type for client-side email/password auth simulation
+export interface SimulatedUser {
   id: string;
   email: string;
   name?: string;
-  phone?: string; // Added phone for profile page
-  addresses?: Address[];
-  // other user fields
+  firstName?: string; // For registration step
+  lastName?: string; // For registration step
+  password?: string; // Only for form handling/mock storage, not secure
+  isRegistered?: boolean;
+  isConfirmed?: boolean;
 }
 
 export interface Address {
@@ -51,3 +54,4 @@ export interface Order {
   totalAmount: number;
   items: CartItem[]; // Simplified, ideally OrderItem with price snapshot
 }
+

@@ -6,7 +6,8 @@ import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut } from 'lucide-react'
 import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signIn, signOut as nextAuthSignOut } from "next-auth/react"; // For NextAuth
+import { useAuth as useSimulatedAuth } from "@/contexts/AuthContext"; // For simulated email/password auth
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import React, { useState } from 'react';
@@ -20,9 +21,11 @@ const navLinks = [
 
 export function Header() {
   const { cartCount } = useCart();
-  const { data: session, status } = useSession();
-  const isAuthenticated = status === "authenticated";
-  const isLoadingAuth = status === "loading";
+  const { data: nextAuthSession, status: nextAuthStatus } = useSession();
+  const { currentUser: simulatedUser, logout: simulatedLogout, isLoading: isLoadingSimulatedAuth } = useSimulatedAuth();
+  
+  const isAuthenticated = !!nextAuthSession || !!simulatedUser;
+  const isLoadingAuth = nextAuthStatus === "loading" || isLoadingSimulatedAuth;
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
@@ -37,8 +40,30 @@ export function Header() {
     }
   };
 
+  const handleLogout = async () => {
+    if (nextAuthSession) {
+      await nextAuthSignOut({ callbackUrl: '/' });
+    }
+    if (simulatedUser) {
+      simulatedLogout();
+      router.push('/'); // Redirect after simulated logout
+    }
+    if (isMobileMenuOpen) setIsMobileMenuOpen(false);
+  };
+
   const accountLink = isAuthenticated ? "/account/profile" : "/login";
-  const accountLinkLabel = isAuthenticated ? "My Account" : "Login";
+  
+  let userName = "";
+  if (nextAuthSession?.user?.name) {
+    userName = nextAuthSession.user.name;
+  } else if (simulatedUser?.name) {
+    userName = simulatedUser.name;
+  } else if (nextAuthSession?.user?.email) {
+    userName = nextAuthSession.user.email;
+  } else if (simulatedUser?.email) {
+    userName = simulatedUser.email;
+  }
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -71,14 +96,16 @@ export function Header() {
           {!isLoadingAuth && (
             <>
               {isAuthenticated ? (
-                <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex" title="My Account">
+                <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex" title={userName || "My Account"}>
                   <Link href={accountLink}>
                     <User className="h-5 w-5" />
                   </Link>
                 </Button>
               ) : (
-                <Button variant="ghost" size="icon" onClick={() => signIn()} className="hidden md:inline-flex" title="Login">
-                   <LogIn className="h-5 w-5" />
+                 <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex" title="Login">
+                   <Link href="/login">
+                     <LogIn className="mr-1 h-4 w-4" /> Login
+                   </Link>
                 </Button>
               )}
             </>
@@ -145,10 +172,10 @@ export function Header() {
                             className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
                           >
                             <User className="h-5 w-5" />
-                            <span>My Account</span>
+                            <span>{userName || "My Account"}</span>
                           </Link>
                           <Button variant="outline" 
-                            onClick={() => { signOut(); setIsMobileMenuOpen(false); }} 
+                            onClick={handleLogout}
                             className="w-full text-lg"
                           >
                             <LogOut className="mr-2 h-5 w-5" />
@@ -158,7 +185,7 @@ export function Header() {
                       ) : (
                         <Button 
                           variant="ghost" 
-                          onClick={() => { signIn(); setIsMobileMenuOpen(false); }}
+                          onClick={() => { router.push('/login'); setIsMobileMenuOpen(false); }}
                           className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground w-full justify-start p-0"
                         >
                           <LogIn className="h-5 w-5" />

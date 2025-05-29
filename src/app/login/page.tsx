@@ -3,39 +3,47 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Logo } from "@/components/icons/Logo";
 import { signIn, useSession } from "next-auth/react";
-import React, { useEffect } from "react";
-import { Chrome, Send, Globe } from "lucide-react"; // Using Chrome for Google, Send for Telegram, Globe for Yandex
+import React, { useEffect, useState } from "react";
+import { Chrome, Send, Globe, Mail, KeyRound } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext"; // For email/password
 
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, status } = useSession();
-  const [isSubmitting, setIsSubmitting] = React.useState(""); // Store which provider is submitting
+  const { data: nextAuthSession, status: nextAuthStatus } = useSession(); // NextAuth session
+  const { login: simulatedLogin, currentUser: simulatedUser, isLoading: isLoadingSimulatedAuth } = useAuth(); // Simulated Auth
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmittingSocial, setIsSubmittingSocial] = React.useState("");
+  const [isSubmittingEmail, setIsSubmittingEmail] = useState(false);
 
   const callbackUrl = searchParams.get("callbackUrl") || "/account";
 
   useEffect(() => {
-    if (status === "authenticated") {
+    if (nextAuthStatus === "authenticated" || simulatedUser) {
       router.replace(callbackUrl);
     }
-  }, [status, router, callbackUrl]);
+  }, [nextAuthStatus, simulatedUser, router, callbackUrl]);
 
-  const handleSignIn = async (provider: string) => {
-    setIsSubmitting(provider);
+  const handleSocialSignIn = async (provider: string) => {
+    setIsSubmittingSocial(provider);
     try {
-      // For now, Telegram and Yandex are UI only.
-      if (provider !== "google") {
+      if (provider !== "google") { // Only Google is fully configured for NextAuth
         toast({
           title: "Coming Soon!",
           description: `Sign in with ${provider.charAt(0).toUpperCase() + provider.slice(1)} is not yet available.`,
         });
-        setIsSubmitting("");
+        setIsSubmittingSocial("");
         return;
       }
       const result = await signIn(provider, { callbackUrl });
@@ -45,22 +53,31 @@ export default function LoginPage() {
           description: result.error || "Could not sign you in. Please try again.",
           variant: "destructive",
         });
-        setIsSubmitting("");
-      } else if (result?.ok) {
-        // Successful sign-in will trigger the useEffect to redirect
       }
+      // Successful NextAuth sign-in will trigger the useEffect to redirect
     } catch (error) {
       console.error("Sign in error", error);
       toast({
         title: "Login Failed",
-        description: "An unexpected error occurred.",
+        description: "An unexpected error occurred during social sign-in.",
         variant: "destructive",
       });
-      setIsSubmitting("");
+    } finally {
+      setIsSubmittingSocial("");
     }
   };
+
+  const handleEmailPasswordLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingEmail(true);
+    const success = await simulatedLogin(email, password);
+    if (success) {
+      // useEffect will handle redirect
+    }
+    setIsSubmittingEmail(false);
+  };
   
-  if (status === "loading" || status === "authenticated") {
+  if (nextAuthStatus === "loading" || isLoadingSimulatedAuth || nextAuthSession || simulatedUser) {
     return <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center"><p>Loading...</p></div>;
   }
 
@@ -72,38 +89,91 @@ export default function LoginPage() {
             <Logo />
           </Link>
           <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-          <CardDescription>Choose a provider to sign in to your account.</CardDescription>
+          <CardDescription>Access your ScentSational Showcase account.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
+          <form onSubmit={handleEmailPasswordLogin} className="space-y-4">
+            <div>
+              <Label htmlFor="email">Email Address</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="you@example.com" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  required 
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="password">Password</Label>
+               <div className="relative">
+                <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  placeholder="••••••••" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                  className="pl-10"
+                />
+              </div>
+            </div>
+            <Button type="submit" className="w-full" disabled={isSubmittingEmail || isLoadingSimulatedAuth}>
+              {isSubmittingEmail ? "Signing In..." : "Sign In with Email"}
+            </Button>
+          </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground">
+                Or continue with
+              </span>
+            </div>
+          </div>
+          
           <Button 
-            onClick={() => handleSignIn("google")} 
+            onClick={() => handleSocialSignIn("google")} 
             className="w-full" 
-            disabled={!!isSubmitting}
+            disabled={!!isSubmittingSocial || isSubmittingEmail}
             variant="outline"
           >
             <Chrome className="mr-2 h-5 w-5" /> 
-            {isSubmitting === "google" ? "Signing in..." : "Sign in with Google"}
+            {isSubmittingSocial === "google" ? "Signing in..." : "Sign in with Google"}
           </Button>
            <Button 
-            onClick={() => handleSignIn("telegram")} 
+            onClick={() => handleSocialSignIn("telegram")} 
             className="w-full" 
-            disabled={!!isSubmitting}
+            disabled={!!isSubmittingSocial || isSubmittingEmail}
             variant="outline"
           >
             <Send className="mr-2 h-5 w-5" /> 
-            {isSubmitting === "telegram" ? "Processing..." : "Sign in with Telegram"}
+            {isSubmittingSocial === "telegram" ? "Processing..." : "Sign in with Telegram"}
           </Button>
           <Button 
-            onClick={() => handleSignIn("yandex")} 
+            onClick={() => handleSocialSignIn("yandex")} 
             className="w-full" 
-            disabled={!!isSubmitting}
+            disabled={!!isSubmittingSocial || isSubmittingEmail}
             variant="outline"
           >
             <Globe className="mr-2 h-5 w-5" /> 
-            {isSubmitting === "yandex" ? "Processing..." : "Sign in with Yandex"}
+            {isSubmittingSocial === "yandex" ? "Processing..." : "Sign in with Yandex"}
           </Button>
         </CardContent>
-        <CardFooter className="flex flex-col items-center space-y-2 text-sm">
+        <CardFooter className="flex flex-col items-center space-y-3 text-sm">
+           <p>
+            Don&apos;t have an account?{" "}
+            <Link href="/register" className="font-medium text-primary hover:underline">
+              Sign Up
+            </Link>
+          </p>
           <p className="text-muted-foreground text-xs px-4 text-center">
             By signing in, you agree to our Terms of Service and Privacy Policy.
           </p>

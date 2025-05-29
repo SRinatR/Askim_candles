@@ -8,7 +8,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { User, MapPin, ShoppingBag, LogOut, Link2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut as nextAuthSignOut } from "next-auth/react"; // NextAuth
+import { useAuth as useSimulatedAuth } from "@/contexts/AuthContext"; // Simulated Auth
 import React, { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -38,18 +39,28 @@ const sidebarNavItems = [
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: nextAuthSession, status: nextAuthStatus } = useSession();
+  const { currentUser: simulatedUser, logout: simulatedLogout, isLoading: isLoadingSimulatedAuth } = useSimulatedAuth();
   const { toast } = useToast();
 
+  const isAuthenticated = !!nextAuthSession || !!simulatedUser;
+  const isLoadingAuth = nextAuthStatus === "loading" || isLoadingSimulatedAuth;
+
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (!isLoadingAuth && !isAuthenticated) {
       router.replace(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
     }
-  }, [status, router, pathname]);
+  }, [isLoadingAuth, isAuthenticated, router, pathname]);
 
   const handleLogout = async () => {
     try {
-      await signOut({ callbackUrl: '/login' }); // Redirect to login after sign out
+      if (nextAuthSession) {
+        await nextAuthSignOut({ callbackUrl: '/login' });
+      }
+      if (simulatedUser) {
+        simulatedLogout();
+        router.push('/login'); // Redirect after simulated logout
+      }
       toast({
         title: "Logged Out",
         description: "You have been successfully logged out.",
@@ -63,7 +74,19 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     }
   };
 
-  if (status === "loading" || !session) {
+  let welcomeName = "Guest";
+  if (nextAuthSession?.user?.name) {
+    welcomeName = nextAuthSession.user.name;
+  } else if (simulatedUser?.name) {
+    welcomeName = simulatedUser.name;
+  } else if (nextAuthSession?.user?.email) {
+    welcomeName = nextAuthSession.user.email;
+  } else if (simulatedUser?.email) {
+    welcomeName = simulatedUser.email;
+  }
+
+
+  if (isLoadingAuth || !isAuthenticated) {
     return <div className="flex justify-center items-center min-h-[300px]"><p>Loading account...</p></div>;
   }
 
@@ -72,7 +95,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Account</h1>
-          {session?.user && <p className="text-muted-foreground">Welcome back, {session.user.name || session.user.email}!</p>}
+          <p className="text-muted-foreground">Welcome back, {welcomeName}!</p>
         </div>
         <Button variant="outline" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" /> Logout
