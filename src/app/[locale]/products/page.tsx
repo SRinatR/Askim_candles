@@ -10,7 +10,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Slash, SlidersHorizontal, X } from 'lucide-react';
 import type { Locale } from '@/lib/i18n-config';
 import type { ProductCardDictionary } from '@/components/products/ProductCard';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetTrigger } from '@/components/ui/sheet'; // Added SheetTrigger
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import React, { useState, useMemo, useEffect } from 'react';
@@ -20,7 +20,7 @@ import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type FullDictionary = typeof enMessages;
-const PRICE_DIVISOR = 1;
+const PRICE_DIVISOR = 1; // Keep prices as integers for UZS
 
 const dictionaries: Record<Locale, FullDictionary> = {
   en: enMessages,
@@ -38,7 +38,7 @@ const getCombinedDictionary = (locale: Locale) => {
       searchResultsTitle: "Search results for \"{searchTerm}\"",
       productsFound: "{count} product found",
       productsFound_plural: "{count} products found",
-      productsFound_few: "{count} products found",
+      productsFound_few: "{count} products found", // For Russian
       noProductsFound: "No Products Found",
       searchNoMatch: "Your search for \"{searchTerm}\" did not match any products.",
       filterNoMatch: "We couldn't find products matching your current filters.",
@@ -86,18 +86,19 @@ export default function ProductsPage() {
 
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
   
+  // Filter products to only active ones for filter generation and initial display
   const allActiveProducts = useMemo(() => mockProducts.filter(p => p.isActive), []);
 
   const { minProductPrice, maxProductPrice } = useMemo(() => {
     if (!allActiveProducts || allActiveProducts.length === 0) {
-      return { minProductPrice: 0, maxProductPrice: 500000 };
+      return { minProductPrice: 0, maxProductPrice: 500000 }; // Sensible default
     }
     const prices = allActiveProducts.map(p => p.price / PRICE_DIVISOR);
     const min = Math.floor(Math.min(...prices));
     const max = Math.ceil(Math.max(...prices));
     return {
-      minProductPrice: isNaN(min) ? 0 : min,
-      maxProductPrice: isNaN(max) ? 500000 : max,
+      minProductPrice: (isNaN(min) || min < 0) ? 0 : min,
+      maxProductPrice: (isNaN(max) || max <= 0) ? 500000 : max,
     };
   }, [allActiveProducts]);
 
@@ -142,13 +143,16 @@ export default function ProductsPage() {
         case 'name-desc':
           return nameB.localeCompare(nameA);
         case 'newest':
+           // Assuming product.id is a string like "1", "2", "prod-xyz"
+           // For numeric IDs, this works:
            const idA = parseInt(a.id.replace (/[^0-9]/g, ""), 10);
            const idB = parseInt(b.id.replace (/[^0-9]/g, ""), 10);
            if (!isNaN(idA) && !isNaN(idB)) {
-             return idB - idA;
+             return idB - idA; // Higher ID means newer
            }
+           // Fallback for non-numeric or mixed IDs
            return b.id.localeCompare(a.id);
-        default:
+        default: // 'relevance' or unknown
           return 0;
       }
     });
@@ -167,7 +171,7 @@ export default function ProductsPage() {
     productsCountText = (dictionary.productsFound_few).replace('{count}', String(productsCount));
   } else if (dictionary.productsFound_plural) {
      productsCountText = (dictionary.productsFound_plural).replace('{count}', String(productsCount));
-  } else if (dictionary.productsFound) {
+  } else if (dictionary.productsFound) { // Fallback if plural/few keys are missing
     productsCountText = dictionary.productsFound.replace('{count}', String(productsCount));
   }
 
@@ -191,6 +195,7 @@ export default function ProductsPage() {
       <div className="flex flex-col items-center justify-between gap-4 border-b border-border/60 pb-6 sm:flex-row">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
+          {/* Use dangerouslySetInnerHTML to render <strong> for count */}
           <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: productsCountText.replace(String(productsCount), `<strong>${productsCount}</strong>`) }} />
         </div>
         <div className="flex items-center gap-4">
@@ -209,12 +214,12 @@ export default function ProductsPage() {
                      <Button variant="ghost" size="icon"><X className="h-5 w-5"/></Button>
                   </SheetClose>
                 </SheetHeader>
-                <ScrollArea className="flex-1 overflow-y-auto p-1">
+                <ScrollArea className="flex-1 overflow-y-auto p-1"> {/* Ensure padding for content inside scroll area */}
                   <ProductFilters
                     dictionary={filtersDictionary}
                     categoriesData={mockCategories.map(cat => ({...cat, name: combinedDict.categories[cat.slug as keyof typeof combinedDict.categories] || cat.name}))}
-                    allProducts={allActiveProducts} 
-                    onApplyFilters={() => setIsMobileFiltersOpen(false)}
+                    allProducts={allActiveProducts} // Pass only active products
+                    onApplyFilters={() => setIsMobileFiltersOpen(false)} // Pass handler to close sheet
                   />
                 </ScrollArea>
               </SheetContent>
@@ -225,11 +230,11 @@ export default function ProductsPage() {
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
-        <div className="hidden lg:block lg:w-72 lg:sticky lg:top-24 self-start">
+        <div className="hidden lg:block lg:w-72 lg:sticky lg:top-24 self-start"> {/* Sticky for desktop */}
           <ProductFilters
             dictionary={filtersDictionary}
             categoriesData={mockCategories.map(cat => ({...cat, name: combinedDict.categories[cat.slug as keyof typeof combinedDict.categories] || cat.name}))}
-            allProducts={allActiveProducts} 
+            allProducts={allActiveProducts} // Pass only active products
           />
         </div>
         <div className="flex-1">
