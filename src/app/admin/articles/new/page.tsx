@@ -12,5 +12,6 @@ export default function NewArticleRedirectPage() {
     router.replace('/admin/articles/form/new');
   }, [router]);
 
-  return <div>Loading new article form...</div>;
+  // It's good practice to return null or a loading indicator during redirection.
+  return <div>Loading new article form...</div>; 
 }

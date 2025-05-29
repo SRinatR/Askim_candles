@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -12,8 +12,10 @@ import { useToast } from "@/hooks/use-toast";
 import type { Article } from "@/lib/types";
 import type { AdminLocale } from '@/admin/lib/i18n-config-admin';
 import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
+import { getAdminDictionary } from '@/admin/lib/getAdminDictionary'; // For future title translation
+import { logAdminAction } from '@/admin/lib/admin-logger';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
-// Sample initial articles - this will be used to seed localStorage if empty
 const initialSeedArticles: Omit<Article, 'id' | 'createdAt' | 'updatedAt'>[] = [
   {
     slug: "what-is-soy-wax",
@@ -49,8 +51,11 @@ export default function AdminArticlesPage() {
   const { toast } = useToast();
   const [articles, setArticles] = useState<Article[]>([]);
   const [adminLocale, setAdminLocale] = useState<AdminLocale>('en');
+  const { currentAdminUser } = useAdminAuth();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
     if (storedLocale && i18nAdmin.locales.includes(storedLocale)) {
       setAdminLocale(storedLocale);
@@ -59,13 +64,17 @@ export default function AdminArticlesPage() {
     let storedArticles: Article[] = [];
     const storedArticlesRaw = localStorage.getItem(ARTICLES_STORAGE_KEY);
     if (storedArticlesRaw) {
-      storedArticles = JSON.parse(storedArticlesRaw);
+      try {
+        storedArticles = JSON.parse(storedArticlesRaw);
+      } catch (e) {
+        console.error("Error parsing articles from localStorage", e);
+        localStorage.removeItem(ARTICLES_STORAGE_KEY); // Clear corrupted data
+      }
     } else {
-      // Seed localStorage if it's empty
       const now = new Date().toISOString();
       const seededArticles = initialSeedArticles.map((art, index) => ({
         ...art,
-        id: art.slug + '-' + Date.now() + index, // Ensure unique ID for seeding
+        id: art.slug + '-' + Date.now() + index, 
         createdAt: now,
         updatedAt: now,
       }));
@@ -75,15 +84,22 @@ export default function AdminArticlesPage() {
     setArticles(storedArticles);
   }, []);
 
-  const handleDeleteArticle = (articleId: string) => {
+  const handleDeleteArticle = (articleId: string, articleTitle: string) => {
     const updatedArticles = articles.filter(art => art.id !== articleId);
     setArticles(updatedArticles);
     localStorage.setItem(ARTICLES_STORAGE_KEY, JSON.stringify(updatedArticles));
+    if (currentAdminUser?.email) {
+      logAdminAction(currentAdminUser.email, "Article Deleted (Simulated)", { articleId, articleTitle });
+    }
     toast({
       title: "Article Deleted (Simulated)",
-      description: `Article ID: ${articleId} has been 'deleted'. Client-side only.`,
+      description: `Article "${articleTitle}" (ID: ${articleId}) has been 'deleted'. Client-side only.`,
     });
   };
+  
+  if (!isClient) {
+    return <div>Loading articles...</div>;
+  }
 
   return (
     <div className="space-y-6">
@@ -91,7 +107,7 @@ export default function AdminArticlesPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Manage Articles</h1>
           <p className="text-muted-foreground">
-            Create, edit, and manage informational articles.
+            Create, edit, and manage informational articles for your site.
           </p>
         </div>
         <Button asChild>
@@ -120,32 +136,35 @@ export default function AdminArticlesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {articles.map((article) => (
-                  <TableRow key={article.id}>
-                    <TableCell className="font-medium">{article.title[adminLocale] || article.title.en}</TableCell>
-                    <TableCell>{article.slug}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={article.isActive ? "secondary" : "outline"}>
-                        {article.isActive ? "Active" : "Inactive"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center space-x-1">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/admin/articles/form/${article.id}`}>
-                          <Edit3 className="mr-1 h-3 w-3" /> Edit
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => handleDeleteArticle(article.id)}
-                      >
-                        <Trash2 className="mr-1 h-3 w-3" /> Delete
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {articles.map((article) => {
+                  const titleInAdminLocale = article.title[adminLocale] || article.title.en || 'N/A';
+                  return (
+                    <TableRow key={article.id}>
+                      <TableCell className="font-medium">{titleInAdminLocale}</TableCell>
+                      <TableCell>{article.slug}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant={article.isActive ? "secondary" : "outline"}>
+                          {article.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center space-x-1">
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/admin/articles/form/${article.id}`}>
+                            <Edit3 className="mr-1 h-3 w-3" /> Edit
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => handleDeleteArticle(article.id, titleInAdminLocale)}
+                        >
+                          <Trash2 className="mr-1 h-3 w-3" /> Delete
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           ) : (

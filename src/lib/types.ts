@@ -1,5 +1,5 @@
 
-import type { Locale } from './i1n-config';
+import type { Locale } from './i18n-config';
 
 export interface Product {
   id: string;
@@ -82,16 +82,17 @@ export interface MockAdminClient {
 }
 
 export interface Article {
-  id: string; // slug can serve as id for simplicity with localStorage
+  id: string; 
   slug: string;
   title: { [key in Locale | 'en']: string };
   content: { [key in Locale | 'en']: string };
-  sharedMainImage?: string; // Data URL or external URL
-  mainImage_en?: string;    // Data URL or external URL
-  mainImage_ru?: string;    // Data URL or external URL
-  mainImage_uz?: string;    // Data URL or external URL
+  sharedMainImage?: string; 
+  mainImage_en?: string;    
+  mainImage_ru?: string;    
+  mainImage_uz?: string;    
   useSharedImage: boolean;
   isActive: boolean;
-  createdAt: string; // ISO date string
-  updatedAt: string; // ISO date string
+  createdAt: string; 
+  updatedAt: string; 
 }
+

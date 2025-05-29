@@ -1,11 +1,10 @@
-
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, PlusCircle } from "lucide-react";
+import { Trash2, PlusCircle, Edit3, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { mockProducts } from '@/lib/mock-data';
 import {
@@ -31,31 +30,40 @@ type AlertDialogStrings = {
   confirmDeleteTitle: string;
   confirmDeleteScentInUse: string;
   confirmDeleteGeneral: string;
+  confirmRenameTitle: string;
+  confirmRenameAttributeInUse: string;
   cancelButton: string;
   deleteConfirmButton: string;
+  updateButton: string;
 };
 
 export default function AdminManageScentsPage() {
   const [allScents, setAllScents] = useState<string[]>([]);
   const [newScentName, setNewScentName] = useState("");
+  const [editingAttributeName, setEditingAttributeName] = useState<string | null>(null);
   const { toast } = useToast();
   const [dictionary, setDictionary] = useState<ManageScentsDict | null>(null);
   const [alertStrings, setAlertStrings] = useState<AlertDialogStrings | null>(null);
-
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
     const localeToLoad = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
     
     async function loadDictionary() {
       const fullDict = await getAdminDictionary(localeToLoad);
-      setDictionary(fullDict.adminManageScentsPage);
+      const pageDict = fullDict.adminManageScentsPage;
+      setDictionary(pageDict);
       setAlertStrings({
-        confirmDeleteTitle: fullDict.adminManageScentsPage.confirmDeleteTitle || "Confirm Deletion",
-        confirmDeleteScentInUse: fullDict.adminManageScentsPage.confirmDeleteScentInUse || "The scent '{attributeName}' is currently used. Deleting it may affect products. Sure?",
-        confirmDeleteGeneral: fullDict.adminManageScentsPage.confirmDeleteGeneral || "Are you sure you want to delete the scent \"{name}\"?",
-        cancelButton: fullDict.adminManageScentsPage.cancelButton || "Cancel",
-        deleteConfirmButton: fullDict.adminManageScentsPage.deleteConfirmButton || "Delete",
+        confirmDeleteTitle: pageDict.confirmDeleteTitle || "Confirm Deletion",
+        confirmDeleteScentInUse: pageDict.confirmDeleteScentInUse || "The scent '{attributeName}' is currently used. Products using it may need manual updates. Sure?",
+        confirmDeleteGeneral: pageDict.confirmDeleteGeneral || "Are you sure you want to delete scent \"{name}\"?",
+        confirmRenameTitle: pageDict.confirmRenameTitle || "Confirm Rename",
+        confirmRenameAttributeInUse: pageDict.confirmRenameAttributeInUse || "Renaming '{oldName}' to '{newName}'? Products using '{oldName}' may need manual updates. Sure?",
+        cancelButton: pageDict.cancelButton || "Cancel",
+        deleteConfirmButton: pageDict.deleteConfirmButton || "Delete",
+        updateButton: pageDict.updateButton || "Update"
       });
     }
     loadDictionary();
@@ -64,46 +72,68 @@ export default function AdminManageScentsPage() {
     if (!storedScents) {
       const initialMockScentNames = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s))).sort();
       localStorage.setItem(LOCAL_STORAGE_KEY_SCENTS, JSON.stringify(initialMockScentNames));
-      storedScents = JSON.stringify(initialMockScentNames);
+      setAllScents(initialMockScentNames);
+    } else {
+        setAllScents(JSON.parse(storedScents));
     }
-    setAllScents(JSON.parse(storedScents));
-
   }, []);
   
-  const isScentInUse = (scentName: string): boolean => {
-    return mockProducts.some(product => product.scent === scentName);
-  };
+  const isAttributeInUse = useCallback((attributeName: string): boolean => {
+    return mockProducts.some(product => product.scent === attributeName);
+  }, []);
 
-  const handleAddScent = () => {
-    if (!dictionary) return;
-    if (!newScentName.trim()) {
-      toast({ title: "Error", description: dictionary.errorEmptyName, variant: "destructive" });
+  const handleAddOrUpdateAttribute = () => {
+    if (!dictionary || !newScentName.trim()) {
+      toast({ title: "Error", description: dictionary?.errorEmptyName || "Name cannot be empty.", variant: "destructive" });
       return;
     }
-    const scentExists = allScents.some(
-      (scent) => scent.toLowerCase() === newScentName.trim().toLowerCase()
+    const trimmedNewName = newScentName.trim();
+    const isDuplicate = allScents.some(
+      (scent) => scent.toLowerCase() === trimmedNewName.toLowerCase() && scent !== editingAttributeName
     );
-    if (scentExists) {
-      toast({ title: "Error", description: dictionary.errorExists, variant: "destructive" });
+
+    if (isDuplicate) {
+      toast({ title: "Error", description: dictionary?.errorExists || "Attribute already exists.", variant: "destructive" });
       return;
     }
-    const updatedScents = [...allScents, newScentName.trim()];
-    setAllScents(updatedScents);
-    localStorage.setItem(LOCAL_STORAGE_KEY_SCENTS, JSON.stringify(updatedScents));
-    setNewScentName("");
-    toast({ title: dictionary.addSuccessTitle, description: dictionary.addSuccess.replace('{name}', newScentName.trim()) });
-  };
 
-  const handleDeleteScent = (scentToDelete: string) => {
-    if (!dictionary) return;
-    const updatedScents = allScents.filter(scent => scent !== scentToDelete);
-    setAllScents(updatedScents);
-    localStorage.setItem(LOCAL_STORAGE_KEY_SCENTS, JSON.stringify(updatedScents));
-    toast({ title: dictionary.deleteSuccessTitle, description: dictionary.deleteSuccess.replace('{name}', scentToDelete) });
+    if (editingAttributeName) { // Updating
+      const oldName = editingAttributeName;
+      const updatedScents = allScents.map(scent => (scent === oldName ? trimmedNewName : scent));
+      setAllScents(updatedScents);
+      localStorage.setItem(LOCAL_STORAGE_KEY_SCENTS, JSON.stringify(updatedScents));
+      toast({ title: dictionary?.updateSuccessTitle || "Updated", description: (dictionary?.updateSuccess || "'{oldName}' updated to '{newName}'.").replace('{oldName}', oldName).replace('{newName}', trimmedNewName) });
+      setNewScentName("");
+      setEditingAttributeName(null);
+    } else { // Adding
+      const updatedScents = [...allScents, trimmedNewName];
+      setAllScents(updatedScents);
+      localStorage.setItem(LOCAL_STORAGE_KEY_SCENTS, JSON.stringify(updatedScents));
+      toast({ title: dictionary?.addSuccessTitle || "Added", description: (dictionary?.addSuccess || "'{name}' has been added.").replace('{name}', trimmedNewName) });
+      setNewScentName("");
+    }
   };
   
-  if (!dictionary || !alertStrings) {
-    return <div>Loading translations...</div>;
+  const handleInitiateEdit = (name: string) => {
+    setEditingAttributeName(name);
+    setNewScentName(name);
+  };
+
+  const handleCancelEdit = () => {
+    setNewScentName("");
+    setEditingAttributeName(null);
+  };
+
+  const handleDeleteAttribute = (attributeToDelete: string) => {
+    if (!dictionary) return;
+    const updatedAttributes = allScents.filter(attr => attr !== attributeToDelete);
+    setAllScents(updatedAttributes);
+    localStorage.setItem(LOCAL_STORAGE_KEY_SCENTS, JSON.stringify(updatedAttributes));
+    toast({ title: dictionary?.deleteSuccessTitle || "Deleted", description: (dictionary?.deleteSuccess || "'{name}' has been deleted.").replace('{name}', attributeToDelete) });
+  };
+  
+  if (!isClient || !dictionary || !alertStrings) {
+    return <div>Loading...</div>;
   }
 
   return (
@@ -112,17 +142,26 @@ export default function AdminManageScentsPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>{dictionary.addNewTitle}</CardTitle>
-          <CardDescription>{dictionary.addNewDescription}</CardDescription>
+          <CardTitle>{editingAttributeName ? (dictionary.editExistingTitle || "Edit Scent") : (dictionary.addNewTitle || "Add New Scent")}</CardTitle>
+          <CardDescription>{editingAttributeName ? (dictionary.editExistingDescription || "Modify the scent name below.") : (dictionary.addNewDescription || "Create a new scent.")}</CardDescription>
         </CardHeader>
-        <CardContent className="flex gap-2">
+        <CardContent className="flex flex-col sm:flex-row gap-2">
           <Input
             value={newScentName}
             onChange={(e) => setNewScentName(e.target.value)}
             placeholder={dictionary.inputPlaceholder}
             className="flex-grow"
           />
-          <Button onClick={handleAddScent}><PlusCircle className="mr-2 h-4 w-4" /> {dictionary.addButton}</Button>
+          <div className="flex gap-2 mt-2 sm:mt-0">
+            <Button onClick={handleAddOrUpdateAttribute}>
+              {editingAttributeName 
+                ? <><Edit3 className="mr-2 h-4 w-4" /> {dictionary.updateButton || "Update"}</> 
+                : <><PlusCircle className="mr-2 h-4 w-4" /> {dictionary.addButton || "Add"}</>}
+            </Button>
+            {editingAttributeName && (
+              <Button variant="outline" onClick={handleCancelEdit}>{dictionary.cancelButton || "Cancel"}</Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -136,31 +175,36 @@ export default function AdminManageScentsPage() {
             <p className="text-muted-foreground text-sm">{dictionary.noCustomYet || "No scents added yet."}</p>
           ) : (
             <ul className="space-y-2">
-              {allScents.map(scent => (
-                <li key={scent} className="flex items-center justify-between p-2 border rounded-md text-sm">
-                  <span>{scent}</span>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{alertStrings.confirmDeleteTitle}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {isScentInUse(scent) 
-                            ? alertStrings.confirmDeleteScentInUse.replace('{attributeName}', scent)
-                            : alertStrings.confirmDeleteGeneral.replace('{name}', scent)
-                          }
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{alertStrings.cancelButton}</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteScent(scent)} className="bg-destructive hover:bg-destructive/90">{alertStrings.deleteConfirmButton}</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+              {allScents.map(attr => (
+                <li key={attr} className="flex items-center justify-between p-3 border rounded-md text-sm hover:bg-muted/50 transition-colors">
+                  <span>{attr}</span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" onClick={() => handleInitiateEdit(attr)} className="h-7 px-2 py-1 text-xs">
+                      <Edit3 className="mr-1 h-3 w-3" /> {dictionary.editButton || "Edit"}
+                    </Button>
+                     <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive h-7 px-2 py-1 text-xs">
+                          <Trash2 className="mr-1 h-3 w-3" /> {dictionary.deleteButton || "Delete"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{alertStrings.confirmDeleteTitle}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {isAttributeInUse(attr) 
+                              ? alertStrings.confirmDeleteScentInUse.replace('{attributeName}', attr)
+                              : alertStrings.confirmDeleteGeneral.replace('{name}', attr)
+                            }
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{alertStrings.cancelButton}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteAttribute(attr)} className="bg-destructive hover:bg-destructive/90">{alertStrings.deleteConfirmButton}</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </li>
               ))}
             </ul>

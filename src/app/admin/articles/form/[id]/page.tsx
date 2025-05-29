@@ -13,12 +13,14 @@ import { FormProvider, useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter, useParams, usePathname } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, ImageUp } from "lucide-react";
 import type { Article, Locale } from "@/lib/types";
 import { slugify } from "@/lib/utils";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
+import { logAdminAction } from "@/admin/lib/admin-logger";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 const ARTICLES_STORAGE_KEY = "askimAdminArticles";
 
@@ -32,23 +34,18 @@ const articleSchema = z.object({
   content_uz: z.string().min(1, "Uzbek content is required."),
   isActive: z.boolean().default(true),
   useSharedImage: z.boolean().default(true),
-  sharedMainImage: z.string().url({ message: "Invalid image URL." }).optional().or(z.literal("")),
-  mainImage_en: z.string().url({ message: "Invalid image URL." }).optional().or(z.literal("")),
-  mainImage_ru: z.string().url({ message: "Invalid image URL." }).optional().or(z.literal("")),
-  mainImage_uz: z.string().url({ message: "Invalid image URL." }).optional().or(z.literal("")),
+  sharedMainImage: z.string().url({ message: "Invalid image URL (shared)." }).optional().or(z.literal("")),
+  mainImage_en: z.string().url({ message: "Invalid image URL (EN)." }).optional().or(z.literal("")),
+  mainImage_ru: z.string().url({ message: "Invalid image URL (RU)." }).optional().or(z.literal("")),
+  mainImage_uz: z.string().url({ message: "Invalid image URL (UZ)." }).optional().or(z.literal("")),
 }).refine(data => {
   if (data.useSharedImage && !data.sharedMainImage) {
-    return false; // Shared image must be provided if useSharedImage is true
-  }
-  if (!data.useSharedImage && (!data.mainImage_en && !data.mainImage_ru && !data.mainImage_uz)) {
-    // If not using shared, at least one language-specific image might be desired, but not strictly enforced by this rule
-    // You might want to enforce at least the 'en' image if not shared:
-    // return !!data.mainImage_en;
+    return false; 
   }
   return true;
 }, {
-  message: "If 'Use shared image' is checked, a shared image must be uploaded. Otherwise, ensure appropriate language-specific images are provided if needed.",
-  path: ["useSharedImage"], // This path might need adjustment based on where you want the error to show
+  message: "If 'Use shared image' is checked, a shared image must be uploaded.",
+  path: ["sharedMainImage"], 
 });
 
 
@@ -58,12 +55,12 @@ export default function ArticleFormPage() {
   const { toast } = useToast();
   const router = useRouter();
   const params = useParams();
-  const pathname = usePathname();
+  const { currentAdminUser } = useAdminAuth();
   
   const articleId = params.id as string;
   const isEditing = articleId !== "new";
+  const [isClient, setIsClient] = useState(false);
 
-  const [initialArticles, setInitialArticles] = useState<Article[]>([]);
 
   const formMethods = useForm<ArticleFormValues>({
     resolver: zodResolver(articleSchema),
@@ -84,12 +81,11 @@ export default function ArticleFormPage() {
   const watchedUseSharedImage = watch("useSharedImage");
 
   useEffect(() => {
+    setIsClient(true);
     if (typeof window !== "undefined") {
-      const storedArticlesRaw = localStorage.getItem(ARTICLES_STORAGE_KEY);
-      const articles: Article[] = storedArticlesRaw ? JSON.parse(storedArticlesRaw) : [];
-      setInitialArticles(articles);
-
       if (isEditing) {
+        const storedArticlesRaw = localStorage.getItem(ARTICLES_STORAGE_KEY);
+        const articles: Article[] = storedArticlesRaw ? JSON.parse(storedArticlesRaw) : [];
         const articleToEdit = articles.find(art => art.id === articleId);
         if (articleToEdit) {
           reset({
@@ -101,7 +97,7 @@ export default function ArticleFormPage() {
             content_ru: articleToEdit.content.ru || "",
             content_uz: articleToEdit.content.uz || "",
             isActive: articleToEdit.isActive,
-            useSharedImage: articleToEdit.useSharedImage,
+            useSharedImage: articleToEdit.useSharedImage === undefined ? true : articleToEdit.useSharedImage,
             sharedMainImage: articleToEdit.sharedMainImage || "",
             mainImage_en: articleToEdit.mainImage_en || "",
             mainImage_ru: articleToEdit.mainImage_ru || "",
@@ -111,22 +107,36 @@ export default function ArticleFormPage() {
           toast({ title: "Error", description: "Article not found.", variant: "destructive" });
           router.push("/admin/articles");
         }
+      } else { // For 'new' article
+        reset({ // Reset to default values for new article form
+          slug: "",
+          title_en: "", title_ru: "", title_uz: "",
+          content_en: "", content_ru: "", content_uz: "",
+          isActive: true,
+          useSharedImage: true,
+          sharedMainImage: "",
+          mainImage_en: "", mainImage_ru: "", mainImage_uz: "",
+        });
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [articleId, isEditing, router, toast]); // Removed reset from deps as it was causing loop
+  }, [articleId, isEditing, router, toast]); // Removed reset to avoid loops, re-added for correct form population on nav
 
   useEffect(() => {
-    if (!isEditing && watchedTitleEn) {
+    if (!isEditing && watchedTitleEn && isClient) {
       setValue("slug", slugify(watchedTitleEn));
     }
-  }, [watchedTitleEn, setValue, isEditing]);
+  }, [watchedTitleEn, setValue, isEditing, isClient]);
 
 
   const onSubmit = (data: ArticleFormValues) => {
-    const articles = initialArticles;
+    if (typeof window === 'undefined') return;
+
+    const storedArticlesRaw = localStorage.getItem(ARTICLES_STORAGE_KEY);
+    let articles: Article[] = storedArticlesRaw ? JSON.parse(storedArticlesRaw) : [];
     const now = new Date().toISOString();
     let finalArticleData: Article;
+    const articleAction = isEditing ? "Article Updated" : "Article Created";
 
     if (isEditing) {
       const articleIndex = articles.findIndex(art => art.id === articleId);
@@ -150,7 +160,7 @@ export default function ArticleFormPage() {
       };
       articles[articleIndex] = finalArticleData;
     } else {
-      const newId = slugify(data.title_en) + '-' + Date.now(); // Ensure unique ID
+      const newId = slugify(data.title_en) + '-' + Date.now(); 
       finalArticleData = {
         id: newId,
         slug: data.slug,
@@ -169,15 +179,22 @@ export default function ArticleFormPage() {
     }
 
     localStorage.setItem(ARTICLES_STORAGE_KEY, JSON.stringify(articles));
+    if(currentAdminUser?.email) {
+        logAdminAction(currentAdminUser.email, articleAction + " (Simulated)", { articleId: finalArticleData.id, articleTitle: data.title_en});
+    }
     toast({
-      title: isEditing ? "Article Updated (Simulated)" : "Article Created (Simulated)",
-      description: `${data.title_en} has been ${isEditing ? 'updated' : 'created'}. Client-side only.`,
+      title: `${articleAction} (Simulated)`,
+      description: `Article "${data.title_en}" has been ${isEditing ? 'updated' : 'created'}. Client-side only.`,
     });
     router.push("/admin/articles");
-    router.refresh(); // To ensure the list page re-fetches from localStorage if it caches
+    router.refresh();
   };
   
   const locales: Locale[] = ['en', 'ru', 'uz'];
+
+  if (!isClient) {
+    return <div>Loading form...</div>; // Or a skeleton loader
+  }
 
   return (
     <FormProvider {...formMethods}>
@@ -234,14 +251,14 @@ export default function ArticleFormPage() {
                         checked={field.value}
                         onCheckedChange={(checked) => {
                           field.onChange(checked);
-                          if (checked) { // Clear individual images if switching to shared
+                          if (checked) { 
                             setValue("mainImage_en", "");
                             setValue("mainImage_ru", "");
                             setValue("mainImage_uz", "");
-                          } else { // Clear shared if switching to individual
+                          } else { 
                              setValue("sharedMainImage", "");
                           }
-                          trigger(["sharedMainImage", "mainImage_en", "mainImage_ru", "mainImage_uz"]); // Trigger validation
+                          trigger(["sharedMainImage", "mainImage_en", "mainImage_ru", "mainImage_uz"]);
                         }}
                         className="ml-3"
                       />
@@ -249,6 +266,7 @@ export default function ArticleFormPage() {
                   />
                 </Label>
                 {errors.useSharedImage && <p className="text-sm text-destructive">{errors.useSharedImage.message}</p>}
+                {errors.sharedMainImage && watchedUseSharedImage && <p className="text-sm text-destructive">{errors.sharedMainImage.message}</p>}
               </div>
 
               {watchedUseSharedImage && (
@@ -267,7 +285,7 @@ export default function ArticleFormPage() {
                       />
                     )}
                   />
-                  {errors.sharedMainImage && <p className="text-sm text-destructive">{errors.sharedMainImage.message}</p>}
+                  {/* Error for sharedMainImage handled above with useSharedImage error */}
                 </div>
               )}
 
@@ -324,3 +342,4 @@ export default function ArticleFormPage() {
     </FormProvider>
   );
 }
+

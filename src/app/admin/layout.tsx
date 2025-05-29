@@ -10,7 +10,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetTrigger 
 import {
   LayoutDashboard, Package, ShoppingCart, Users as ClientsIcon, Megaphone, FileOutput, Landmark, Percent,
   FileText as ContentIcon, Settings, LogOut, Menu, ShieldCheck, UserCog as UserManagementIcon,
-  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Tags, Beaker, Wind, ChevronDown
+  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Tags, Beaker, Wind, ChevronDown, FileText
 } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
@@ -37,12 +37,13 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/admin/dashboard', labelKey: 'dashboard', icon: LayoutDashboard, managerOrAdmin: true },
   { href: '/admin/products', labelKey: 'products', icon: Package, managerOrAdmin: true },
+  { href: '/admin/articles', labelKey: 'articles', icon: FileText, managerOrAdmin: true },
   {
-    href: '#!', labelKey: 'attributes', icon: Tags, managerOrAdmin: true, // Use #! or similar for non-navigable parent
+    href: '#!', labelKey: 'attributes', icon: Tags, adminOnly: true, // Attributes section is Admin only for now
     subItems: [
-      { href: '/admin/attributes/categories', labelKey: 'categories', icon: Tags, managerOrAdmin: true },
-      { href: '/admin/attributes/materials', labelKey: 'materials', icon: Beaker, managerOrAdmin: true },
-      { href: '/admin/attributes/scents', labelKey: 'scents', icon: Wind, managerOrAdmin: true },
+      { href: '/admin/attributes/categories', labelKey: 'categories', icon: Tags, adminOnly: true },
+      { href: '/admin/attributes/materials', labelKey: 'materials', icon: Beaker, adminOnly: true },
+      { href: '/admin/attributes/scents', labelKey: 'scents', icon: Wind, adminOnly: true },
     ]
   },
   { href: '/admin/sales', labelKey: 'sales', icon: ShoppingCart, managerOrAdmin: true },
@@ -63,18 +64,18 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('sidebar-collapsed') === 'true';
-    }
-    return false;
-  });
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [dictionary, setDictionary] = useState<AdminLayoutStrings | null>(null);
   const [currentLocale, setCurrentLocale] = useState<AdminLocale>(i18nAdmin.defaultLocale);
   const [darkMode, setDarkMode] = useState(false);
   const isMobile = useIsMobile();
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+    const storedCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+    setIsSidebarCollapsed(storedCollapsed);
+
     const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
     const initialLocale = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
     setCurrentLocale(initialLocale);
@@ -88,8 +89,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('sidebar-collapsed', String(isSidebarCollapsed));
-  }, [isSidebarCollapsed]);
+    if(isClient) { // Only run on client
+      localStorage.setItem('sidebar-collapsed', String(isSidebarCollapsed));
+    }
+  }, [isSidebarCollapsed, isClient]);
 
   useEffect(() => {
     async function loadDictionary() {
@@ -111,11 +114,17 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     localStorage.setItem('admin-lang', newLocale);
   };
 
+  useEffect(() => {
+    if (!isLoadingAuth && !currentAdminUser && pathname !== '/admin/login') {
+      router.replace('/admin/login');
+    }
+  }, [isLoadingAuth, currentAdminUser, pathname, router]);
+
   if (isLoadingAuth || !dictionary) {
     return <div className="flex h-screen items-center justify-center bg-muted"><p>Loading Admin Panel...</p></div>;
   }
 
-  if (pathname !== '/admin/login' && isMobile && currentAdminUser) {
+  if (pathname !== '/admin/login' && isClient && isMobile && currentAdminUser) {
     return (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-8 text-center">
             <ShieldCheck className="h-16 w-16 text-primary mb-6" />
@@ -133,16 +142,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
 
-  if (!currentAdminUser && pathname !== '/admin/login') {
-    if (typeof window !== 'undefined') router.replace('/admin/login');
-    return <div className="flex h-screen items-center justify-center bg-muted"><p>Redirecting to login...</p></div>;
-  }
-
   if (pathname === '/admin/login') { 
     return <>{children}</>;
   }
   
-  if (!currentAdminUser) return null;
+  if (!currentAdminUser) return null; // Should be caught by useEffect redirect
 
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) return isAdmin;
@@ -182,7 +186,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                   <Button
                     variant={isActive ? 'secondary' : 'ghost'}
                     className={cn(
-                      "w-full text-sm h-9 flex items-center",
+                      "w-full text-sm h-9 flex items-center group",
                       isSidebarActuallyCollapsed && !isMobileContext ? "justify-center px-2" : "justify-start px-2",
                       isActive && "font-semibold"
                     )}
@@ -203,7 +207,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             side={isMobileContext ? "bottom" : "right"} 
             align={isMobileContext ? "center" : "start"} 
             sideOffset={isMobileContext ? 4 : (isSidebarActuallyCollapsed ? 2 : 8)}
-            className={cn(isMobileContext ? "w-[calc(100vw-4rem)]" : "min-w-[180px]")}
+            className={cn("z-50", isMobileContext ? "w-[calc(100vw-4rem)]" : "min-w-[180px]")} // Ensure z-index for dropdown content
           >
             {item.subItems?.filter(subItem => subItem.adminOnly ? isAdmin : (subItem.managerOrAdmin ? (isManager || isAdmin) : true)).map(subItem => {
               const subLabel = dictionary[subItem.labelKey] || subItem.labelKey;
@@ -382,13 +386,16 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // Ensure AdminAuthProvider wraps the login page as well to allow login logic access to context
   if (pathname === '/admin/login') { 
     return <AdminAuthProvider>{children}</AdminAuthProvider>;
   }
 
+  // For all other admin pages, wrap with AdminAuthProvider and then the layout content
   return (
     <AdminAuthProvider>
       <AdminLayoutContent>{children}</AdminLayoutContent>
     </AdminAuthProvider>
   );
 }
+

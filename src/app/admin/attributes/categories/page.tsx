@@ -1,11 +1,10 @@
-
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, PlusCircle } from "lucide-react";
+import { Trash2, PlusCircle, Edit3, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { mockCategories, mockProducts } from '@/lib/mock-data';
 import {
@@ -24,37 +23,47 @@ import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
 import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
 import type enAdminMessages from '@/admin/dictionaries/en.json';
 
-const LOCAL_STORAGE_KEY_CATEGORIES = "askimAdminCustomCategories"; // Renamed for clarity
+const LOCAL_STORAGE_KEY_CATEGORIES = "askimAdminCustomCategories";
 type ManageCategoriesDict = typeof enAdminMessages.adminManageCategoriesPage;
 
 type AlertDialogStrings = {
   confirmDeleteTitle: string;
   confirmDeleteCategoryInUse: string;
   confirmDeleteGeneral: string;
+  confirmRenameTitle: string;
+  confirmRenameAttributeInUse: string;
   cancelButton: string;
   deleteConfirmButton: string;
+  updateButton: string;
 };
 
 export default function AdminManageCategoriesPage() {
   const [allCategories, setAllCategories] = useState<string[]>([]);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [editingAttributeName, setEditingAttributeName] = useState<string | null>(null);
   const { toast } = useToast();
   const [dictionary, setDictionary] = useState<ManageCategoriesDict | null>(null);
   const [alertStrings, setAlertStrings] = useState<AlertDialogStrings | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
     const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
     const localeToLoad = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
     
     async function loadDictionary() {
       const fullDict = await getAdminDictionary(localeToLoad);
-      setDictionary(fullDict.adminManageCategoriesPage);
+      const pageDict = fullDict.adminManageCategoriesPage;
+      setDictionary(pageDict);
       setAlertStrings({
-        confirmDeleteTitle: fullDict.adminManageCategoriesPage.confirmDeleteTitle || "Confirm Deletion",
-        confirmDeleteCategoryInUse: fullDict.adminManageCategoriesPage.confirmDeleteCategoryInUse || "The category '{attributeName}' is currently used. Deleting it may affect products. Sure?",
-        confirmDeleteGeneral: fullDict.adminManageCategoriesPage.confirmDeleteGeneral || "Are you sure you want to delete the category \"{name}\"?",
-        cancelButton: fullDict.adminManageCategoriesPage.cancelButton || "Cancel",
-        deleteConfirmButton: fullDict.adminManageCategoriesPage.deleteConfirmButton || "Delete",
+        confirmDeleteTitle: pageDict.confirmDeleteTitle || "Confirm Deletion",
+        confirmDeleteCategoryInUse: pageDict.confirmDeleteCategoryInUse || "The category '{attributeName}' is currently used. Products using it may need manual updates. Sure?",
+        confirmDeleteGeneral: pageDict.confirmDeleteGeneral || "Are you sure you want to delete category \"{name}\"?",
+        confirmRenameTitle: pageDict.confirmRenameTitle || "Confirm Rename",
+        confirmRenameAttributeInUse: pageDict.confirmRenameAttributeInUse || "Renaming '{oldName}' to '{newName}'? Products using '{oldName}' may need manual updates. Sure?",
+        cancelButton: pageDict.cancelButton || "Cancel",
+        deleteConfirmButton: pageDict.deleteConfirmButton || "Delete",
+        updateButton: pageDict.updateButton || "Update"
       });
     }
     loadDictionary();
@@ -63,46 +72,69 @@ export default function AdminManageCategoriesPage() {
     if (!storedCategories) {
       const initialMockCategoryNames = mockCategories.map(cat => cat.name);
       localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(initialMockCategoryNames));
-      storedCategories = JSON.stringify(initialMockCategoryNames);
+      setAllCategories(initialMockCategoryNames);
+    } else {
+      setAllCategories(JSON.parse(storedCategories));
     }
-    setAllCategories(JSON.parse(storedCategories));
-
   }, []);
 
-  const isCategoryInUse = (categoryName: string): boolean => {
-    return mockProducts.some(product => product.category === categoryName);
-  };
+  const isAttributeInUse = useCallback((attributeName: string): boolean => {
+    return mockProducts.some(product => product.category === attributeName);
+  }, []);
 
-  const handleAddCategory = () => {
-    if (!dictionary) return;
-    if (!newCategoryName.trim()) {
-      toast({ title: "Error", description: dictionary.errorEmptyName, variant: "destructive" });
+  const handleAddOrUpdateAttribute = () => {
+    if (!dictionary || !newCategoryName.trim()) {
+      toast({ title: "Error", description: dictionary?.errorEmptyName || "Name cannot be empty.", variant: "destructive" });
       return;
     }
-    const categoryExists = allCategories.some(
-      (cat) => cat.toLowerCase() === newCategoryName.trim().toLowerCase()
+
+    const trimmedNewName = newCategoryName.trim();
+    const isDuplicate = allCategories.some(
+      (cat) => cat.toLowerCase() === trimmedNewName.toLowerCase() && cat !== editingAttributeName
     );
-    if (categoryExists) {
-      toast({ title: "Error", description: dictionary.errorExists, variant: "destructive" });
+
+    if (isDuplicate) {
+      toast({ title: "Error", description: dictionary?.errorExists || "Attribute already exists.", variant: "destructive" });
       return;
     }
-    const updatedCategories = [...allCategories, newCategoryName.trim()];
-    setAllCategories(updatedCategories);
-    localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(updatedCategories));
+
+    if (editingAttributeName) { // Updating
+      const oldName = editingAttributeName;
+      const updatedCategories = allCategories.map(cat => (cat === oldName ? trimmedNewName : cat));
+      setAllCategories(updatedCategories);
+      localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(updatedCategories));
+      toast({ title: dictionary?.updateSuccessTitle || "Updated", description: (dictionary?.updateSuccess || "'{oldName}' updated to '{newName}'.").replace('{oldName}', oldName).replace('{newName}', trimmedNewName) });
+      setNewCategoryName("");
+      setEditingAttributeName(null);
+    } else { // Adding
+      const updatedCategories = [...allCategories, trimmedNewName];
+      setAllCategories(updatedCategories);
+      localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(updatedCategories));
+      toast({ title: dictionary?.addSuccessTitle || "Added", description: (dictionary?.addSuccess || "'{name}' has been added.").replace('{name}', trimmedNewName) });
+      setNewCategoryName("");
+    }
+  };
+  
+  const handleInitiateEdit = (name: string) => {
+    setEditingAttributeName(name);
+    setNewCategoryName(name);
+  };
+
+  const handleCancelEdit = () => {
     setNewCategoryName("");
-    toast({ title: dictionary.addSuccessTitle, description: dictionary.addSuccess.replace('{name}', newCategoryName.trim()) });
+    setEditingAttributeName(null);
   };
 
-  const handleDeleteCategory = (categoryToDelete: string) => {
+  const handleDeleteAttribute = (attributeToDelete: string) => {
     if (!dictionary) return;
-    const updatedCategories = allCategories.filter(cat => cat !== categoryToDelete);
-    setAllCategories(updatedCategories);
-    localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(updatedCategories));
-    toast({ title: dictionary.deleteSuccessTitle, description: dictionary.deleteSuccess.replace('{name}', categoryToDelete) });
+    const updatedAttributes = allCategories.filter(attr => attr !== attributeToDelete);
+    setAllCategories(updatedAttributes);
+    localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(updatedAttributes));
+    toast({ title: dictionary?.deleteSuccessTitle || "Deleted", description: (dictionary?.deleteSuccess || "'{name}' has been deleted.").replace('{name}', attributeToDelete) });
   };
 
-  if (!dictionary || !alertStrings) {
-    return <div>Loading translations...</div>;
+  if (!isClient || !dictionary || !alertStrings) {
+    return <div>Loading...</div>; // Or a skeleton loader
   }
 
   return (
@@ -111,17 +143,26 @@ export default function AdminManageCategoriesPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>{dictionary.addNewTitle}</CardTitle>
-          <CardDescription>{dictionary.addNewDescription}</CardDescription>
+          <CardTitle>{editingAttributeName ? (dictionary.editExistingTitle || "Edit Category") : (dictionary.addNewTitle || "Add New Category")}</CardTitle>
+          <CardDescription>{editingAttributeName ? (dictionary.editExistingDescription || "Modify the category name below.") : (dictionary.addNewDescription || "Create a new category.")}</CardDescription>
         </CardHeader>
-        <CardContent className="flex gap-2">
+        <CardContent className="flex flex-col sm:flex-row gap-2">
           <Input
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
             placeholder={dictionary.inputPlaceholder}
             className="flex-grow"
           />
-          <Button onClick={handleAddCategory}><PlusCircle className="mr-2 h-4 w-4" /> {dictionary.addButton}</Button>
+          <div className="flex gap-2 mt-2 sm:mt-0">
+            <Button onClick={handleAddOrUpdateAttribute}>
+              {editingAttributeName 
+                ? <><Edit3 className="mr-2 h-4 w-4" /> {dictionary.updateButton || "Update"}</> 
+                : <><PlusCircle className="mr-2 h-4 w-4" /> {dictionary.addButton || "Add"}</>}
+            </Button>
+            {editingAttributeName && (
+              <Button variant="outline" onClick={handleCancelEdit}>{dictionary.cancelButton || "Cancel"}</Button>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -135,31 +176,36 @@ export default function AdminManageCategoriesPage() {
             <p className="text-muted-foreground text-sm">{dictionary.noCustomYet || "No categories added yet."}</p>
           ) : (
             <ul className="space-y-2">
-              {allCategories.map(cat => (
-                <li key={cat} className="flex items-center justify-between p-2 border rounded-md text-sm">
-                  <span>{cat}</span>
-                   <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>{alertStrings.confirmDeleteTitle}</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          {isCategoryInUse(cat) 
-                            ? alertStrings.confirmDeleteCategoryInUse.replace('{attributeName}', cat)
-                            : alertStrings.confirmDeleteGeneral.replace('{name}', cat)
-                          }
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>{alertStrings.cancelButton}</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDeleteCategory(cat)} className="bg-destructive hover:bg-destructive/90">{alertStrings.deleteConfirmButton}</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+              {allCategories.map(attr => (
+                <li key={attr} className="flex items-center justify-between p-3 border rounded-md text-sm hover:bg-muted/50 transition-colors">
+                  <span>{attr}</span>
+                  <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" onClick={() => handleInitiateEdit(attr)} className="h-7 px-2 py-1 text-xs">
+                      <Edit3 className="mr-1 h-3 w-3" /> {dictionary.editButton || "Edit"}
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive h-7 px-2 py-1 text-xs">
+                          <Trash2 className="mr-1 h-3 w-3" /> {dictionary.deleteButton || "Delete"}
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>{alertStrings.confirmDeleteTitle}</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            {isAttributeInUse(attr) 
+                              ? alertStrings.confirmDeleteCategoryInUse.replace('{attributeName}', attr)
+                              : alertStrings.confirmDeleteGeneral.replace('{name}', attr)
+                            }
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>{alertStrings.cancelButton}</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteAttribute(attr)} className="bg-destructive hover:bg-destructive/90">{alertStrings.deleteConfirmButton}</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                 </li>
               ))}
             </ul>
