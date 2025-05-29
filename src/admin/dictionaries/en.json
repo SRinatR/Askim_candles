@@ -18,6 +18,7 @@
     "settings": "Settings",
     "management": "User Management",
     "logs": "Logs",
+    "sessions": "Sessions",
     "logout": "Logout",
     "loggedInAs": "Logged in as: {role}",
     "role": "Role: {role}",
@@ -303,8 +304,8 @@
     "deleteClientSuccessTitle": "Client Deleted (Simulated)",
     "deleteClientSuccessDesc": "Client '{name}' has been deleted locally."
   },
-  "adminLogsPage": {
-    "title": "System &amp; Audit Logs",
+   "adminLogsPage": {
+    "title": "System & Audit Logs",
     "description": "View admin actions. Logs are stored in browser localStorage (max 100 entries).",
     "clearAllButton": "Clear All Logs",
     "entriesTitle": "Log Entries",
@@ -326,7 +327,7 @@
     "clearFiltersButton": "Clear Filters"
   },
   "adminUsersPage": {
-    "title": "Manage Users &amp; Managers",
+    "title": "Manage Users & Managers",
     "description": "View users, assign roles, and manage manager accounts. (ADMIN Only)",
     "addNewManagerButton": "Add New Manager",
     "managerListTitle": "Manager List",
@@ -370,5 +371,19 @@
     "accessDeniedDesc": "You do not have permission to view this page.",
     "roleChangeSimulatedTitle": "Role Change (Simulated)",
     "roleChangeSimulatedDesc": "Role for {name} 'changed' to {role}. Backend required for persistence and actual permission changes."
+  },
+  "adminSessionsPage": {
+    "title": "Session Management",
+    "description": "Manage active sessions. Full cross-device session management requires backend integration.",
+    "currentSessionTitle": "Current Session (This Device)",
+    "nameLabel": "Name:",
+    "emailLabel": "Email:",
+    "roleLabel": "Role:",
+    "logoutThisDeviceButton": "Log Out From This Device",
+    "otherSessionsTitle": "Other Active Sessions",
+    "otherSessionsInfo": "Viewing and managing sessions across all devices (e.g., 'Log out everywhere') is a feature that requires backend database integration to track active sessions centrally. This functionality will be implemented once the backend is in place.",
+    "logoutOtherDevicesButton": "Log Out From All Other Devices (Requires Backend)",
+    "accessDeniedTitle": "Access Denied",
+    "accessDeniedDesc": "You do not have permission to view this page."
   }
 }

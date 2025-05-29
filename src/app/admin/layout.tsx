@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -11,7 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import {
   LayoutDashboard, Package, ShoppingCart, Users as ClientsIcon, Megaphone, FileOutput, Landmark, Percent,
   FileText as ContentIcon, Settings, LogOut, Menu, ShieldCheck, UserCog as UserManagementIcon,
-  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Tags, ChevronDown, FileText, Beaker, Wind
+  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Tags, ChevronDown, FileText as ArticlesIcon, Beaker, Wind, Users // Added Users for Sessions
 } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
@@ -39,7 +38,7 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/admin/dashboard', labelKey: 'dashboard', icon: LayoutDashboard, managerOrAdmin: true },
   { href: '/admin/products', labelKey: 'products', icon: Package, managerOrAdmin: true },
-  { href: '/admin/articles', labelKey: 'articles', icon: FileText, managerOrAdmin: true },
+  { href: '/admin/articles', labelKey: 'articles', icon: ArticlesIcon, managerOrAdmin: true },
   {
     href: '#!', labelKey: 'attributes', icon: Tags, adminOnly: true, isAccordion: true,
     subItems: [
@@ -56,6 +55,7 @@ const navItems: NavItem[] = [
   { href: '/admin/discounts', labelKey: 'discounts', icon: Percent, managerOrAdmin: true },
   { href: '/admin/content', labelKey: 'content', icon: ContentIcon, managerOrAdmin: true },
   { href: '/admin/logs', labelKey: 'logs', icon: History, adminOnly: true },
+  { href: '/admin/sessions', labelKey: 'sessions', icon: Users, adminOnly: true }, // New Sessions Link
   { href: '/admin/settings', labelKey: 'settings', icon: Settings, adminOnly: true },
   { href: '/admin/users', labelKey: 'management', icon: UserManagementIcon, adminOnly: true },
 ];
@@ -176,22 +176,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     const label = dictionary[item.labelKey] || item.labelKey;
     const isActive = pathname === item.href || (item.href !== '/admin/dashboard' && item.href !== '#!' && pathname.startsWith(item.href));
     const isParentOfActive = item.subItems?.some(subItem => pathname.startsWith(subItem.href));
+    const isDesktopExpanded = !isMobileContext && !isSidebarActuallyCollapsed;
 
-    // Case 1: Desktop Expanded View + Accordion Item
-    if (item.isAccordion && !isMobileContext && !isSidebarActuallyCollapsed) {
+    if (item.isAccordion && isDesktopExpanded) {
       return (
         <AccordionItem value={item.labelKey} key={item.labelKey} className="border-b-0">
           <AccordionTrigger
             className={cn(
               "w-full text-sm h-9 flex items-center group hover:bg-muted/80 focus:bg-muted/80 rounded-md transition-colors duration-100 ease-in-out justify-between px-2 py-1.5",
-              (isParentOfActive) && "bg-muted font-semibold" 
+              (isParentOfActive || isActive) && "bg-muted font-semibold" 
             )}
           >
             <div className="flex items-center">
               <item.icon className="h-5 w-5 shrink-0 mr-3" />
               <span className="truncate flex-1 text-left">{label}</span>
             </div>
-            {/* ChevronDown is part of AccordionTrigger by default */}
           </AccordionTrigger>
           <AccordionContent className="pt-0 pb-0 pl-2">
             <div className="flex flex-col space-y-1 py-1 pl-5 border-l border-muted-foreground/30 ml-2">
@@ -219,8 +218,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       );
     }
     
-    // Case 2: Mobile View or Collapsed Desktop View + Item with SubItems
-    if (item.subItems && (isMobileContext || isSidebarActuallyCollapsed)) {
+    if (item.subItems && (isMobileContext || (isSidebarActuallyCollapsed && !item.isAccordion) )) {
        return (
         <DropdownMenu key={item.href}>
           <TooltipProvider delayDuration={isMobileContext || !isSidebarActuallyCollapsed ? 999999 : 0}>
@@ -271,7 +269,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       );
     }
 
-    // Case 3: Regular Link
+    // Regular Link
     return (
       <TooltipProvider key={item.href} delayDuration={isMobileContext || !isSidebarActuallyCollapsed ? 999999 : 0}>
         <Tooltip>
@@ -295,24 +293,22 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const SidebarNav = ({isMobileNav = false, isCollapsedNav = false} : {isMobileNav?: boolean, isCollapsedNav?: boolean}) => {
-      const isDesktopExpanded = !isMobileNav && !isCollapsedNav;
+  const SidebarNav = ({ isMobileNav = false, isCollapsedNav = false }: { isMobileNav?: boolean, isCollapsedNav?: boolean }) => {
+    const isDesktopExpanded = !isMobileNav && !isCollapsedNav;
 
-      if (isDesktopExpanded) {
-        // For desktop expanded view, wrap all items (including accordions) in a single Accordion root
-        return (
-          <Accordion type="multiple" className="w-full px-2 py-4 space-y-0.5">
-            {filteredNavItems.map((item) => renderNavItem(item, false, false))}
-          </Accordion>
-        );
-      } else {
-        // For mobile or collapsed desktop, render items directly
-        return (
-          <nav className={cn("flex flex-col space-y-1 py-4", isCollapsedNav ? "px-2 items-center" : "px-2")}>
-            {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav))}
-          </nav>
-        );
-      }
+    if (isDesktopExpanded) {
+      return (
+        <Accordion type="multiple" className="w-full px-2 py-4 space-y-0.5">
+          {filteredNavItems.map((item) => renderNavItem(item, false, false))}
+        </Accordion>
+      );
+    } else {
+      return (
+        <nav className={cn("flex flex-col space-y-1 py-4", isCollapsedNav ? "px-2 items-center" : "px-2")}>
+          {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav))}
+        </nav>
+      );
+    }
   };
   
   const userRoleDisplay = currentAdminUser?.role ? dictionary.role.replace('{role}', currentAdminUser.role) : '';
@@ -374,9 +370,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               <span className="sr-only">Toggle sidebar</span>
             </Button>
              <div className="md:hidden flex items-center"> 
-                <Link href="/admin/dashboard" className="mr-2" aria-label={dictionary.adminPanelTitle}>
-                    <Logo className="h-7"/>
-                </Link>
                 <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
                     <SheetTrigger asChild>
                         <Button variant="outline" size="icon">
@@ -389,7 +382,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                            <Link href="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} aria-label={dictionary.adminPanelTitle}>
                                <Logo />
                            </Link>
-                           <SheetTitle className="sr-only">{dictionary.mobileMenuTitle}</SheetTitle>
                            <SheetClose asChild>
                               <Button variant="ghost" size="icon">
                                  <X className="h-6 w-6" />
@@ -419,6 +411,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                         </div>
                     </SheetContent>
                 </Sheet>
+                 <Link href="/admin/dashboard" className="ml-2 md:hidden" aria-label={dictionary.adminPanelTitle}>
+                    <Logo className="h-7"/>
+                </Link>
              </div>
           </div>
           
@@ -430,8 +425,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         
-        <div className="flex flex-col flex-1"> {/* Added flex-col here */}
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto"> {/* main content */}
+        <div className="flex flex-col flex-1">
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                 {children}
             </main>
             <footer className="border-t mt-auto bg-background/50 text-muted-foreground text-xs text-center p-3 shrink-0">
@@ -454,6 +449,3 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
     </AdminAuthProvider>
   );
 }
-
-
-    
