@@ -30,7 +30,7 @@ const getCombinedDictionary = (locale: Locale) => {
     productsPage: dict.productsPage,
     productFilters: dict.productFilters,
     productSort: dict.productSort,
-    productCard: dict.productCard || { // Fallback for productCard
+    productCard: dict.productCard || { 
       addToCart: "Add to Cart (ProductsPage Fallback)",
       addedToCartTitle: "Added to cart (ProductsPage Fallback)",
       addedToCartDesc: "{productName} has been added (ProductsPage Fallback)."
@@ -80,7 +80,14 @@ export default function ProductsPage() {
       case 'name-desc':
         return b.name.localeCompare(a.name);
       case 'newest':
-         return parseInt(b.id) - parseInt(a.id); // Assuming IDs are numeric strings
+         // Ensure IDs are treated as numbers for proper sorting if they are numeric strings
+         const idA = parseInt(a.id, 10);
+         const idB = parseInt(b.id, 10);
+         if (!isNaN(idA) && !isNaN(idB)) {
+           return idB - idA;
+         }
+         // Fallback for non-numeric IDs or if one is NaN
+         return b.id.localeCompare(a.id);
       default:
         return 0;
     }
@@ -90,12 +97,14 @@ export default function ProductsPage() {
   const productsCount = sortedProducts.length;
 
   let productsCountText = "";
-  if (productsCount === 1) {
+  if (productsCount === 1 && dictionary.productsFound) {
     productsCountText = dictionary.productsFound.replace('{count}', String(productsCount));
-  } else if (locale === 'ru' && (productsCount % 10 >= 2 && productsCount % 10 <= 4) && !(productsCount % 100 >= 12 && productsCount % 100 <= 14) ) {
-    productsCountText = (dictionary.productsFound_few || dictionary.productsFound_plural!).replace('{count}', String(productsCount));
-  } else {
-     productsCountText = (dictionary.productsFound_plural || dictionary.productsFound).replace('{count}', String(productsCount));
+  } else if (locale === 'ru' && (productsCount % 10 >= 2 && productsCount % 10 <= 4) && !(productsCount % 100 >= 12 && productsCount % 100 <= 14) && dictionary.productsFound_few) {
+    productsCountText = (dictionary.productsFound_few).replace('{count}', String(productsCount));
+  } else if (dictionary.productsFound_plural) {
+     productsCountText = (dictionary.productsFound_plural).replace('{count}', String(productsCount));
+  } else if (dictionary.productsFound) { // Fallback for locales without plural_few
+    productsCountText = dictionary.productsFound.replace('{count}', String(productsCount));
   }
 
 
@@ -124,7 +133,11 @@ export default function ProductsPage() {
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
-        <ProductFilters dictionary={filtersDictionary} categoriesData={mockCategories} />
+        <ProductFilters 
+          dictionary={filtersDictionary} 
+          categoriesData={mockCategories}
+          allProducts={mockProducts} // Pass all products for dynamic filter options
+        />
         <div className="flex-1">
           {sortedProducts.length > 0 ? (
             <ProductList products={sortedProducts} locale={locale} dictionary={productCardDictionaryForList} />
@@ -142,4 +155,5 @@ export default function ProductsPage() {
     </div>
   );
 }
+
     
