@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetTrigger } from '@/components/ui/sheet'; // Added SheetTrigger
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import {
   LayoutDashboard,
   Package,
@@ -18,10 +18,10 @@ import {
   LogOut,
   Menu,
   ShieldCheck,
-  Megaphone, 
-  FileOutput, 
-  Landmark, 
-  Briefcase, 
+  Megaphone,
+  FileOutput,
+  Landmark,
+  Briefcase,
   PanelLeftOpen,
   PanelRightOpen,
   X
@@ -35,7 +35,7 @@ interface NavItem {
   label: string;
   icon: React.ElementType;
   adminOnly?: boolean;
-  managerOnly?: boolean; 
+  managerOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
   { href: '/admin/discounts', label: 'Скидки и акции', icon: Percent, managerOnly: true },
   { href: '/admin/content', label: 'Контент', icon: FileText, managerOnly: true },
   { href: '/admin/settings', label: 'Настройки', icon: Settings, adminOnly: true },
-  { href: '/admin/users', label: 'Управление', icon: Briefcase, adminOnly: true }, 
+  { href: '/admin/users', label: 'Управление', icon: Briefcase, adminOnly: true },
 ];
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
@@ -67,19 +67,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') router.replace('/admin/login');
     return <div className="flex h-screen items-center justify-center bg-muted"><p>Redirecting to login...</p></div>;
   }
-  
+
   if (!currentAdminUser && pathname === '/admin/login') {
-    return <>{children}</>; 
+    return <>{children}</>;
   }
 
-  if (!currentAdminUser) { 
+  if (!currentAdminUser) {
       return null;
   }
-  
+
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) return isAdmin;
-    if (item.managerOnly) return isManager; 
-    return true; 
+    if (item.managerOnly) return isManager || isAdmin; // Admin can access manager routes too
+    return true;
   });
 
 
@@ -92,7 +92,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               <Link href={item.href} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
                 <Button
                   variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) ? 'secondary' : 'ghost'}
-                  className={cn("w-full text-sm h-10", isCollapsed && !isMobile ? "justify-center px-2" : "justify-start")}
+                  className={cn("w-full text-sm h-9", isCollapsed && !isMobile ? "justify-center px-2" : "justify-start")} // Reduced height to h-9
                   title={isCollapsed && !isMobile ? item.label : undefined}
                 >
                   <item.icon className={cn("h-5 w-5", isCollapsed && !isMobile ? "" : "mr-3")} />
@@ -117,7 +117,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         )}
       >
         <div className={cn(
-            "flex h-16 items-center border-b px-6",
+            "flex h-16 items-center border-b",
             isSidebarCollapsed ? "justify-center px-2" : "px-6"
           )}
         >
@@ -128,21 +128,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <div className="flex-1 overflow-y-auto">
           <SidebarNav isCollapsed={isSidebarCollapsed} />
         </div>
-        <div className={cn("mt-auto border-t", isSidebarCollapsed ? "p-2" : "p-4")}>
-            <div className={cn("text-sm mb-2", isSidebarCollapsed ? "hidden" : "")}>
-                <p className="font-semibold truncate">{currentAdminUser?.name}</p>
-                <p className="text-xs text-muted-foreground flex items-center">
+        <div className={cn("mt-auto border-t", isSidebarCollapsed ? "px-2 py-3" : "px-4 py-3")}> {/* Adjusted padding */}
+            <div className={cn("text-sm mb-3", isSidebarCollapsed ? "hidden" : "")}> {/* Adjusted margin */}
+                <p className="font-semibold truncate leading-tight">{currentAdminUser?.name}</p> {/* Added leading-tight */}
+                <p className="text-xs text-muted-foreground flex items-center leading-tight"> {/* Added leading-tight */}
                     <ShieldCheck className="h-3 w-3 mr-1 text-primary"/> Role: {currentAdminUser?.role}
                 </p>
             </div>
-            <Button 
-              variant="outline" 
-              size={isSidebarCollapsed ? "icon" : "sm"} 
-              className="w-full" 
-              onClick={logout} 
+            <Button
+              variant="outline"
+              size={isSidebarCollapsed ? "icon" : "sm"}
+              className={cn(isSidebarCollapsed ? "mx-auto" : "w-full")} // Centered when icon, full-width when expanded
+              onClick={logout}
               title="Logout"
             >
-                <LogOut className={cn(isSidebarCollapsed ? "" : "mr-2", "h-4 w-4")} />
+                <LogOut className={cn("h-4 w-4", isSidebarCollapsed ? "" : "mr-2")} />
                 {!isSidebarCollapsed && <span>Logout</span>}
             </Button>
         </div>
@@ -155,10 +155,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       >
         <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4">
           {/* Desktop Sidebar Toggle Button */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
             className="hidden md:inline-flex"
             title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -167,7 +167,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </Button>
 
            {/* Mobile Menu Trigger */}
-          <div className="md:hidden flex-1 flex justify-end"> 
+          <div className="md:hidden flex-1 flex justify-end">
              <Link href="/admin/dashboard" className="absolute left-4 top-1/2 -translate-y-1/2 md:hidden">
                 <Logo className="h-7"/>
             </Link>
@@ -193,9 +193,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 <div className="flex-1 overflow-y-auto">
                   <SidebarNav isMobile={true} />
                 </div>
-                <div className="mt-auto p-4 border-t">
-                  <div className="text-sm mb-2">
-                      <p className="font-semibold">{currentAdminUser?.name}</p>
+                <div className="mt-auto p-4 border-t"> {/* Mobile bottom block */}
+                  <div className="text-sm mb-2 leading-tight"> {/* Added leading-tight */}
+                      <p className="font-semibold truncate">{currentAdminUser?.name}</p>
                       <p className="text-xs text-muted-foreground flex items-center">
                           <ShieldCheck className="h-3 w-3 mr-1 text-primary"/> Role: {currentAdminUser?.role}
                       </p>
@@ -208,7 +208,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </Sheet>
           </div>
         </header>
-        
+
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
             {children}
         </main>
@@ -222,11 +222,12 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
   if (pathname === '/admin/login') {
     return <AdminAuthProvider>{children}</AdminAuthProvider>;
   }
-  
+
   return (
     <AdminAuthProvider>
       <AdminLayoutContent>{children}</AdminLayoutContent>
     </AdminAuthProvider>
   );
 }
+
     
