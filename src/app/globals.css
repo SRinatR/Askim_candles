@@ -47,7 +47,7 @@ body {
   }
 
   .dark {
-    /* Corporate-derived dark theme */
+    /* Corporate-derived dark theme, with adjusted accent for hover */
     --background: 230 49% 10%; /* Dark Navy/Blue base (#162044) */
     --foreground: 347 100% 93%; /* Light Pink variant for text */
 
@@ -66,11 +66,12 @@ body {
     --primary: 348 84% 72%; /* Pink (#F37E92) */
     --primary-foreground: 230 49% 5%; /* Very Dark Navy for text on Pink buttons */
 
-    --secondary: 216 61% 30%; /* Darker muted Light Blue */
-    --secondary-foreground: 216 61% 90%; /* Very Light Blue for text on dark secondary */
+    --secondary: 216 61% 30%; /* Darker muted Light Blue - USED FOR ACTIVE SIDEBAR ITEM BG */
+    --secondary-foreground: 216 61% 90%; /* Very Light Blue for text on dark secondary - USED FOR ACTIVE SIDEBAR ITEM TEXT */
 
-    --accent: 348 84% 78%; /* Brighter Pink for hover/accent */
-    --accent-foreground: 230 49% 5%; /* Very Dark Navy for text on accent */
+    /* Adjusted accent for better hover in dark navy sidebar */
+    --accent: 230 49% 15%; /* Slightly Lighter Navy (same as muted for subtle hover) */
+    --accent-foreground: 210 20% 98%; /* Almost White/Very Light Gray text on hover */
     
     --destructive: 0 70% 50%; /* Adjusted destructive to be more visible on dark navy */
     --destructive-foreground: 0 0% 98%;
