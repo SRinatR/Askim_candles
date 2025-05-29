@@ -9,6 +9,7 @@ import { useSearchParams, useParams } from 'next/navigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
+import type { ProductCardDictionary } from '@/components/products/ProductCard';
 
 // Importing main dictionaries
 import enMessages from '@/dictionaries/en.json';
@@ -16,10 +17,6 @@ import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type FullDictionary = typeof enMessages; // Assuming en.json has all keys
-type ProductsPageDictionary = FullDictionary['productsPage'];
-type ProductFiltersDictionary = FullDictionary['productFilters'];
-type ProductSortDictionary = FullDictionary['productSort'];
-type ProductCardDictionary = FullDictionary['productCard']; // For ProductList -> ProductCard
 
 const dictionaries: Record<Locale, FullDictionary> = {
   en: enMessages,
@@ -33,20 +30,24 @@ const getCombinedDictionary = (locale: Locale) => {
     productsPage: dict.productsPage,
     productFilters: dict.productFilters,
     productSort: dict.productSort,
-    productCard: dict.productCard, // Include strings for ProductCard
+    productCard: dict.productCard || { // Fallback for productCard
+      addToCart: "Add to Cart (ProductsPage Fallback)",
+      addedToCartTitle: "Added to cart (ProductsPage Fallback)",
+      addedToCartDesc: "{productName} has been added (ProductsPage Fallback)."
+    },
   };
 };
 
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
-  const params = useParams();
-  const locale = params.locale as Locale || 'uz';
+  const routeParams = useParams();
+  const locale = routeParams.locale as Locale || 'uz';
   const combinedDict = getCombinedDictionary(locale);
   const dictionary = combinedDict.productsPage;
   const filtersDictionary = combinedDict.productFilters;
   const sortDictionary = combinedDict.productSort;
-  const productCardDictionary = combinedDict.productCard;
+  const productCardDictionaryForList = combinedDict.productCard as ProductCardDictionary;
 
 
   const searchTerm = searchParams.get('search')?.toLowerCase();
@@ -78,23 +79,23 @@ export default function ProductsPage() {
         return a.name.localeCompare(b.name);
       case 'name-desc':
         return b.name.localeCompare(a.name);
-      case 'newest': 
-         return parseInt(b.id) - parseInt(a.id);
+      case 'newest':
+         return parseInt(b.id) - parseInt(a.id); // Assuming IDs are numeric strings
       default:
-        return 0; 
+        return 0;
     }
   });
-  
+
   const pageTitle = searchTerm ? dictionary.searchResultsTitle.replace('{searchTerm}', searchTerm) : dictionary.allProductsTitle;
   const productsCount = sortedProducts.length;
-  
+
   let productsCountText = "";
   if (productsCount === 1) {
     productsCountText = dictionary.productsFound.replace('{count}', String(productsCount));
   } else if (locale === 'ru' && (productsCount % 10 >= 2 && productsCount % 10 <= 4) && !(productsCount % 100 >= 12 && productsCount % 100 <= 14) ) {
-    productsCountText = dictionary.productsFound_few!.replace('{count}', String(productsCount));
+    productsCountText = (dictionary.productsFound_few || dictionary.productsFound_plural!).replace('{count}', String(productsCount));
   } else {
-     productsCountText = dictionary.productsFound_plural!.replace('{count}', String(productsCount));
+     productsCountText = (dictionary.productsFound_plural || dictionary.productsFound).replace('{count}', String(productsCount));
   }
 
 
@@ -126,7 +127,7 @@ export default function ProductsPage() {
         <ProductFilters dictionary={filtersDictionary} categoriesData={mockCategories} />
         <div className="flex-1">
           {sortedProducts.length > 0 ? (
-            <ProductList products={sortedProducts} locale={locale} dictionary={productCardDictionary} />
+            <ProductList products={sortedProducts} locale={locale} dictionary={productCardDictionaryForList} />
           ) : (
             <div className="text-center py-10">
               <h2 className="text-2xl font-semibold mb-2">{dictionary.noProductsFound}</h2>
@@ -141,3 +142,4 @@ export default function ProductsPage() {
     </div>
   );
 }
+    

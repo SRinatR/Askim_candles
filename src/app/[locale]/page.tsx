@@ -7,10 +7,17 @@ import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { getDictionary } from '@/lib/getDictionary';
 import type { Locale } from '@/lib/i1n-config';
+import type { ProductCardDictionary } from '@/components/products/ProductCard';
 
 export default async function HomePage({ params: { locale } }: { params: { locale: Locale } }) {
   const dictionary = await getDictionary(locale);
   const featuredProducts = mockProducts.slice(0, 4);
+
+  const productCardStrings: ProductCardDictionary = dictionary.productCard || {
+    addToCart: "Add to Cart (HomePage Fallback)",
+    addedToCartTitle: "Added to cart (HomePage Fallback)",
+    addedToCartDesc: "{productName} has been added (HomePage Fallback)."
+  };
 
   return (
     <div className="space-y-12">
@@ -27,8 +34,7 @@ export default async function HomePage({ params: { locale } }: { params: { local
             {dictionary.homepage.heroSubtitle}
           </p>
           <Button size="lg" asChild className="bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all transform hover:scale-105">
-            {/* TODO: Update Link href with locale */}
-            <Link href={`/${locale}/products`}> 
+            <Link href={`/${locale}/products`}>
               {dictionary.homepage.shopAllButton} <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
@@ -40,19 +46,17 @@ export default async function HomePage({ params: { locale } }: { params: { local
         <h2 className="text-3xl font-semibold tracking-tight text-center mb-8">{dictionary.homepage.categoriesTitle}</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           {mockCategories.map(category => (
-            // TODO: Update Link href with locale
             <Link key={category.id} href={`/${locale}/products?category=${category.slug}`} className="group block">
               <div className="relative aspect-[4/3] rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300">
-                <Image 
-                  src={`https://placehold.co/400x300.png?text=${encodeURIComponent(category.name)}`} 
-                  alt={category.name} // TODO: Translate category name if needed from dictionary
-                  layout="fill" 
-                  objectFit="cover"
-                  className="group-hover:scale-105 transition-transform duration-300"
+                <Image
+                  src={`https://placehold.co/400x300.png?text=${encodeURIComponent(dictionary.categories[category.slug as keyof typeof dictionary.categories] || category.name)}`}
+                  alt={dictionary.categories[category.slug as keyof typeof dictionary.categories] || category.name}
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 300px"
+                  className="object-cover group-hover:scale-105 transition-transform duration-300"
                   data-ai-hint={`${category.slug} items`}
                 />
                 <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-10 transition-colors duration-300 flex items-center justify-center">
-                  {/* TODO: Translate category name if needed from dictionary */}
                   <h3 className="text-2xl font-semibold text-white text-center p-4">{dictionary.categories[category.slug as keyof typeof dictionary.categories] || category.name}</h3>
                 </div>
               </div>
@@ -65,12 +69,11 @@ export default async function HomePage({ params: { locale } }: { params: { local
       <section>
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-3xl font-semibold tracking-tight">{dictionary.homepage.featuredProductsTitle}</h2>
-          {/* TODO: Update Link href with locale */}
           <Button variant="outline" asChild>
             <Link href={`/${locale}/products`}>{dictionary.homepage.viewAllButton} <ArrowRight className="ml-2 h-4 w-4" /></Link>
           </Button>
         </div>
-        <ProductList products={featuredProducts} locale={locale} /> {/* Pass locale to ProductList */}
+        <ProductList products={featuredProducts} locale={locale} dictionary={productCardStrings} />
       </section>
 
       {/* Call to Action / Brand Story Snippet */}
@@ -79,7 +82,6 @@ export default async function HomePage({ params: { locale } }: { params: { local
         <p className="text-muted-foreground max-w-xl mx-auto mb-6">
           {dictionary.homepage.ctaSubtitle}
         </p>
-        {/* TODO: Update Link href with locale */}
         <Button variant="outline" asChild className="border-accent text-accent hover:bg-accent hover:text-accent-foreground">
           <Link href={`/${locale}/about`}>{dictionary.homepage.learnMoreButton}</Link>
         </Button>
@@ -87,3 +89,4 @@ export default async function HomePage({ params: { locale } }: { params: { local
     </div>
   );
 }
+    

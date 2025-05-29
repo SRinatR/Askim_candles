@@ -14,15 +14,15 @@ import Link from 'next/link';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
-import Image from 'next/image'; 
+import Image from 'next/image';
+import { ProductCard, type ProductCardDictionary } from '@/components/products/ProductCard';
+
 
 import enMessages from '@/dictionaries/en.json';
 import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type Dictionary = typeof enMessages;
-type ProductDetailPageDictionary = Dictionary['productDetailPage'];
-type ProductCardDictionary = Dictionary['productCard'];
 
 const dictionaries: Record<Locale, Dictionary> = {
   en: enMessages,
@@ -34,16 +34,20 @@ const getProductDetailPageDictionaryBundle = (locale: Locale) => {
   const dict = dictionaries[locale] || dictionaries.en;
   return {
     page: dict.productDetailPage,
-    productCard: dict.productCard,
+    productCard: dict.productCard || { // Fallback for productCard
+      addToCart: "Add to Cart (Detail Page Fallback)",
+      addedToCartTitle: "Added to cart (Detail Page Fallback)",
+      addedToCartDesc: "{productName} has been added (Detail Page Fallback)."
+    },
   };
 };
 
-export default function ProductDetailPage({ params: routeParams }: { params: { id: string; locale: Locale } }) { 
-  const clientParams = useParams(); 
+export default function ProductDetailPage({ params: routeParams }: { params: { id: string; locale: Locale } }) {
+  const clientParams = useParams();
   const locale = routeParams.locale || clientParams.locale as Locale || 'uz';
   const dictionaryBundle = getProductDetailPageDictionaryBundle(locale);
   const dictionary = dictionaryBundle.page;
-  const productCardDict = dictionaryBundle.productCard;
+  const productCardDict = dictionaryBundle.productCard as ProductCardDictionary;
 
 
   const product = mockProducts.find(p => p.id === routeParams.id);
@@ -57,8 +61,8 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
   const handleAddToCart = () => {
     addToCart(product);
     toast({
-      title: productCardDict.addedToCartTitle, // Use localized toast title
-      description: productCardDict.addedToCartDesc.replace('{productName}', product.name), // Use localized toast description
+      title: productCardDict.addedToCartTitle,
+      description: productCardDict.addedToCartDesc.replace('{productName}', product.name),
     });
   };
 
@@ -85,7 +89,7 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
 
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
         <ProductImageGallery images={product.images} altText={product.name} />
-        
+
         <div className="space-y-6">
           <div className="space-y-2">
             <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">{product.name}</h1>
@@ -111,14 +115,16 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
               <p key={attr.key}><strong className="font-medium">{attr.key}:</strong> {attr.value}</p>
             ))}
           </div>
-          
-          <Button 
-            size="lg" 
+
+          <Button
+            size="lg"
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all transform hover:scale-105"
             onClick={handleAddToCart}
             disabled={product.stock === 0}
+            aria-label={`${productCardDict.addToCart} ${product.name}`}
           >
-            <ShoppingCart className="mr-2 h-5 w-5" /> {product.stock > 0 ? dictionary.addToCartButton : dictionary.outOfStockButton}
+            <ShoppingCart className="mr-2 h-5 w-5" />
+            {product.stock > 0 ? productCardDict.addToCart : (dictionary.outOfStockButton || "Out of Stock")}
           </Button>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 text-sm">
@@ -143,11 +149,11 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
           <h2 className="text-2xl font-semibold tracking-tight mb-6">{dictionary.relatedProductsTitle}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {relatedProducts.map(related => (
-              <ProductCard 
-                key={related.id} 
-                product={related} 
-                locale={locale} 
-                dictionary={productCardDict} 
+              <ProductCard
+                key={related.id}
+                product={related}
+                locale={locale}
+                dictionary={productCardDict}
               />
             ))}
           </div>
@@ -156,5 +162,4 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
     </div>
   );
 }
-
     

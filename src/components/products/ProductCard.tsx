@@ -9,29 +9,40 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { ShoppingCart } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from "@/hooks/use-toast";
-import type { Locale } from '@/lib/i1n-config'; 
+import type { Locale } from '@/lib/i1n-config';
+
+export interface ProductCardDictionary {
+  addToCart: string;
+  addedToCartTitle: string;
+  addedToCartDesc: string; // Expects a string with {productName} placeholder
+}
 
 interface ProductCardProps {
   product: Product;
-  locale: Locale; 
-  dictionary: { // Expecting the productCard section of the main dictionary
-    addToCart: string;
-    addedToCartTitle: string;
-    addedToCartDesc: string; // Changed to string, placeholder will be handled in component
-  };
+  locale: Locale;
+  dictionary?: ProductCardDictionary; // Make dictionary prop optional for now to test fallback
 }
+
+const defaultProductCardDictionary: ProductCardDictionary = {
+  addToCart: "Add to Cart (Default Fallback)",
+  addedToCartTitle: "Added to cart (Default Fallback)",
+  addedToCartDesc: "{productName} has been added (Default Fallback)."
+};
 
 export function ProductCard({ product, locale, dictionary }: ProductCardProps) {
   const { addToCart } = useCart();
   const { toast } = useToast();
 
+  // Use provided dictionary or fallback to default
+  const currentDictionary = dictionary || defaultProductCardDictionary;
+
   const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault(); 
+    e.preventDefault();
     e.stopPropagation();
     addToCart(product);
     toast({
-      title: dictionary.addedToCartTitle,
-      description: dictionary.addedToCartDesc.replace('{productName}', product.name),
+      title: currentDictionary.addedToCartTitle,
+      description: currentDictionary.addedToCartDesc.replace('{productName}', product.name),
     });
   };
 
@@ -42,34 +53,35 @@ export function ProductCard({ product, locale, dictionary }: ProductCardProps) {
           <div className="aspect-square overflow-hidden relative">
             <Image
               src={product.images[0]}
-              alt={product.name} 
-              width={400}
-              height={400}
+              alt={product.name}
+              fill
               className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
               data-ai-hint={`${product.category.toLowerCase().replace(' ', '-')} product`}
+              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             />
           </div>
         </CardHeader>
         <CardContent className="p-4 flex-grow">
           <CardTitle className="text-lg font-semibold leading-tight mb-1 group-hover:text-primary transition-colors">
-            {product.name} 
+            {product.name}
           </CardTitle>
           <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{product.description}</p>
           <p className="text-lg font-bold text-foreground">${product.price.toFixed(2)}</p>
         </CardContent>
         <CardFooter className="p-4 border-t border-border/60 mt-auto">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="w-full hover:bg-accent hover:text-accent-foreground transition-colors"
             onClick={handleAddToCart}
-            aria-label={`${dictionary.addToCart} ${product.name}`} 
+            aria-label={`${currentDictionary.addToCart} ${product.name}`}
+            disabled={product.stock === 0}
           >
-            <ShoppingCart className="mr-2 h-4 w-4" /> {dictionary.addToCart}
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            {product.stock === 0 ? ((dictionary as any)?.outOfStock || "Out of Stock (Fallback)") : currentDictionary.addToCart}
           </Button>
         </CardFooter>
       </Link>
     </Card>
   );
 }
-
     
