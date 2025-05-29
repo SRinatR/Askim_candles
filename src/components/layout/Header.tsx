@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { useSession, signIn, signOut as nextAuthSignOut } from "next-auth/react"; // For NextAuth
 import { useAuth as useSimulatedAuth } from "@/contexts/AuthContext"; // For simulated email/password auth
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -127,41 +127,44 @@ export function Header() {
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-full max-w-xs bg-background p-6">
+            <SheetContent side="right" className="w-full max-w-xs bg-background p-0">
               <div className="flex flex-col space-y-6 h-full">
-                <div className="flex justify-between items-center">
+                <SheetHeader className="flex flex-row justify-between items-center border-b p-6">
                    <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
                       <Logo className="h-7 w-auto" />
                    </Link>
+                   <SheetTitle className="sr-only">Main Menu</SheetTitle> {/* Visually hidden title */}
                    <SheetClose asChild>
                       <Button variant="ghost" size="icon">
                          <X className="h-6 w-6" />
                       </Button>
                    </SheetClose>
-                </div>
-
-                <form onSubmit={handleSearch} className="flex items-center relative">
-                  <Input type="search" name="search" placeholder="Search products..." className="h-10 pr-12 w-full" />
-                  <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10">
-                    <Search className="h-5 w-5" />
-                    <span className="sr-only">Search</span>
-                  </Button>
-                </form>
-
-                <nav className="flex flex-col space-y-4">
-                  {navLinks.map(link => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </nav>
+                </SheetHeader>
                 
-                <div className="mt-auto border-t border-border pt-4 space-y-3">
+                <div className="px-6 space-y-6">
+                  <form onSubmit={handleSearch} className="flex items-center relative">
+                    <Input type="search" name="search" placeholder="Search products..." className="h-10 pr-12 w-full" />
+                    <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10">
+                      <Search className="h-5 w-5" />
+                      <span className="sr-only">Search</span>
+                    </Button>
+                  </form>
+
+                  <nav className="flex flex-col space-y-4">
+                    {navLinks.map(link => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </nav>
+                </div>
+                
+                <div className="mt-auto border-t border-border p-6 space-y-3">
                   {!isLoadingAuth && (
                     <>
                       {isAuthenticated ? (

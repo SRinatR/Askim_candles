@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet'; // Added SheetHeader, SheetTitle, SheetClose
 import {
   LayoutDashboard,
   Package,
@@ -166,7 +166,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </Button>
 
            {/* Mobile Menu Trigger */}
-          <div className="md:hidden flex-1 flex justify-end"> {/* Ensure this is pushed to the right on mobile */}
+          <div className="md:hidden flex-1 flex justify-end"> 
              <Link href="/admin/dashboard" className="absolute left-4 top-1/2 -translate-y-1/2 md:hidden">
                 <Logo className="h-7"/>
             </Link>
@@ -178,11 +178,17 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="flex flex-col p-0 w-3/4 max-w-xs">
-                <div className="flex h-16 items-center border-b px-6">
+                <SheetHeader className="flex flex-row justify-between items-center border-b p-6">
                   <Link href="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
                     <Logo />
                   </Link>
-                </div>
+                  <SheetTitle className="sr-only">Admin Menu</SheetTitle> {/* Visually hidden title */}
+                  <SheetClose asChild>
+                      <Button variant="ghost" size="icon">
+                         <X className="h-6 w-6" />
+                      </Button>
+                   </SheetClose>
+                </SheetHeader>
                 <div className="flex-1 overflow-y-auto">
                   <SidebarNav isMobile={true} />
                 </div>
@@ -222,6 +228,4 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
     </AdminAuthProvider>
   );
 }
-    
-
     
