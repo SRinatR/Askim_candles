@@ -16,35 +16,31 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+const CART_STORAGE_KEY = 'scentSationalCart'; // Changed from 'scentSationalCart' to 'askimCart'
 
-  // Load cart from localStorage on initial client-side mount
-  useEffect(() => {
-    const storedCart = localStorage.getItem('scentSationalCart');
-    if (storedCart) {
-      try {
-        const parsedCart = JSON.parse(storedCart);
-        // Basic validation to ensure it's an array (or whatever structure you expect)
-        if (Array.isArray(parsedCart)) {
-            setCartItems(parsedCart);
-        } else {
-            // Handle cases where localStorage might have invalid data
-            localStorage.removeItem('scentSationalCart');
+export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    if (typeof window !== 'undefined') {
+      const storedCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (storedCart) {
+        try {
+          const parsedCart = JSON.parse(storedCart);
+          if (Array.isArray(parsedCart)) {
+            return parsedCart;
+          }
+        } catch (error) {
+          console.error("Failed to parse cart from localStorage on init:", error);
+          localStorage.removeItem(CART_STORAGE_KEY); // Clear corrupted data
         }
-      } catch (error) {
-        console.error("Failed to parse cart from localStorage:", error);
-        localStorage.removeItem('scentSationalCart'); // Clear corrupted data
       }
     }
-  }, []); // Empty dependency array: runs only once on the client after mount
+    return []; // Default to empty array
+  });
 
   // Save cart to localStorage whenever it changes, only on client
   useEffect(() => {
-    // This useEffect runs on the client, after the initial render and after cartItems changes.
-    // So, direct localStorage access here is safe.
-    localStorage.setItem('scentSationalCart', JSON.stringify(cartItems));
-  }, [cartItems]); // Run whenever cartItems changes
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+  }, [cartItems]);
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prevItems => {
@@ -52,12 +48,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       if (existingItem) {
         return prevItems.map(item =>
           item.id === product.id
-            ? { ...item, quantity: Math.max(0, item.quantity + quantity) } // Ensure quantity doesn't go below 0
+            ? { ...item, quantity: Math.max(0, item.quantity + quantity) }
             : item
         );
       }
-      // Ensure product being added has a valid stock if you track it
-      return [...prevItems, { ...product, quantity: Math.max(1, quantity) }]; // Ensure quantity is at least 1 for new items
+      return [...prevItems, { ...product, quantity: Math.max(1, quantity) }];
     });
   };
 
@@ -84,9 +79,6 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  // Always render the provider and its children.
-  // The context value will be initially an empty array / 0 for cart,
-  // then update on the client after localStorage is read.
   return (
     <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal }}>
       {children}
