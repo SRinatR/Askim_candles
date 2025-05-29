@@ -4,7 +4,8 @@
 import type { AdminUser } from '@/lib/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useParams } from 'next/navigation'; // Added useParams
+import type { Locale } from '@/lib/i1n-config'; // For potential future localization of admin panel
 
 type AdminRole = 'ADMIN' | 'MANAGER';
 
@@ -28,14 +29,14 @@ const predefinedUsers: Record<string, AdminUser> = {
     email: 'admin@scentsational.com',
     name: 'Store Administrator',
     role: 'ADMIN',
-    password: 'adminpass', // In a real app, this would be hashed and checked on a server
+    password: 'adminpass', 
   },
   'manager@scentsational.com': {
     id: 'manager001',
     email: 'manager@scentsational.com',
     name: 'Store Manager',
     role: 'MANAGER',
-    password: 'managerpass', // In a real app, this would be hashed and checked on a server
+    password: 'managerpass', 
   },
 };
 
@@ -45,17 +46,18 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
+  // const params = useParams(); // For potential future localization of admin
+  // const locale = params.locale as Locale || 'uz';
 
   useEffect(() => {
     const storedUser = localStorage.getItem(ADMIN_STORAGE_KEY);
     if (storedUser) {
       try {
         const parsedUser: AdminUser = JSON.parse(storedUser);
-        // Basic validation of stored user
         if (parsedUser && parsedUser.email && parsedUser.role) {
            setCurrentAdminUser(parsedUser);
         } else {
-          localStorage.removeItem(ADMIN_STORAGE_KEY); // Clear invalid stored user
+          localStorage.removeItem(ADMIN_STORAGE_KEY);
         }
       } catch (error) {
         console.error("Failed to parse admin user from localStorage", error);
@@ -67,7 +69,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 500)); 
 
     const userToLogin = predefinedUsers[email.toLowerCase()];
 
@@ -76,7 +78,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(userToLogin));
       toast({ title: "Admin Login Successful", description: `Welcome, ${userToLogin.name}!` });
       setIsLoading(false);
-      router.push('/admin/dashboard');
+      router.push('/admin/dashboard'); // Admin panel is not localized yet
       return true;
     } else {
       toast({ title: "Admin Login Failed", description: "Invalid email or password.", variant: "destructive" });
@@ -89,15 +91,15 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     setCurrentAdminUser(null);
     localStorage.removeItem(ADMIN_STORAGE_KEY);
     toast({ title: "Logged Out", description: "You have been successfully logged out from the admin panel." });
-    router.push('/admin/login');
+    router.push('/admin/login'); // Admin panel login is not localized yet
   };
   
   const role = currentAdminUser?.role || null;
   const isAdmin = role === 'ADMIN';
-  const isManager = role === 'MANAGER' || role === 'ADMIN'; // Admin can do everything a manager can
+  const isManager = role === 'MANAGER' || role === 'ADMIN'; 
 
-  // Protection for admin routes
   useEffect(() => {
+    // Admin routes are not localized for now, so direct path check is fine
     if (!isLoading && !currentAdminUser && pathname.startsWith('/admin') && pathname !== '/admin/login') {
       router.replace('/admin/login');
     }

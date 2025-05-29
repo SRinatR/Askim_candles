@@ -1,12 +1,13 @@
-"use client";
-import { useEffect } from 'react';
-import { useRouter }  from 'next/navigation';
 
-export default function AccountPage() {
-  const router = useRouter();
-  useEffect(() => {
-    router.replace('/account/profile');
-  }, [router]);
-
-  return null; // Or a loading spinner
+// This file is deprecated and will be deleted.
+// Content has been moved to src/app/[locale]/account/page.tsx
+export default function DeprecatedAccountRootPage() {
+  if (typeof window !== 'undefined') {
+    const segments = window.location.pathname.split('/');
+    const localeSegment = segments[1];
+    const validLocales = ['en', 'ru', 'uz'];
+    const locale = validLocales.includes(localeSegment) ? localeSegment : 'uz';
+    window.location.href = `/${locale}/account`;
+  }
+  return null;
 }
