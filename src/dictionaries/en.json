@@ -9,8 +9,6 @@
     "products": "Products",
     "about": "About Us",
     "usefulInfo": "Useful Info",
-    "soyWaxInfoTitle": "What is soy wax...",
-    "aromaSachetInfoTitle": "What is an aroma sachet and how to use it",
     "cart": "Cart",
     "account": "My Account",
     "login": "Login",
@@ -19,7 +17,9 @@
     "mainMenuTitle": "Main Menu",
     "langUz": "UZ",
     "langRu": "RU",
-    "langEn": "EN"
+    "langEn": "EN",
+    "soyWaxInfoTitle": "What is Soy Wax...",
+    "aromaSachetInfoTitle": "What is an Aroma Sachet and How to Use It"
   },
   "homepage": {
     "heroTitle": {
@@ -42,7 +42,7 @@
     "contactPagePath": "/info/contact",
     "termsPagePath": "/info/terms",
     "privacyPagePath": "/info/privacy",
-    "version": "Version"
+    "version": "v0.1.0 (Simulated)"
   },
   "categories": {
     "corporate-sets": "Corporate Sets",
@@ -240,7 +240,7 @@
     "subtotal": "Subtotal",
     "shipping": "Shipping",
     "free": "Free",
-    "total": "Total",
+    "total": "Total (UZS)",
     "returnToCart": "Return to Cart",
     "checkoutTitle": "Checkout",
     "contactInfoTitle": "Contact Information",
@@ -387,19 +387,26 @@
     "loggedOutSuccess": "You have been successfully logged out.",
     "errorPasswordsDontMatch": "Passwords do not match."
   },
+  "cartContextToasts": {
+    "errorTitle": "Error",
+    "infoTitle": "Info",
+    "genericError": "An unexpected error occurred.",
+    "productOutOfStockToast": "{productName} is out of stock.",
+    "stockAvailableToast": "Not enough stock. Quantity updated to {availableStock}.",
+    "addedToCartLimitedStockToast": "Not enough stock. Added {availableStock} to cart."
+  },
   "usefulInfoPage": {
     "title": "Useful Information",
     "description": "Learn more about our products and how to best care for them.",
-    "soyWaxTeaser": "Discover the benefits of natural soy wax and why it's a great choice for candles.",
-    "aromaSachetTeaser": "Find out what aroma sachets are and creative ways to use them around your home and car.",
     "readMoreButton": "Read More",
-    "noArticlesYet": "No articles available yet."
+    "noArticlesYet": "No articles available yet.",
+    "articleTeaserDefault": "Read more about this topic..."
   },
   "soyWaxPage": {
     "breadcrumbHome": "Home",
     "breadcrumbUsefulInfo": "Useful Info",
     "title": "What is Soy Wax and Why We Use It",
-    "placeholderContent": "Detailed information about soy wax, its benefits, and why Askim candles chooses it for many products will be available here soon."
+    "placeholderContent": "Detailed information about soy wax, its benefits, and why Askim candles chooses it for many products will be available here soon. Soy wax is a vegetable wax made from the oil of soybeans..."
   },
   "aromaSachetPage": {
     "breadcrumbHome": "Home",
@@ -408,3 +415,5 @@
     "placeholderContent": "Learn all about aroma sachets, their uses, and how to best enjoy their fragrance in your home or car. Content coming soon!"
   }
 }
+
+    

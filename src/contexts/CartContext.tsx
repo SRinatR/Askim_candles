@@ -1,8 +1,29 @@
-
 "use client";
 
 import type { CartItem, Product } from '@/lib/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { useParams } from 'next/navigation';
+import type { Locale } from '@/lib/i1n-config';
+
+// Simulating dictionary loading for client component
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type FullDictionary = typeof enMessages;
+type CartContextToastsDictionary = FullDictionary['cartContextToasts']; // Assuming toasts are in a top-level key or nested
+
+const dictionaries: Record<Locale, FullDictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
+const getCartContextToastsDictionary = (locale: Locale): CartContextToastsDictionary => {
+  return dictionaries[locale]?.cartContextToasts || dictionaries.en.cartContextToasts;
+};
+
 
 interface CartContextType {
   cartItems: CartItem[];
@@ -16,9 +37,14 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const CART_STORAGE_KEY = 'scentSationalCart'; // Changed from 'scentSationalCart' to 'askimCart'
+const CART_STORAGE_KEY = 'askimCart';
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
+  const { toast } = useToast();
+  const params = useParams();
+  const locale = (params.locale as Locale) || 'uz';
+  const dictionary = getCartContextToastsDictionary(locale);
+
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
     if (typeof window !== 'undefined') {
       const storedCart = localStorage.getItem(CART_STORAGE_KEY);
@@ -30,29 +56,71 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           }
         } catch (error) {
           console.error("Failed to parse cart from localStorage on init:", error);
-          localStorage.removeItem(CART_STORAGE_KEY); // Clear corrupted data
+          localStorage.removeItem(CART_STORAGE_KEY);
         }
       }
     }
-    return []; // Default to empty array
+    return [];
   });
 
-  // Save cart to localStorage whenever it changes, only on client
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
   }, [cartItems]);
 
-  const addToCart = (product: Product, quantity: number = 1) => {
+  const addToCart = (product: Product, quantityToAdd: number = 1) => {
+    if (!product || product.stock === undefined) {
+      console.error("Product data is invalid or stock is undefined", product);
+      toast({
+        title: dictionary.errorTitle || "Error",
+        description: dictionary.genericError || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (product.stock === 0) {
+      toast({
+        title: dictionary.errorTitle || "Error",
+        description: (dictionary.productOutOfStockToast || "{productName} is out of stock.").replace('{productName}', product.name[locale] || product.name.en),
+        variant: "destructive",
+      });
+      return;
+    }
+
     setCartItems(prevItems => {
       const existingItem = prevItems.find(item => item.id === product.id);
+      let finalQuantity;
+
       if (existingItem) {
+        const potentialQuantity = existingItem.quantity + quantityToAdd;
+        if (potentialQuantity > product.stock) {
+          finalQuantity = product.stock;
+          toast({
+            title: dictionary.infoTitle || "Info",
+            description: (dictionary.stockAvailableToast || "Not enough stock. Quantity updated to {availableStock}.")
+                            .replace('{availableStock}', String(product.stock)),
+          });
+        } else {
+          finalQuantity = potentialQuantity;
+        }
         return prevItems.map(item =>
           item.id === product.id
-            ? { ...item, quantity: Math.max(0, item.quantity + quantity) }
+            ? { ...item, quantity: Math.max(0, finalQuantity) } // Ensure quantity is not negative
             : item
         );
+      } else {
+        if (quantityToAdd > product.stock) {
+          finalQuantity = product.stock;
+          toast({
+            title: dictionary.infoTitle || "Info",
+            description: (dictionary.addedToCartLimitedStockToast || "Not enough stock. Added {availableStock} to cart.")
+                            .replace('{availableStock}', String(product.stock)),
+          });
+        } else {
+          finalQuantity = quantityToAdd;
+        }
+        return [...prevItems, { ...product, quantity: Math.max(1, finalQuantity) }]; // Ensure at least 1 item added
       }
-      return [...prevItems, { ...product, quantity: Math.max(1, quantity) }];
     });
   };
 
@@ -60,14 +128,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCartItems(prevItems => prevItems.filter(item => item.id !== productId));
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
+  const updateQuantity = (productId: string, newQuantity: number) => {
+    const itemInCart = cartItems.find(item => item.id === productId);
+    if (!itemInCart) return;
+
+    if (newQuantity <= 0) {
       removeFromCart(productId);
       return;
     }
+
+    if (newQuantity > itemInCart.stock) {
+      newQuantity = itemInCart.stock;
+      toast({
+        title: dictionary.infoTitle || "Info",
+        description: (dictionary.stockAvailableToast || "Not enough stock. Quantity updated to {availableStock}.")
+                        .replace('{availableStock}', String(itemInCart.stock)),
+      });
+    }
+
     setCartItems(prevItems =>
       prevItems.map(item =>
-        item.id === productId ? { ...item, quantity } : item
+        item.id === productId ? { ...item, quantity: newQuantity } : item
       )
     );
   };

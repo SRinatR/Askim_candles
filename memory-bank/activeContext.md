@@ -4,14 +4,13 @@
 ## Date: 2024-07-30 (Simulated Date of Update)
 
 ## 1. Current Focus
-*   **Revert Admin Dark Theme (Again):** User expressed dissatisfaction with the "professional dark theme" (which they perceived as too "black"). Reverting the `.dark` block in `globals.css` to the **corporate-color-derived dark theme**. This theme uses the corporate Dark Navy/Blue as its background. Light theme (main site & admin) retains corporate colors.
-*   Verifying all previous functionality after theme changes, particularly in the admin panel.
+*   **Implement Stock-Aware Quantity Logic:** Ensure cart operations and product additions respect available stock. Update toast notifications for stock-related scenarios.
+*   Verify that product displays (cards, detail page) correctly show "Out of Stock" messages and disable "Add to Cart" buttons when stock is zero.
 
 ## 2. Recent Changes (Leading to this state)
-*   **Professional Dark Theme Attempt:** Updated `globals.css` with a "standard, professional dark theme" (dark blues, grays). This was not well-received by the user ("too black").
-*   **Corporate Color Palette Application:** Updated `globals.css` with HSL values for the new corporate colors (Pink, Light Pink, Dark Navy/Blue, Light Blue) for both light and dark themes.
-*   **Product Deactivation Feature & SKU/ID:** Implemented.
-*   **Admin Panel - Dynamic Attributes Management (Categories, Materials, Scents):** Implemented full CRUD (simulated via `localStorage`) with edit functionality and warning modals for deleting/renaming in-use attributes. Product forms updated to use these dynamic attributes in `Select` components.
+*   **Admin Panel - Dark Theme Reversion (Corporate-derived):** The admin panel's dark theme in `globals.css` was reverted to use the corporate Dark Navy/Blue as its base, as per user preference over a more "standard professional black" theme. Hover effects adjusted.
+*   **Product Deactivation Feature & SKU/ID:** Implemented. Products can be marked inactive, hiding them from main site listings. SKU and Product ID are now part of the product data and admin UI.
+*   **Admin Panel - Dynamic Attributes Management (Categories, Materials, Scents):** Implemented full CRUD (add, edit, delete from `localStorage`, with initial seeding from mock data) with warning modals for deleting/renaming in-use attributes. Product forms updated to use these dynamic attributes in `Select` components. Attribute menu in sidebar now an accordion.
 *   **Admin Panel - Article Management with Images:**
     *   Admin section for creating, editing, and deleting articles (simulated via `localStorage`).
     *   Multilingual input for article titles and content (EN, RU, UZ via tabs).
@@ -20,23 +19,23 @@
     *   Dynamic article detail page (`/info/[slug]`) displays localized content and the appropriate image with `prose` styling.
 *   **Admin Panel Navigation:** "Attributes" and "Articles" sections are functional in the sidebar. "Attributes" dropdown now opens downwards (accordion style for desktop).
 *   **Internationalization (i18n) & UI Enhancements:**
-    *   Main site fully path-based (`/[locale]`) for UZ/RU/EN. Key pages localized.
+    *   Main site fully path-based (`/[locale]`) for UZ/RU/EN. Key pages localized (Homepage, Product Listing, Product Detail, Cart, Checkout, Account, About Us, Login, Register, "Useful Info" section).
     *   Functional language switcher (desktop dropdown, compact mobile horizontal list).
     *   Admin panel has client-side i18n (EN/RU, with localStorage preference) and a dark/light theme toggle.
     *   Password visibility toggles and improved toast feedback implemented.
     *   Main site product filters and sorting enhanced (dynamic price range, correct sort logic).
+    *   Cart state persists through language changes.
 *   **Error Fixes:** Resolved various "cn is not defined", "SheetTrigger is not defined", "FormProvider is not defined", "formState is not defined", JSON parsing, and hydration errors. Addressed issues with mobile menu close button and admin header/footer visibility.
 
 ## 3. Next Steps (Potential - based on user's previous input list)
 
-**Immediate Focus (User Preference from before theme issues):**
-1.  **Main Site:** Add a visual indicator for inactive products on the Product Detail page (`/[locale]/products/[id]`).
-2.  **Admin Panel:** Implement a basic UI for displaying the order list in `/admin/sales` (using `mockOrders` for now).
+**Immediate Focus (User Preference from before theme issues, now being addressed by stock logic):**
+1.  Main Site: Add a visual indicator for inactive products on the Product Detail page (`/[locale]/products/[id]`). (Partially addressed by `isActive` logic, but direct page view needs clarity)
+2.  Admin Panel: Implement a basic UI for displaying the order list in `/admin/sales` (using `mockOrders` for now).
 
 **Other Potential Enhancements (from user's list):**
 
 **UX Improvements (Main Site):**
-*   Enhance the "Useful Info" page (`/info`) further with article teasers/previews beyond the current card list.
 *   Improve the empty cart page (e.g., more engaging message, popular product suggestions).
 
 **Admin Panel Functional & UI Enhancements:**
@@ -51,8 +50,9 @@
 *   Prepare for full backend integration (Prisma/PostgreSQL) for all simulated data.
 
 ## 4. Active Decisions & Considerations
-*   **Admin Dark Theme Reversion:** The current task is to change the admin dark theme back to the **corporate-color-derived** dark theme, as the previous attempt at a "standard professional" theme was perceived as too black.
+*   **Stock Logic:** The current task is to make cart and product adding fully stock-aware.
+*   **Admin Dark Theme:** Reverted to corporate-color-derived dark theme.
 *   **Backend Transition:** All new features are being built with future backend integration (Prisma/PostgreSQL) in mind.
 *   **Attribute & Article Management:** Now fully dynamic using `localStorage` for admin, with initial seeding from mock data if empty. Includes multilingual text and image support for articles.
 *   **Mobile Admin Access:** Restricted, user prompted to use desktop.
-*   **Simulated Data:** Product, order, client, and log data are still simulated or stored in `localStorage`.
+*   **Simulated Data:** Product, order, client, and log data are

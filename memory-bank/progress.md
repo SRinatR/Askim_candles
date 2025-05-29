@@ -9,7 +9,7 @@
 *   **Corporate Color Palette:** Applied to `globals.css` for main site and admin panel.
 *   **Main Site Internationalization (i18n - UZ default, RU, EN):**
     *   Path-based routing (`/[locale]/...`). Dictionary files and getters in place.
-    *   Key e-commerce pages (`HomePage`, `ProductsPage`, `ProductDetailPage`, `CartPage`, `CheckoutPage`, `LoginPage`, `RegisterPage`, `Account` section pages) are localized for static text.
+    *   Key e-commerce pages (`HomePage`, `ProductsPage`, `ProductDetailPage`, `CartPage`, `CheckoutPage`, `LoginPage`, `RegisterPage`, `Account` section pages, `AboutUsPage`) are localized for static text.
     *   "Useful Info" section (`/info`, `/info/[slug]`) implemented with dynamic, multilingual articles from admin.
     *   Functional language switcher in Header (desktop dropdown, compact mobile horizontal list).
     *   Middleware (`middleware.ts`) for locale handling and redirection.
@@ -54,7 +54,7 @@
         *   Page-level access control for admin-only pages (`/admin/users`, `/admin/settings`, `/admin/logs`, `/admin/attributes/*`) with redirection.
     *   **Admin Layout (`src/app/admin/layout.tsx`):**
         *   Collapsible sidebar, header with toggles.
-        *   **Dark/Light Theme Toggle:** Functional, preference saved in `localStorage`. Applied new corporate color palette.
+        *   **Dark/Light Theme Toggle:** Functional, preference saved in `localStorage`. Applied new corporate color palette (with specific dark theme variant).
         *   **i18n (EN/RU):** Functional language switcher (dropdown), preference saved in `localStorage`. Admin layout text and some page titles (Dashboard, Login, Attribute pages) are localized.
     *   **Mobile Access Restriction:** Admin panel shows a message to use desktop if accessed on mobile (except login).
     *   **Version Display:** Admin panel footer shows simulated version and update date. Main site footer shows only version.
@@ -80,16 +80,19 @@
         *   UI stubs for various statistics (revenue, payments, products, clients etc.). More detailed placeholders added.
         *   **"Recent Activity" section** displaying latest logs from the simulated logger.
     *   **Other Admin Sections (Sales, Marketing, Reports, Finances, Discounts, Content, Settings):** Placeholder pages created/enhanced with more structure. Navigation updated.
+*   **Cart State Persistence:** Cart items now persist through language changes by initializing state from `localStorage`.
 
 ## 2. What's Left to Build (Key Areas - based on User's List & Project Needs)
 
+**Current Focus (User Request):**
+*   **Implement Stock-Aware Quantity Logic:** Ensure cart operations and product additions respect available stock. Update toast notifications for stock-related scenarios. (This is the immediate task)
+
 **UX Improvements (Main Site):**
-*   **Visual indicator for inactive products on Product Detail Page.** (User's immediate next step)
-*   Enhance the "Useful Info" page (`/info`) further with article teasers/previews beyond the current card list.
+*   **Visual indicator for inactive products on Product Detail Page.** (User's previous immediate next step)
 *   Improve the empty cart page (e.g., more engaging message, popular product suggestions).
 
 **Admin Panel Functional & UI Enhancements:**
-*   **Orders (`/admin/sales`): Implement basic UI for order list (table with ID, date, status, amount), "View Details" button.** (User's immediate next step)
+*   **Orders (`/admin/sales`): Implement basic UI for order list (table with ID, date, status, amount), "View Details" button.** (User's previous immediate next step)
 *   Dashboard: Implement basic data visualization (e.g., simple charts for sales, top products using `shadcn/ui` charts with mock data).
 *   Orders (`/admin/sales` - beyond basic list): Add filtering by status, view order details (linking to a new detail page stub).
 *   Pagination for admin lists (products, clients, logs - client-side initially).
@@ -99,7 +102,7 @@
 **Technical Improvements & Future Prep:**
 *   **Backend Integration (Prisma/PostgreSQL - Next Major Phase):**
     *   Define full Prisma schema (initial schema outlined in `deployment_guide.md`).
-    *   Implement all API routes or Server Actions for data CUD for all admin sections (Products, Articles, Attributes, Orders, Users, Clients, Discounts, Settings).
+    *   Implement all API routes or Server Actions for data CUD for all admin sections.
     *   Migrate main site user authentication (email/password) to use the database via NextAuth Credentials.
     *   Implement real NextAuth Credentials provider for admin login using the database.
     *   Implement real logging to the database.
@@ -116,12 +119,12 @@
 
 ## 3. Current Status
 
-*   **Main Site:** MVP with core e-commerce UI flows implemented and largely localized (UZ/RU/EN). Authentication is hybrid (NextAuth Google + Simulated Email/Pass). Product data is mocked, prices in UZS. Product filters are dynamic (including price range) and filter only active products. Sorting verified. Inactive products hidden from lists. New corporate color palette applied. "Useful Info" section has dynamic articles with multilingual text and images.
-*   **Admin Panel:** UI shell created with simulated authentication (ADMIN/MANAGER roles), collapsible sidebar, role-based navigation, dark/light theme, and EN/RU i18n. New corporate color palette applied.
+*   **Main Site:** MVP with core e-commerce UI flows implemented and largely localized (UZ/RU/EN). Authentication is hybrid (NextAuth Google + Simulated Email/Pass). Product data is mocked, prices in UZS. Product filters are dynamic (including price range) and filter only active products. Sorting verified. Inactive products hidden from lists. New corporate color palette applied. "Useful Info" section has dynamic articles with multilingual text and images. Cart persists across language changes.
+*   **Admin Panel:** UI shell created with simulated authentication (ADMIN/MANAGER roles), collapsible sidebar, role-based navigation, dark/light theme, and EN/RU i18n. New corporate-derived dark theme applied.
     *   Product management includes image display in list, ID, SKU, Active status. Forms with drag-and-drop image upload (simulated), multilingual name/description inputs, and expanded attribute fields (SKU, Scent (Select), Material (Select), Category (Select), Dimensions, Burning Time, Active status). Attribute Select options are dynamic from admin-managed localStorage.
     *   Article management allows CRUD for multilingual articles with shared/per-language images (simulated via `localStorage`).
     *   User (Manager) management includes adding new managers (simulated via `localStorage`).
-    *   Attribute management (Categories, Materials, Scents) allows full CRUD (simulated via `localStorage`) with warnings for in-use attributes.
+    *   Attribute management (Categories, Materials, Scents) allows full CRUD (simulated via `localStorage`) with warnings for in-use attributes. "Attributes" menu in sidebar is an accordion.
     *   Clients section shows mock client data with search/simulated block.
     *   Logs section shows simulated admin actions from `localStorage` with a clear function, and client-side filtering/sorting.
     *   Dashboard shows enhanced mock stats and recent simulated activity.
@@ -131,8 +134,16 @@
 *   **Memory Bank system active.** `deployment_guide.md` created and updated.
 
 ## 4. Known Issues/Previous Errors Addressed (Recent)
-*   Admin panel `DropdownMenu` usage for sidebar items with sub-menus corrected to use `Accordion` for "Attributes" for downward expansion.
+*   Admin panel `DropdownMenu` for "Attributes" corrected to `Accordion` for downward expansion.
 *   Addressed various `cn is not defined`, `SheetTrigger is not defined`, `FormProvider is not defined`, JSON parsing, and hydration errors.
 *   Corrected issue where "Articles" section was missing from admin navigation.
-*   Corrected issues with `ProductCard` dictionary prop.
 *   Fixed issue where cart items would disappear on language change.
+*   Admin dark theme styling, hover effects, and sidebar text color issues addressed.
+*   Main site search bar width increased.
+*   Removed `<SelectItem value="">None</SelectItem>` to fix Select component errors.
+*   `formState` not defined in admin product forms fixed.
+*   Corrected parsing errors in admin attribute pages and `ru.json` dictionary.
+*   Admin header/footer visibility and positioning on mobile fixed.
+*   Missing `X` icon and `SheetTrigger` imports in admin layout fixed.
+
+```

@@ -9,8 +9,6 @@
     "products": "Товары",
     "about": "О нас",
     "usefulInfo": "Полезное",
-    "soyWaxInfoTitle": "Что такое соевый воск...",
-    "aromaSachetInfoTitle": "Что такое аромасаше и как его использовать",
     "cart": "Корзина",
     "account": "Мой аккаунт",
     "login": "Войти",
@@ -19,7 +17,9 @@
     "mainMenuTitle": "Главное меню",
     "langUz": "UZ",
     "langRu": "RU",
-    "langEn": "EN"
+    "langEn": "EN",
+    "soyWaxInfoTitle": "Что такое соевый воск...",
+    "aromaSachetInfoTitle": "Что такое аромасаше и как его использовать"
   },
   "homepage": {
     "heroTitle": {
@@ -42,7 +42,7 @@
     "contactPagePath": "/info/contact-ru",
     "termsPagePath": "/info/terms-ru",
     "privacyPagePath": "/info/privacy-ru",
-    "version": "Версия"
+    "version": "v0.1.0 (Симуляция)"
   },
   "categories": {
     "corporate-sets": "Корпоративные наборы",
@@ -240,7 +240,7 @@
     "subtotal": "Промежуточный итог",
     "shipping": "Доставка",
     "free": "Бесплатно",
-    "total": "Итого",
+    "total": "Итого (UZS)",
     "returnToCart": "Вернуться в корзину",
     "checkoutTitle": "Оформление заказа",
     "contactInfoTitle": "Контактная информация",
@@ -387,13 +387,20 @@
     "loggedOutSuccess": "Вы успешно вышли из системы.",
     "errorPasswordsDontMatch": "Пароли не совпадают."
   },
+  "cartContextToasts": {
+    "errorTitle": "Ошибка",
+    "infoTitle": "Информация",
+    "genericError": "Произошла непредвиденная ошибка.",
+    "productOutOfStockToast": "Товар \"{productName}\" отсутствует на складе.",
+    "stockAvailableToast": "Недостаточно товара на складе. Количество обновлено до {availableStock}.",
+    "addedToCartLimitedStockToast": "Недостаточно товара на складе. В корзину добавлено {availableStock}."
+  },
   "usefulInfoPage": {
     "title": "Полезная информация",
     "description": "Узнайте больше о наших продуктах и о том, как лучше всего за ними ухаживать.",
-    "soyWaxTeaser": "Откройте для себя преимущества натурального соевого воска и почему это отличный выбор для свечей.",
-    "aromaSachetTeaser": "Узнайте, что такое аромасаше и как творчески использовать их дома и в машине.",
     "readMoreButton": "Читать далее",
-    "noArticlesYet": "Статьи пока отсутствуют."
+    "noArticlesYet": "Статьи пока отсутствуют.",
+    "articleTeaserDefault": "Подробнее об этой теме..."
   },
   "soyWaxPage": {
     "breadcrumbHome": "Главная",
@@ -408,3 +415,5 @@
     "placeholderContent": "Узнайте все об аромасаше, их применении и как лучше всего наслаждаться их ароматом дома или в машине. Контент скоро появится!"
   }
 }
+
+    

@@ -1,4 +1,3 @@
-
 {
   "metadata": {
     "title": "Askim candles",
@@ -9,8 +8,6 @@
     "products": "Mahsulotlar",
     "about": "Biz haqimizda",
     "usefulInfo": "Foydali",
-    "soyWaxInfoTitle": "Soya mumi nima...",
-    "aromaSachetInfoTitle": "Aromasashe nima va undan qanday foydalanish kerak",
     "cart": "Savatcha",
     "account": "Mening hisobim",
     "login": "Kirish",
@@ -42,7 +39,7 @@
     "contactPagePath": "/info/contact-uz",
     "termsPagePath": "/info/terms-uz",
     "privacyPagePath": "/info/privacy-uz",
-    "version": "Versiya"
+    "version": "v0.1.0 (Simulyatsiya)"
   },
   "categories": {
     "corporate-sets": "Korporativ to'plamlar",
@@ -240,7 +237,7 @@
     "subtotal": "Oraliq jami",
     "shipping": "Yetkazib berish",
     "free": "Bepul",
-    "total": "Jami",
+    "total": "Jami (UZS)",
     "returnToCart": "Savatchaga qaytish",
     "checkoutTitle": "To'lov",
     "contactInfoTitle": "Aloqa ma'lumotlari",
@@ -387,11 +384,17 @@
     "loggedOutSuccess": "Siz tizimdan muvaffaqiyatli chiqdingiz.",
     "errorPasswordsDontMatch": "Parollar mos kelmadi."
   },
+   "cartContextToasts": {
+    "errorTitle": "Xatolik",
+    "infoTitle": "Ma'lumot",
+    "genericError": "Kutilmagan xatolik yuz berdi.",
+    "productOutOfStockToast": "\"{productName}\" mahsuloti omborda yo'q.",
+    "stockAvailableToast": "Omborda yetarli mahsulot yo'q. Miqdor {availableStock} ga o'zgartirildi.",
+    "addedToCartLimitedStockToast": "Omborda yetarli mahsulot yo'q. Savatga {availableStock} dona qo'shildi."
+  },
   "usefulInfoPage": {
     "title": "Foydali Ma'lumotlar",
     "description": "Mahsulotlarimiz va ularga qanday g'amxo'rlik qilish haqida ko'proq bilib oling.",
-    "soyWaxTeaser": "Tabiiy soya mumining afzalliklarini va nima uchun u shamlar uchun ajoyib tanlov ekanligini bilib oling.",
-    "aromaSachetTeaser": "Aromasashelar nima ekanligini va ularni uyingizda va mashinangizda ijodiy usullarda qanday ishlatishni bilib oling.",
     "readMoreButton": "Batafsil O'qish",
     "noArticlesYet": "Hozircha maqolalar mavjud emas."
   },
