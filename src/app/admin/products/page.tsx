@@ -16,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { logAdminAction } from '@/admin/lib/admin-logger';
-import type { Locale } from "@/lib/i1n-config"; 
 import type { AdminLocale } from '@/admin/lib/i18n-config-admin';
 import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
 import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
@@ -133,76 +132,78 @@ export default function AdminProductsPage() {
         </CardHeader>
         <CardContent>
           {filteredProducts.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[60px]">{dict.imageHeader}</TableHead>
-                  <TableHead className="w-[80px]">{dict.idHeader}</TableHead>
-                  <TableHead className="w-[120px]">{dict.skuHeader}</TableHead>
-                  <TableHead>{dict.nameHeader.replace('{locale}', adminLocale.toUpperCase())}</TableHead>
-                  <TableHead>{dict.categoryHeader}</TableHead>
-                  <TableHead className="text-right">{dict.priceHeader}</TableHead>
-                  <TableHead className="text-right">{dict.costPriceHeader}</TableHead>
-                  <TableHead className="text-center">{dict.stockHeader}</TableHead>
-                  <TableHead className="text-center">{dict.statusHeader}</TableHead>
-                  <TableHead className="text-center">{dict.actionsHeader}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div className="relative h-10 w-10 rounded-md overflow-hidden border">
-                        <Image
-                          src={product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : "https://placehold.co/100x100.png?text=No+Image")}
-                          alt={product.name[adminLocale] || product.name.en || 'Product Image'}
-                          fill
-                          sizes="40px"
-                          className="object-cover"
-                          data-ai-hint="product thumbnail"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-xs">{product.id}</TableCell>
-                    <TableCell className="text-xs">{product.sku || '-'}</TableCell>
-                    <TableCell className="font-medium">{product.name[adminLocale] || product.name.en}</TableCell>
-                    <TableCell>{product.category}</TableCell>
-                    <TableCell className="text-right">{product.price.toLocaleString('en-US')}</TableCell>
-                    <TableCell className="text-right">{product.costPrice?.toLocaleString('en-US') || '-'}</TableCell>
-                    <TableCell className="text-center">{product.stock}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center space-x-2">
-                        <Switch
-                          id={`status-${product.id}`}
-                          checked={product.isActive}
-                          onCheckedChange={() => toggleProductStatus(product.id)}
-                          aria-label={product.isActive ? dict.deactivateAction : dict.activateAction}
-                        />
-                        <Badge variant={product.isActive ? "secondary" : "outline"}>
-                          {product.isActive ? dict.statusActive : dict.statusInactive}
-                        </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center space-x-1">
-                      <Button variant="outline" size="sm" asChild title={`${dict.editAction} ${product.name[adminLocale] || product.name.en}`}>
-                        <Link href={`/admin/products/edit/${product.id}`}>
-                          <Edit3 className="mr-1 h-3 w-3" /> {dict.editButton}
-                        </Link>
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => handleDeleteProduct(product.id, product.name)}
-                        title={`${dict.deleteAction} ${product.name[adminLocale] || product.name.en}`}
-                      >
-                        <Trash2 className="mr-1 h-3 w-3" /> {dict.deleteButton}
-                      </Button>
-                    </TableCell>
+            <div className="overflow-x-auto"> {/* Added overflow-x-auto for better responsiveness */}
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[60px]">{dict.idHeader}</TableHead>
+                    <TableHead className="w-[70px]">{dict.imageHeader}</TableHead>
+                    <TableHead className="w-[100px]">{dict.skuHeader}</TableHead>
+                    <TableHead className="min-w-[200px]">{dict.nameHeader.replace('{locale}', adminLocale.toUpperCase())}</TableHead>
+                    <TableHead className="w-[150px]">{dict.categoryHeader}</TableHead>
+                    <TableHead className="text-right w-[100px]">{dict.priceHeader}</TableHead>
+                    <TableHead className="text-right w-[100px]">{dict.costPriceHeader}</TableHead>
+                    <TableHead className="text-center w-[70px]">{dict.stockHeader}</TableHead>
+                    <TableHead className="text-center w-[120px]">{dict.statusHeader}</TableHead>
+                    <TableHead className="text-center w-[160px]">{dict.actionsHeader}</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredProducts.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell className="text-xs">{product.id}</TableCell>
+                      <TableCell>
+                        <div className="relative h-10 w-10 rounded-md overflow-hidden border">
+                          <Image
+                            src={product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : "https://placehold.co/100x100.png?text=No+Image")}
+                            alt={product.name[adminLocale] || product.name.en || 'Product Image'}
+                            fill
+                            sizes="40px"
+                            className="object-cover"
+                            data-ai-hint="product thumbnail"
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs">{product.sku || '-'}</TableCell>
+                      <TableCell className="font-medium">{product.name[adminLocale] || product.name.en}</TableCell>
+                      <TableCell>{product.category}</TableCell>
+                      <TableCell className="text-right">{product.price.toLocaleString('en-US')}</TableCell>
+                      <TableCell className="text-right">{product.costPrice?.toLocaleString('en-US') || '-'}</TableCell>
+                      <TableCell className="text-center">{product.stock}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <Switch
+                            id={`status-${product.id}`}
+                            checked={product.isActive}
+                            onCheckedChange={() => toggleProductStatus(product.id)}
+                            aria-label={product.isActive ? dict.deactivateAction : dict.activateAction}
+                          />
+                          <Badge variant={product.isActive ? "secondary" : "outline"}>
+                            {product.isActive ? dict.statusActive : dict.statusInactive}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center space-x-1">
+                        <Button variant="outline" size="sm" asChild title={`${dict.editAction} ${product.name[adminLocale] || product.name.en}`}>
+                          <Link href={`/admin/products/edit/${product.id}`}>
+                            <Edit3 className="mr-1 h-3 w-3" /> {dict.editButton}
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
+                          onClick={() => handleDeleteProduct(product.id, product.name)}
+                          title={`${dict.deleteAction} ${product.name[adminLocale] || product.name.en}`}
+                        >
+                          <Trash2 className="mr-1 h-3 w-3" /> {dict.deleteButton}
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <p className="text-muted-foreground text-center py-8">{dict.noProductsFound}</p>
           )}
