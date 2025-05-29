@@ -24,10 +24,9 @@ import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
 import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
 import type enAdminMessages from '@/admin/dictionaries/en.json';
 
-const LOCAL_STORAGE_KEY_CUSTOM_MATERIALS = "askimAdminCustomMaterials";
+const LOCAL_STORAGE_KEY_MATERIALS = "askimAdminCustomMaterials";
 type ManageMaterialsDict = typeof enAdminMessages.adminManageMaterialsPage;
 
-// This type is for the strings used within the AlertDialog component
 type AlertDialogStrings = {
   confirmDeleteTitle: string;
   confirmDeleteMaterialInUse: string;
@@ -37,7 +36,7 @@ type AlertDialogStrings = {
 };
 
 export default function AdminManageMaterialsPage() {
-  const [customMaterials, setCustomMaterials] = useState<string[]>([]);
+  const [allMaterials, setAllMaterials] = useState<string[]>([]);
   const [newMaterialName, setNewMaterialName] = useState("");
   const { toast } = useToast();
   const [dictionary, setDictionary] = useState<ManageMaterialsDict | null>(null);
@@ -59,20 +58,16 @@ export default function AdminManageMaterialsPage() {
       });
     }
     loadDictionary();
-
-    const storedMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
-    if (storedMaterials) {
-      setCustomMaterials(JSON.parse(storedMaterials));
-    } else {
-      const initialMockMaterialNames = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m))).sort();
-      setCustomMaterials(initialMockMaterialNames);
-      localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS, JSON.stringify(initialMockMaterialNames));
+    
+    let storedMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_MATERIALS);
+    if (!storedMaterials) {
+        const initialMockMaterialNames = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m))).sort();
+        localStorage.setItem(LOCAL_STORAGE_KEY_MATERIALS, JSON.stringify(initialMockMaterialNames));
+        storedMaterials = JSON.stringify(initialMockMaterialNames);
     }
+    setAllMaterials(JSON.parse(storedMaterials));
   }, []);
 
-  const baseMaterials = useMemo(() => {
-    return Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m))).sort();
-  }, []);
 
   const isMaterialInUse = (materialName: string): boolean => {
     return mockProducts.some(product => product.material === materialName);
@@ -84,25 +79,25 @@ export default function AdminManageMaterialsPage() {
       toast({ title: "Error", description: dictionary.errorEmptyName, variant: "destructive" });
       return;
     }
-    const materialExists = customMaterials.some(
+    const materialExists = allMaterials.some(
       (mat) => mat.toLowerCase() === newMaterialName.trim().toLowerCase()
     );
     if (materialExists) {
       toast({ title: "Error", description: dictionary.errorExists, variant: "destructive" });
       return;
     }
-    const updatedMaterials = [...customMaterials, newMaterialName.trim()];
-    setCustomMaterials(updatedMaterials);
-    localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS, JSON.stringify(updatedMaterials));
+    const updatedMaterials = [...allMaterials, newMaterialName.trim()];
+    setAllMaterials(updatedMaterials);
+    localStorage.setItem(LOCAL_STORAGE_KEY_MATERIALS, JSON.stringify(updatedMaterials));
     setNewMaterialName("");
     toast({ title: dictionary.addSuccessTitle, description: dictionary.addSuccess.replace('{name}', newMaterialName.trim()) });
   };
 
   const handleDeleteMaterial = (materialToDelete: string) => {
     if (!dictionary) return;
-    const updatedMaterials = customMaterials.filter(mat => mat !== materialToDelete);
-    setCustomMaterials(updatedMaterials);
-    localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS, JSON.stringify(updatedMaterials));
+    const updatedMaterials = allMaterials.filter(mat => mat !== materialToDelete);
+    setAllMaterials(updatedMaterials);
+    localStorage.setItem(LOCAL_STORAGE_KEY_MATERIALS, JSON.stringify(updatedMaterials));
     toast({ title: dictionary.deleteSuccessTitle, description: dictionary.deleteSuccess.replace('{name}', materialToDelete) });
   };
 
@@ -136,23 +131,11 @@ export default function AdminManageMaterialsPage() {
           <CardDescription>{dictionary.existingDescription}</CardDescription>
         </CardHeader>
         <CardContent>
-          <h3 className="font-semibold mb-2 text-lg">{dictionary.baseMaterialsHeader}</h3>
-          {baseMaterials.length > 0 ? (
-             <ul className="list-disc pl-5 space-y-1 mb-6">
-                {baseMaterials.map(mat => (
-                <li key={mat} className="text-sm">{mat} <span className="text-xs text-muted-foreground">(Base)</span></li>
-                ))}
-            </ul>
-          ) : (
-            <p className="text-muted-foreground text-sm mb-6">{dictionary.noBaseYet || "No base materials found in current products."}</p>
-          )}
-          
-          <h3 className="font-semibold mb-2 text-lg">{dictionary.customMaterialsHeader}</h3>
-          {customMaterials.filter(c => !baseMaterials.includes(c)).length === 0 ? (
-            <p className="text-muted-foreground text-sm">{dictionary.noCustomYet}</p>
+          {allMaterials.length === 0 ? (
+             <p className="text-muted-foreground text-sm">{dictionary.noCustomYet || "No materials added yet."}</p>
           ) : (
             <ul className="space-y-2">
-              {customMaterials.filter(c => !baseMaterials.includes(c)).map(mat => (
+              {allMaterials.map(mat => (
                 <li key={mat} className="flex items-center justify-between p-2 border rounded-md text-sm">
                   <span>{mat}</span>
                   <AlertDialog>

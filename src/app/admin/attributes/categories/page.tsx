@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, PlusCircle } from "lucide-react"; // Removed AlertTriangle as it's not used directly here
+import { Trash2, PlusCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { mockCategories, mockProducts } from '@/lib/mock-data';
 import {
@@ -24,26 +24,23 @@ import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
 import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
 import type enAdminMessages from '@/admin/dictionaries/en.json';
 
-const LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES = "askimAdminCustomCategories";
+const LOCAL_STORAGE_KEY_CATEGORIES = "askimAdminCustomCategories"; // Renamed for clarity
 type ManageCategoriesDict = typeof enAdminMessages.adminManageCategoriesPage;
 
-// This type is for the strings used within the AlertDialog component
 type AlertDialogStrings = {
   confirmDeleteTitle: string;
   confirmDeleteCategoryInUse: string;
-  confirmDeleteGeneral: string; // Added for general case
+  confirmDeleteGeneral: string;
   cancelButton: string;
   deleteConfirmButton: string;
 };
 
-
 export default function AdminManageCategoriesPage() {
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [allCategories, setAllCategories] = useState<string[]>([]);
   const [newCategoryName, setNewCategoryName] = useState("");
   const { toast } = useToast();
   const [dictionary, setDictionary] = useState<ManageCategoriesDict | null>(null);
   const [alertStrings, setAlertStrings] = useState<AlertDialogStrings | null>(null);
-
 
   useEffect(() => {
     const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
@@ -52,10 +49,9 @@ export default function AdminManageCategoriesPage() {
     async function loadDictionary() {
       const fullDict = await getAdminDictionary(localeToLoad);
       setDictionary(fullDict.adminManageCategoriesPage);
-      // Ensure all keys for alertStrings are present or provide fallbacks
       setAlertStrings({
         confirmDeleteTitle: fullDict.adminManageCategoriesPage.confirmDeleteTitle || "Confirm Deletion",
-        confirmDeleteCategoryInUse: fullDict.adminManageCategoriesPage.confirmDeleteCategoryInUse || "The category '{attributeName}' is currently used by one or more products. Deleting it means these products will no longer be associated with this category and may need to be updated manually. Are you sure you want to delete it?",
+        confirmDeleteCategoryInUse: fullDict.adminManageCategoriesPage.confirmDeleteCategoryInUse || "The category '{attributeName}' is currently used. Deleting it may affect products. Sure?",
         confirmDeleteGeneral: fullDict.adminManageCategoriesPage.confirmDeleteGeneral || "Are you sure you want to delete the category \"{name}\"?",
         cancelButton: fullDict.adminManageCategoriesPage.cancelButton || "Cancel",
         deleteConfirmButton: fullDict.adminManageCategoriesPage.deleteConfirmButton || "Delete",
@@ -63,19 +59,14 @@ export default function AdminManageCategoriesPage() {
     }
     loadDictionary();
 
-    const storedCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
-    if (storedCategories) {
-      setCustomCategories(JSON.parse(storedCategories));
-    } else {
-      // Seed from mockCategories if localStorage is empty
+    let storedCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CATEGORIES);
+    if (!storedCategories) {
       const initialMockCategoryNames = mockCategories.map(cat => cat.name);
-      setCustomCategories(initialMockCategoryNames);
-      localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES, JSON.stringify(initialMockCategoryNames));
+      localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(initialMockCategoryNames));
+      storedCategories = JSON.stringify(initialMockCategoryNames);
     }
-  }, []);
+    setAllCategories(JSON.parse(storedCategories));
 
-  const baseCategories = useMemo(() => {
-    return mockCategories.map(cat => cat.name);
   }, []);
 
   const isCategoryInUse = (categoryName: string): boolean => {
@@ -88,25 +79,25 @@ export default function AdminManageCategoriesPage() {
       toast({ title: "Error", description: dictionary.errorEmptyName, variant: "destructive" });
       return;
     }
-    const categoryExists = customCategories.some(
+    const categoryExists = allCategories.some(
       (cat) => cat.toLowerCase() === newCategoryName.trim().toLowerCase()
     );
     if (categoryExists) {
       toast({ title: "Error", description: dictionary.errorExists, variant: "destructive" });
       return;
     }
-    const updatedCategories = [...customCategories, newCategoryName.trim()];
-    setCustomCategories(updatedCategories);
-    localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES, JSON.stringify(updatedCategories));
+    const updatedCategories = [...allCategories, newCategoryName.trim()];
+    setAllCategories(updatedCategories);
+    localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(updatedCategories));
     setNewCategoryName("");
     toast({ title: dictionary.addSuccessTitle, description: dictionary.addSuccess.replace('{name}', newCategoryName.trim()) });
   };
 
   const handleDeleteCategory = (categoryToDelete: string) => {
     if (!dictionary) return;
-    const updatedCategories = customCategories.filter(cat => cat !== categoryToDelete);
-    setCustomCategories(updatedCategories);
-    localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES, JSON.stringify(updatedCategories));
+    const updatedCategories = allCategories.filter(cat => cat !== categoryToDelete);
+    setAllCategories(updatedCategories);
+    localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(updatedCategories));
     toast({ title: dictionary.deleteSuccessTitle, description: dictionary.deleteSuccess.replace('{name}', categoryToDelete) });
   };
 
@@ -140,24 +131,11 @@ export default function AdminManageCategoriesPage() {
           <CardDescription>{dictionary.existingDescription}</CardDescription>
         </CardHeader>
         <CardContent>
-          <h3 className="font-semibold mb-2 text-lg">{dictionary.baseCategoriesHeader}</h3>
-          {baseCategories.length > 0 ? (
-             <ul className="list-disc pl-5 space-y-1 mb-6">
-                {baseCategories.map(cat => (
-                <li key={cat} className="text-sm">{cat} <span className="text-xs text-muted-foreground">(Base)</span></li>
-                ))}
-            </ul>
-          ) : (
-             <p className="text-muted-foreground text-sm mb-6">{dictionary.noBaseYet || "No base categories found."}</p>
-          )}
-         
-
-          <h3 className="font-semibold mb-2 text-lg">{dictionary.customCategoriesHeader}</h3>
-          {customCategories.filter(c => !baseCategories.includes(c)).length === 0 ? (
-            <p className="text-muted-foreground text-sm">{dictionary.noCustomYet}</p>
+          {allCategories.length === 0 ? (
+            <p className="text-muted-foreground text-sm">{dictionary.noCustomYet || "No categories added yet."}</p>
           ) : (
             <ul className="space-y-2">
-              {customCategories.filter(c => !baseCategories.includes(c)).map(cat => (
+              {allCategories.map(cat => (
                 <li key={cat} className="flex items-center justify-between p-2 border rounded-md text-sm">
                   <span>{cat}</span>
                    <AlertDialog>
