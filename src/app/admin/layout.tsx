@@ -24,24 +24,25 @@ import {
   Briefcase,
   PanelLeftOpen,
   PanelRightOpen,
-  X, // Ensure X is imported
+  X,
 } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import '../globals.css'; // Import global styles
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ElementType;
   adminOnly?: boolean;
-  managerOnly?: boolean; // True if manager OR admin can access
+  managerOnly?: boolean;
 }
 
 const navItems: NavItem[] = [
   { href: '/admin/dashboard', label: 'Главная панель', icon: LayoutDashboard, managerOnly: true },
   { href: '/admin/products', label: 'Товары', icon: Package, managerOnly: true },
-  { href: '/admin/sales', label: 'Продажи', icon: ShoppingCart, managerOnly: true }, // Was /admin/orders, changed to /admin/sales for label "Продажи"
+  { href: '/admin/sales', label: 'Продажи', icon: ShoppingCart, managerOnly: true },
   { href: '/admin/clients', label: 'Клиенты', icon: Users, managerOnly: true },
   { href: '/admin/marketing', label: 'Маркетинг', icon: Megaphone, managerOnly: true },
   { href: '/admin/reports', label: 'Отчеты', icon: FileOutput, managerOnly: true },
@@ -49,7 +50,7 @@ const navItems: NavItem[] = [
   { href: '/admin/discounts', label: 'Скидки и акции', icon: Percent, managerOnly: true },
   { href: '/admin/content', label: 'Контент', icon: FileText, managerOnly: true },
   { href: '/admin/settings', label: 'Настройки', icon: Settings, adminOnly: true },
-  { href: '/admin/users', label: 'Управление', icon: Briefcase, adminOnly: true }, // Was "Пользователи"
+  { href: '/admin/users', label: 'Управление', icon: Briefcase, adminOnly: true },
 ];
 
 function AdminLayoutContent({ children }: { children: React.ReactNode }) {
@@ -78,7 +79,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) return isAdmin;
-    if (item.managerOnly) return isManager || isAdmin; // Admin can access manager routes too
+    if (item.managerOnly) return isManager || isAdmin;
     return true;
   });
 
@@ -111,25 +112,24 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen bg-muted/40">
-      {/* Desktop Sidebar */}
       <aside className={cn(
           "hidden md:flex md:flex-col border-r bg-background fixed h-full z-40 transition-all duration-300 ease-in-out",
           isSidebarCollapsed ? "md:w-16" : "md:w-64"
         )}
       >
-        <div className={cn( // Sidebar Header (Logo)
-            "flex h-16 items-center border-b shrink-0", // Added shrink-0
+        <div className={cn(
+            "flex h-16 items-center border-b shrink-0",
             isSidebarCollapsed ? "justify-center px-2" : "px-6"
           )}
         >
-          <Link href="/admin/dashboard">
+          <Link href="/admin/dashboard" aria-label="Admin Dashboard Home">
             {isSidebarCollapsed ? <ShieldCheck className="h-7 w-7 text-primary" /> : <Logo />}
           </Link>
         </div>
-        <div className="flex-1 overflow-y-auto"> {/* Scrollable Nav Area */}
+        <div className="flex-1 overflow-y-auto">
           <SidebarNav isCollapsed={isSidebarCollapsed} />
         </div>
-        <div className={cn("border-t shrink-0", isSidebarCollapsed ? "px-2 py-3" : "px-6 py-4")}> {/* Sidebar Footer (User Info & Logout) - Added shrink-0, adjusted padding */}
+        <div className={cn("border-t shrink-0", isSidebarCollapsed ? "px-2 py-3" : "px-6 py-4")}>
             <div className={cn("text-sm mb-2 leading-tight", isSidebarCollapsed ? "hidden" : "")}>
                 <p className="font-semibold truncate">{currentAdminUser?.name}</p>
                 <p className="text-xs text-muted-foreground flex items-center">
@@ -139,39 +139,35 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             <Button
               variant="outline"
               size={isSidebarCollapsed ? "icon" : "sm"}
-              className={cn("flex items-center justify-center", isSidebarCollapsed ? "h-9 w-9 mx-auto" : "w-full h-9")} // Ensured button is centered when icon
+              className={cn("flex items-center justify-center", isSidebarCollapsed ? "h-9 w-9 mx-auto" : "w-full h-9 text-sm")}
               onClick={logout}
               title="Logout"
             >
                 <LogOut className={cn("h-4 w-4", isSidebarCollapsed ? "" : "mr-2")} />
-                {!isSidebarCollapsed && <span className="text-sm">Logout</span>}
+                {!isSidebarCollapsed && <span>Logout</span>}
             </Button>
         </div>
       </aside>
 
-      {/* Main Content Area */}
       <div className={cn(
           "flex flex-1 flex-col transition-all duration-300 ease-in-out",
           isSidebarCollapsed ? "md:pl-16" : "md:pl-64"
         )}
       >
-        {/* Header for Main Content (Toggle & Mobile Menu) */}
         <header className="sticky top-0 z-30 flex h-16 items-center border-b bg-background px-4 md:px-6">
-          {/* Desktop Sidebar Toggle Button */}
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-            className="hidden md:inline-flex mr-4" // Added margin for spacing
+            className="hidden md:inline-flex mr-4"
             title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             {isSidebarCollapsed ? <PanelRightOpen className="h-6 w-6" /> : <PanelLeftOpen className="h-6 w-6" />}
             <span className="sr-only">Toggle sidebar</span>
           </Button>
 
-           {/* Mobile: Logo and Menu Trigger */}
           <div className="flex-1 flex md:hidden items-center justify-between">
-             <Link href="/admin/dashboard" className="md:hidden">
+             <Link href="/admin/dashboard" className="md:hidden" aria-label="Admin Dashboard Home">
                 <Logo className="h-7"/>
             </Link>
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -183,20 +179,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               </SheetTrigger>
               <SheetContent side="left" className="flex flex-col p-0 w-3/4 max-w-xs">
                 <SheetHeader className="flex flex-row justify-between items-center border-b p-6">
-                  <SheetTitle className="sr-only">Admin Menu</SheetTitle>
-                  <Link href="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                   <Link href="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} aria-label="Admin Dashboard Home">
                     <Logo />
-                  </Link>
+                   </Link>
+                   <SheetTitle className="sr-only">Admin Menu</SheetTitle>
                    <SheetClose asChild>
                       <Button variant="ghost" size="icon">
                          <X className="h-6 w-6" />
+                         <span className="sr-only">Close menu</span>
                       </Button>
                    </SheetClose>
                 </SheetHeader>
-                <div className="flex-1 overflow-y-auto"> {/* Scrollable Nav for Mobile */}
+                <div className="flex-1 overflow-y-auto">
                   <SidebarNav isMobile={true} />
                 </div>
-                <div className="p-4 border-t"> {/* Mobile bottom block (User Info & Logout) */}
+                <div className="p-4 border-t shrink-0">
                   <div className="text-sm mb-2 leading-tight">
                       <p className="font-semibold truncate">{currentAdminUser?.name}</p>
                       <p className="text-xs text-muted-foreground flex items-center">
@@ -212,7 +209,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto"> {/* Added overflow-y-auto to main content area as well */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
             {children}
         </main>
       </div>
@@ -223,7 +220,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   if (pathname === '/admin/login') {
-    // For the login page, we don't need the full AdminLayoutContent, just the provider
     return <AdminAuthProvider>{children}</AdminAuthProvider>;
   }
 
