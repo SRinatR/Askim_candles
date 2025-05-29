@@ -1,107 +1,179 @@
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, PlusCircle } from "lucide-react";
+import { Trash2, PlusCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { mockProducts } from '@/lib/mock-data';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import type { AdminLocale } from '@/admin/lib/i18n-config-admin';
+import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
+import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
+import type enAdminMessages from '@/admin/dictionaries/en.json';
 
 const LOCAL_STORAGE_KEY_CUSTOM_SCENTS = "askimAdminCustomScents";
+type ManageScentsDict = typeof enAdminMessages.adminManageScentsPage;
+type AlertDialogStrings = {
+  confirmDeleteTitle: string;
+  confirmDeleteScentInUse: string;
+  cancelButton: string;
+  deleteConfirmButton: string;
+};
 
-// TODO: Localize admin page texts
+
 export default function AdminManageScentsPage() {
   const [customScents, setCustomScents] = useState<string[]>([]);
   const [newScentName, setNewScentName] = useState("");
   const { toast } = useToast();
+  const [dictionary, setDictionary] = useState<ManageScentsDict | null>(null);
+  const [alertStrings, setAlertStrings] = useState<AlertDialogStrings | null>(null);
+
 
   useEffect(() => {
+    const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
+    const localeToLoad = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
+    
+    async function loadDictionary() {
+      const fullDict = await getAdminDictionary(localeToLoad);
+      setDictionary(fullDict.adminManageScentsPage);
+      setAlertStrings({
+        confirmDeleteTitle: fullDict.adminManageScentsPage.confirmDeleteTitle || "Are you sure?",
+        confirmDeleteScentInUse: fullDict.adminManageScentsPage.confirmDeleteScentInUse || "The scent '{attributeName}' is currently used by one or more products. Deleting it means these products will no longer be associated with this scent and may need to be updated manually. Are you sure you want to delete it?",
+        cancelButton: fullDict.adminManageScentsPage.cancelButton || "Cancel",
+        deleteConfirmButton: fullDict.adminManageScentsPage.deleteConfirmButton || "Delete",
+      });
+    }
+    loadDictionary();
+
     const storedScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
     if (storedScents) {
       setCustomScents(JSON.parse(storedScents));
+    } else {
+      const initialMockScentNames = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s))).sort();
+      setCustomScents(initialMockScentNames);
+      localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS, JSON.stringify(initialMockScentNames));
     }
   }, []);
 
-  const initialScentsFromProducts = useMemo(() => {
-    const scents = mockProducts
-      .map(p => p.scent)
-      .filter((s): s is string => typeof s === 'string' && s.trim() !== '');
-    return Array.from(new Set(scents)).sort();
+  const baseScents = useMemo(() => {
+    return Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s))).sort();
   }, []);
+  
+  const isScentInUse = (scentName: string): boolean => {
+    return mockProducts.some(product => product.scent === scentName);
+  };
 
   const handleAddScent = () => {
+    if (!dictionary) return;
     if (!newScentName.trim()) {
-      toast({ title: "Error", description: "Scent name cannot be empty.", variant: "destructive" });
+      toast({ title: "Error", description: dictionary.errorEmptyName, variant: "destructive" });
       return;
     }
-     if (initialScentsFromProducts.map(s=>s.toLowerCase()).includes(newScentName.trim().toLowerCase()) || customScents.map(s=>s.toLowerCase()).includes(newScentName.trim().toLowerCase())) {
-      toast({ title: "Error", description: "Scent already exists.", variant: "destructive" });
+    const scentExists = customScents.some(
+      (scent) => scent.toLowerCase() === newScentName.trim().toLowerCase()
+    );
+    if (scentExists) {
+      toast({ title: "Error", description: dictionary.errorExists, variant: "destructive" });
       return;
     }
     const updatedScents = [...customScents, newScentName.trim()];
     setCustomScents(updatedScents);
     localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS, JSON.stringify(updatedScents));
     setNewScentName("");
-    toast({ title: "Scent Added", description: `"${newScentName.trim()}" has been added.` });
+    toast({ title: dictionary.addSuccessTitle, description: dictionary.addSuccess.replace('{name}', newScentName.trim()) });
   };
 
-  const handleDeleteCustomScent = (scentToDelete: string) => {
+  const handleDeleteScent = (scentToDelete: string) => {
+    if (!dictionary) return;
     const updatedScents = customScents.filter(scent => scent !== scentToDelete);
     setCustomScents(updatedScents);
     localStorage.setItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS, JSON.stringify(updatedScents));
-    toast({ title: "Scent Deleted", description: `"${scentToDelete}" has been deleted.` });
+    toast({ title: dictionary.deleteSuccessTitle, description: dictionary.deleteSuccess.replace('{name}', scentToDelete) });
   };
+  
+  if (!dictionary || !alertStrings) {
+    return <div>Loading translations...</div>;
+  }
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold tracking-tight">Manage Product Scents</h1>
+      <h1 className="text-3xl font-bold tracking-tight">{dictionary.title}</h1>
       
       <Card>
         <CardHeader>
-          <CardTitle>Add New Scent</CardTitle>
-          <CardDescription>Create a new scent option for your products.</CardDescription>
+          <CardTitle>{dictionary.addNewTitle}</CardTitle>
+          <CardDescription>{dictionary.addNewDescription}</CardDescription>
         </CardHeader>
         <CardContent className="flex gap-2">
           <Input
             value={newScentName}
             onChange={(e) => setNewScentName(e.target.value)}
-            placeholder="New scent name"
+            placeholder={dictionary.inputPlaceholder}
             className="flex-grow"
           />
-          <Button onClick={handleAddScent}><PlusCircle className="mr-2 h-4 w-4" /> Add Scent</Button>
+          <Button onClick={handleAddScent}><PlusCircle className="mr-2 h-4 w-4" /> {dictionary.addButton}</Button>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Existing Scents</CardTitle>
-          <CardDescription>Base scents (from existing products) are fixed. Custom scents can be deleted.</CardDescription>
+          <CardTitle>{dictionary.existingTitle}</CardTitle>
+          <CardDescription>{dictionary.existingDescription}</CardDescription>
         </CardHeader>
         <CardContent>
-           <h3 className="font-semibold mb-2 text-lg">Base Scents (from products)</h3>
-           {initialScentsFromProducts.length > 0 ? (
+          <h3 className="font-semibold mb-2 text-lg">{dictionary.baseScentsHeader}</h3>
+          {baseScents.length > 0 ? (
             <ul className="list-disc pl-5 space-y-1 mb-6">
-                {initialScentsFromProducts.map(scent => (
-                <li key={scent} className="text-sm">{scent}</li>
+                {baseScents.map(scent => (
+                <li key={scent} className="text-sm">{scent} <span className="text-xs text-muted-foreground">(Base)</span></li>
                 ))}
             </ul>
-            ) : (
-              <p className="text-muted-foreground text-sm mb-6">No base scents found in current products.</p>
-            )}
-
-          <h3 className="font-semibold mb-2 text-lg">Custom Scents</h3>
-          {customScents.length === 0 ? (
-            <p className="text-muted-foreground text-sm">No custom scents added yet.</p>
+          ) : (
+             <p className="text-muted-foreground text-sm mb-6">{dictionary.noBaseYet}</p>
+          )}
+          
+          <h3 className="font-semibold mb-2 text-lg">{dictionary.customScentsHeader}</h3>
+          {customScents.filter(c => !baseScents.includes(c)).length === 0 ? (
+            <p className="text-muted-foreground text-sm">{dictionary.noCustomYet}</p>
           ) : (
             <ul className="space-y-2">
-              {customScents.map(scent => (
+              {customScents.filter(c => !baseScents.includes(c)).map(scent => (
                 <li key={scent} className="flex items-center justify-between p-2 border rounded-md text-sm">
                   <span>{scent}</span>
-                  <Button variant="ghost" size="sm" onClick={() => handleDeleteCustomScent(scent)} className="text-destructive hover:text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>{alertStrings.confirmDeleteTitle}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          {isScentInUse(scent) 
+                            ? alertStrings.confirmDeleteScentInUse.replace('{attributeName}', scent)
+                            : dictionary.confirmDeleteGeneral.replace('{name}', scent)
+                          }
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>{alertStrings.cancelButton}</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteScent(scent)} className="bg-destructive hover:bg-destructive/90">{alertStrings.deleteConfirmButton}</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </li>
               ))}
             </ul>
@@ -109,7 +181,7 @@ export default function AdminManageScentsPage() {
         </CardContent>
       </Card>
       <p className="text-sm text-muted-foreground text-center">
-        Note: Custom scents are stored in browser localStorage and are for simulated selection in product forms.
+        {dictionary.note}
       </p>
     </div>
   );

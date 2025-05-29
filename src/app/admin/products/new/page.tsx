@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -14,11 +13,10 @@ import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Languages } from "lucide-react";
-import { mockCategories, mockProducts } from "@/lib/mock-data";
+import { ArrowLeft, Save } from "lucide-react";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
-import React, { useEffect, useState, useMemo } from "react"; 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // For multilingual input
+import React, { useEffect, useState } from "react"; 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const productSchema = z.object({
   name_en: z.string().min(1, { message: "English product name is required." }),
@@ -32,7 +30,7 @@ const productSchema = z.object({
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL (Data URL in this case)."})).min(1, { message: "At least one image is required." }),
-  mainImageId: z.string().optional(),
+  mainImageId: z.string().optional(), // Will store the ID/URL of the main image
   scent: z.string().optional(),
   material: z.string().optional(),
   dimensions: z.string().optional(),
@@ -51,34 +49,20 @@ export default function NewProductPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  const [availableCategories, setAvailableCategories] = useState<{ id: string; name: string; slug: string }[]>(mockCategories);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [availableMaterials, setAvailableMaterials] = useState<string[]>([]);
   const [availableScents, setAvailableScents] = useState<string[]>([]);
 
 
   useEffect(() => {
     const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
-    const customCats = storedCustomCategories ? JSON.parse(storedCustomCategories) : [];
-    const combinedCategories = [
-      ...mockCategories,
-      ...customCats.map((catName: string) => ({ id: catName.toLowerCase().replace(/\s+/g, '-'), name: catName, slug: catName.toLowerCase().replace(/\s+/g, '-') }))
-    ];
-    const uniqueCombinedCategories = combinedCategories.filter((category, index, self) =>
-        index === self.findIndex((c) => c.name === category.name)
-    );
-    setAvailableCategories(uniqueCombinedCategories);
+    setAvailableCategories(storedCustomCategories ? JSON.parse(storedCustomCategories) : []);
     
     const storedCustomMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
-    const customMats = storedCustomMaterials ? JSON.parse(storedCustomMaterials) : [];
-    const initialMaterialsFromProducts = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m)));
-    const combinedMaterials = Array.from(new Set([...initialMaterialsFromProducts, ...customMats])).sort();
-    setAvailableMaterials(combinedMaterials);
+    setAvailableMaterials(storedCustomMaterials ? JSON.parse(storedCustomMaterials) : []);
 
     const storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
-    const customScnts = storedCustomScents ? JSON.parse(storedCustomScents) : [];
-    const initialScentsFromProducts = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s)));
-    const combinedScents = Array.from(new Set([...initialScentsFromProducts, ...customScnts])).sort();
-    setAvailableScents(combinedScents);
+    setAvailableScents(storedCustomScents ? JSON.parse(storedCustomScents) : []);
 
   }, []);
 
@@ -121,8 +105,11 @@ export default function NewProductPage() {
       dimensions: data.dimensions,
       burningTime: data.burningTime,
       isActive: data.isActive,
+      // attributes: data.attributes - if we add custom attributes later
     };
     console.log("New Product Data (Simulated):", newProductData);
+    // Here you would typically call an API to save the product
+    // For now, we'll just show a toast and redirect
     toast({
       title: "Product Added (Simulated)",
       description: `${data.name_en} has been 'added'. This change is client-side only. Image data URLs are in console.`,
@@ -234,7 +221,7 @@ export default function NewProductPage() {
                           </SelectTrigger>
                           <SelectContent>
                             {availableCategories.map(cat => (
-                              <SelectItem key={cat.slug} value={cat.name}>{cat.name}</SelectItem>
+                              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -329,13 +316,17 @@ export default function NewProductPage() {
                 </CardHeader>
                 <CardContent>
                    <Controller
-                    name="images"
+                    name="images" // This name should match the field in your Zod schema
                     control={control}
-                    render={({ field }) => (
+                    render={({ field }) => ( // field contains { value, onChange, onBlur, name, ref }
                       <ImageUploadArea
-                        onImagesChange={(imageDataUrls, mainImageDataUrl) => {
-                           setValue("images", imageDataUrls, { shouldValidate: true });
-                           setValue("mainImageId", mainImageDataUrl);
+                        // Pass the current array of image URLs (Data URLs for new, existing URLs for edit)
+                        initialImageUrls={field.value} 
+                        // Pass the current main image URL
+                        initialMainImageUrl={watch("mainImageId")} // Assuming mainImageId stores the ID/URL of the main image
+                        onImagesChange={(newImageUrls, newMainImageUrl) => {
+                           setValue("images", newImageUrls, { shouldValidate: true });
+                           setValue("mainImageId", newMainImageUrl, { shouldValidate: true });
                         }}
                         maxFiles={5}
                       />

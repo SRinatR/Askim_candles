@@ -1,4 +1,3 @@
-
 {
   "adminLayout": {
     "dashboard": "Dashboard",
@@ -51,7 +50,9 @@
     "salesOverviewDesc": "Sales chart for the last 30 days (placeholder).",
     "placeholderList": "... (full list coming soon)",
     "placeholderChart": "Chart coming soon",
-    "demoDataNote": "Note: All data on this page is for demonstration purposes and will be replaced with real data after backend integration."
+    "demoDataNote": "Note: All data on this page is for demonstration purposes and will be replaced with real data after backend integration.",
+    "recentActivity": "Recent Activity",
+    "noActivityYet": "No recent activity logged yet."
   },
   "adminLoginPage": {
     "title": "Admin Panel",
@@ -84,16 +85,24 @@
     "addNewDescription": "Create a new category for your products.",
     "inputPlaceholder": "New category name",
     "addButton": "Add Category",
-    "existingTitle": "Existing Categories",
-    "existingDescription": "Base categories are fixed. Custom categories can be deleted.",
+    "existingTitle": "All Categories",
+    "existingDescription": "Base categories (from initial data) are fixed. Custom categories can be deleted if not in use by products.",
     "baseCategoriesHeader": "Base Categories",
     "customCategoriesHeader": "Custom Categories",
     "noCustomYet": "No custom categories added yet.",
+    "noBaseYet": "No base categories found.",
     "errorEmptyName": "Category name cannot be empty.",
     "errorExists": "Category already exists.",
+    "addSuccessTitle": "Category Added",
     "addSuccess": "\"{name}\" has been added.",
+    "deleteSuccessTitle": "Category Deleted",
     "deleteSuccess": "\"{name}\" has been deleted.",
-    "note": "Note: Custom categories are stored in browser localStorage and are for simulated selection in product forms."
+    "note": "Note: Categories are managed via browser localStorage for this simulation. Product associations are checked against mock data.",
+    "confirmDeleteTitle": "Confirm Deletion",
+    "confirmDeleteCategoryInUse": "The category '{attributeName}' is currently used by one or more products. Deleting it means these products will no longer be associated with this category and may need to be updated manually. Are you sure you want to delete it?",
+    "confirmDeleteGeneral": "Are you sure you want to delete the category \"{name}\"?",
+    "cancelButton": "Cancel",
+    "deleteConfirmButton": "Delete"
   },
   "adminManageMaterialsPage": {
     "title": "Manage Product Materials",
@@ -101,17 +110,24 @@
     "addNewDescription": "Create a new material option for your products.",
     "inputPlaceholder": "New material name",
     "addButton": "Add Material",
-    "existingTitle": "Existing Materials",
-    "existingDescription": "Base materials (from existing products) are fixed. Custom materials can be deleted.",
+    "existingTitle": "All Materials",
+    "existingDescription": "Base materials (from initial product data) are fixed. Custom materials can be deleted if not in use by products.",
     "baseMaterialsHeader": "Base Materials (from products)",
     "noBaseYet": "No base materials found in current products.",
     "customMaterialsHeader": "Custom Materials",
     "noCustomYet": "No custom materials added yet.",
     "errorEmptyName": "Material name cannot be empty.",
     "errorExists": "Material already exists.",
+    "addSuccessTitle": "Material Added",
     "addSuccess": "\"{name}\" has been added.",
+    "deleteSuccessTitle": "Material Deleted",
     "deleteSuccess": "\"{name}\" has been deleted.",
-    "note": "Note: Custom materials are stored in browser localStorage and are for simulated selection in product forms."
+    "note": "Note: Materials are managed via browser localStorage. Product associations checked against mock data.",
+    "confirmDeleteTitle": "Confirm Deletion",
+    "confirmDeleteMaterialInUse": "The material '{attributeName}' is currently used by one or more products. Deleting it means these products will no longer be associated with this material and may need to be updated manually. Are you sure you want to delete it?",
+    "confirmDeleteGeneral": "Are you sure you want to delete the material \"{name}\"?",
+    "cancelButton": "Cancel",
+    "deleteConfirmButton": "Delete"
   },
   "adminManageScentsPage": {
     "title": "Manage Product Scents",
@@ -119,16 +135,23 @@
     "addNewDescription": "Create a new scent option for your products.",
     "inputPlaceholder": "New scent name",
     "addButton": "Add Scent",
-    "existingTitle": "Existing Scents",
-    "existingDescription": "Base scents (from existing products) are fixed. Custom scents can be deleted.",
+    "existingTitle": "All Scents",
+    "existingDescription": "Base scents (from initial product data) are fixed. Custom scents can be deleted if not in use by products.",
     "baseScentsHeader": "Base Scents (from products)",
     "noBaseYet": "No base scents found in current products.",
     "customScentsHeader": "Custom Scents",
     "noCustomYet": "No custom scents added yet.",
     "errorEmptyName": "Scent name cannot be empty.",
     "errorExists": "Scent already exists.",
+    "addSuccessTitle": "Scent Added",
     "addSuccess": "\"{name}\" has been added.",
+    "deleteSuccessTitle": "Scent Deleted",
     "deleteSuccess": "\"{name}\" has been deleted.",
-    "note": "Note: Custom scents are stored in browser localStorage and are for simulated selection in product forms."
+    "note": "Note: Scents are managed via browser localStorage. Product associations checked against mock data.",
+    "confirmDeleteTitle": "Confirm Deletion",
+    "confirmDeleteScentInUse": "The scent '{attributeName}' is currently used by one or more products. Deleting it means these products will no longer be associated with this scent and may need to be updated manually. Are you sure you want to delete it?",
+    "confirmDeleteGeneral": "Are you sure you want to delete the scent \"{name}\"?",
+    "cancelButton": "Cancel",
+    "deleteConfirmButton": "Delete"
   }
 }

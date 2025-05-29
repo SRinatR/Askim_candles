@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,17 +9,16 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useForm, Controller, FormProvider } from "react-hook-form";
+import { useForm, Controller, FormProvider } from "react-hook-form"; // Added FormProvider
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Languages } from "lucide-react";
-import { mockCategories, mockProducts } from "@/lib/mock-data";
-import type { Product } from "@/lib/types";
+import { ArrowLeft, Save } from "lucide-react";
+import { mockProducts } from "@/lib/mock-data"; 
+import type { Product, Locale } from "@/lib/types";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
-import type { Locale } from "@/lib/i1n-config"; // Assuming this is your Locale type
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const productSchema = z.object({
@@ -53,12 +52,9 @@ export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
-  const adminLocale = (localStorage.getItem('admin-lang') as Locale) || 'en';
-
 
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
-  
-  const [availableCategories, setAvailableCategories] = useState<{ id: string; name: string; slug: string }[]>(mockCategories);
+  const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [availableMaterials, setAvailableMaterials] = useState<string[]>([]);
   const [availableScents, setAvailableScents] = useState<string[]>([]);
 
@@ -66,15 +62,13 @@ export default function EditProductPage() {
     resolver: zodResolver(productSchema),
   });
 
-  const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset, setValue, watch } = formMethods;
+  const { register, handleSubmit, control, formState, reset, setValue, watch } = formMethods;
+  const { errors, isSubmitting } = formState;
 
   useEffect(() => {
     const foundProduct = mockProducts.find(p => p.id === productId);
     if (foundProduct) {
       setProductToEdit(foundProduct);
-      const initialImageUrls = foundProduct.images || [];
-      const initialMainImageUrl = foundProduct.mainImage || (initialImageUrls.length > 0 ? initialImageUrls[0] : undefined);
-
       reset({
         name_en: foundProduct.name.en || "",
         name_ru: foundProduct.name.ru || "",
@@ -84,10 +78,10 @@ export default function EditProductPage() {
         description_uz: foundProduct.description.uz || "",
         sku: foundProduct.sku || "",
         price: foundProduct.price,
-        category: foundProduct.category,
+        category: foundProduct.category, 
         stock: foundProduct.stock,
-        images: initialImageUrls,
-        mainImageId: initialMainImageUrl,
+        images: foundProduct.images || [],
+        mainImageId: foundProduct.mainImage, 
         scent: foundProduct.scent || "",
         material: foundProduct.material || "",
         dimensions: foundProduct.dimensions || "",
@@ -100,27 +94,16 @@ export default function EditProductPage() {
     }
 
     const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
-    const customCats = storedCustomCategories ? JSON.parse(storedCustomCategories) : [];
-    const combinedCategories = [
-      ...mockCategories,
-      ...customCats.map((catName: string) => ({ id: catName.toLowerCase().replace(/\s+/g, '-'), name: catName, slug: catName.toLowerCase().replace(/\s+/g, '-') }))
-    ];
-    const uniqueCombinedCategories = combinedCategories.filter((category, index, self) =>
-        index === self.findIndex((c) => c.name === category.name)
-    );
-    setAvailableCategories(uniqueCombinedCategories);
+    const baseCategories = Array.from(new Set(mockProducts.map(p => p.category).filter(Boolean)));
+    setAvailableCategories(storedCustomCategories ? JSON.parse(storedCustomCategories) : baseCategories);
     
     const storedCustomMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
-    const customMats = storedCustomMaterials ? JSON.parse(storedCustomMaterials) : [];
-    const initialMaterialsFromProducts = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m)));
-    const combinedMaterials = Array.from(new Set([...initialMaterialsFromProducts, ...customMats])).sort();
-    setAvailableMaterials(combinedMaterials);
+    const baseMaterials = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m))).sort();
+    setAvailableMaterials(storedCustomMaterials ? JSON.parse(storedCustomMaterials) : baseMaterials);
 
     const storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
-    const customScnts = storedCustomScents ? JSON.parse(storedCustomScents) : [];
-    const initialScentsFromProducts = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s)));
-    const combinedScents = Array.from(new Set([...initialScentsFromProducts, ...customScnts])).sort();
-    setAvailableScents(combinedScents);
+    const baseScents = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s))).sort();
+    setAvailableScents(storedCustomScents ? JSON.parse(storedCustomScents) : baseScents);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId, reset, router, toast]); 
@@ -136,7 +119,7 @@ export default function EditProductPage() {
       category: data.category,
       stock: data.stock,
       images: data.images,
-      mainImage: data.mainImageId,
+      mainImage: data.mainImageId, 
       scent: data.scent,
       material: data.material,
       dimensions: data.dimensions,
@@ -257,7 +240,7 @@ export default function EditProductPage() {
                             </SelectTrigger>
                             <SelectContent>
                             {availableCategories.map(cat => (
-                                <SelectItem key={cat.slug} value={cat.name}>{cat.name}</SelectItem>
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                             ))}
                             </SelectContent>
                         </Select>
@@ -351,17 +334,17 @@ export default function EditProductPage() {
                     </CardHeader>
                     <CardContent>
                          <Controller
-                            name="images"
+                            name="images" 
                             control={control}
                             render={({ field }) => (
                             <ImageUploadArea
-                                onImagesChange={(newImageDataUrls, newMainImageUrl) => {
-                                    setValue("images", newImageDataUrls, { shouldValidate: true });
-                                    setValue("mainImageId", newMainImageUrl); 
+                                initialImageUrls={field.value} 
+                                initialMainImageUrl={watch("mainImageId")} 
+                                onImagesChange={(newImageUrls, newMainImageUrl) => {
+                                    setValue("images", newImageUrls, { shouldValidate: true });
+                                    setValue("mainImageId", newMainImageUrl, {shouldValidate: true}); 
                                 }}
                                 maxFiles={5}
-                                initialImageUrls={watch("images")} 
-                                initialMainImageUrl={watch("mainImageId")} 
                             />
                             )}
                         />

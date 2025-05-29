@@ -1,4 +1,3 @@
-
 # Active Context: Askim candles
 
 ## Date: 2024-07-30 (Simulated Date of Update)
@@ -38,3 +37,4 @@
 *   **Multilingual Product Input:** For `name` and `description`, admin forms will have separate inputs for UZ, RU, EN.
 *   **Selectable Attributes (Category, Scent, Material):** These will remain single-value fields on the product model. Their *labels* in the admin `Select` components will be translated based on the admin's current language, but the stored value will be a consistent key (e.g., English name or a slug).
 *   **Filter Robustness:** Ensure filters don't break if no products match or if price ranges are unusual.
+*   **Attribute Deletion Warning:** Admins are warned with a modal if they try to delete a category, material, or scent that is currently in use by any product (checked against `mockProducts`).
