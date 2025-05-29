@@ -75,7 +75,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) return isAdmin;
-    if (item.managerOnly) return isManager;
+    if (item.managerOnly) return isManager; // Admin is also a manager implicitly
     return true; 
   });
 
@@ -121,7 +121,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                     <ShieldCheck className="h-3 w-3 mr-1 text-primary"/> Role: {currentAdminUser?.role}
                 </p>
             </div>
-            <Button variant="outline" size="sm" className="w-full" onClick={logout}>
+            <Button variant="outline" size="sm" className="w-full" onClick={logout} title="Logout">
                 <LogOut className="mr-2 h-4 w-4" /> Logout
             </Button>
         </div>
@@ -155,7 +155,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                         <ShieldCheck className="h-3 w-3 mr-1 text-primary"/> Role: {currentAdminUser?.role}
                     </p>
                 </div>
-                <Button variant="outline" size="sm" className="w-full" onClick={() => { logout(); setIsMobileMenuOpen(false);}}>
+                <Button variant="outline" size="sm" className="w-full" onClick={() => { logout(); setIsMobileMenuOpen(false);}} title="Logout">
                     <LogOut className="mr-2 h-4 w-4" /> Logout
                 </Button>
               </div>
@@ -173,6 +173,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // AdminAuthProvider should wrap the content only if we are not on the login page itself,
+  // or if we are, it should still be there to provide context to the login page.
+  // The AdminLayoutContent will handle redirect if not logged in and not on login page.
   if (pathname === '/admin/login') {
     return <AdminAuthProvider>{children}</AdminAuthProvider>;
   }
