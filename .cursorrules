@@ -1,0 +1,11 @@
+# .cursorrules - Project Intelligence for ScentSational Showcase
+
+## Coding Guidelines & Preferences
+
+1.  **XML for Code Changes:** Always use the `<changes>` XML format when providing code modifications.
+    ```xml
+    <changes>
+      <description>[Concise summary of changes]</description>
+      <change>
+        <file>[ABSOLUTE, FULL path to file]</file>
+        <content><![CDATA[ENTIRE, FINAL, intended content of the file. Properly escaped.
