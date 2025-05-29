@@ -1,15 +1,16 @@
 
-
 export interface Product {
   id: string;
   name: string;
   description: string;
-  price: number;
+  price: number; // Represents the price in the smallest currency unit (e.g., tiyin for UZS)
   category: string;
   images: string[]; // Array of image URLs
+  mainImage?: string; // URL of the main image
   scent?: string;
   material?: string;
   dimensions?: string; // e.g., "10cm x 5cm x 5cm"
+  burningTime?: string; // e.g., "Approx. 40 hours"
   stock: number; // Available stock
   attributes?: { key: string; value: string }[]; // For other attributes like color, size
 }
@@ -35,6 +36,7 @@ export interface SimulatedUser {
   password?: string; // Only for form handling/mock storage, not secure
   isRegistered?: boolean;
   isConfirmed?: boolean;
+  phone?: string; // Added from previous request
 }
 
 // User type for client-side ADMIN PANEL auth simulation
@@ -63,6 +65,6 @@ export interface Order {
   orderNumber: string;
   date: string; // Or Date object
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
-  totalAmount: number;
+  totalAmount: number; // Represents the total amount in the smallest currency unit
   items: CartItem[]; // Simplified, ideally OrderItem with price snapshot
 }

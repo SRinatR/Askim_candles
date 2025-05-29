@@ -209,7 +209,7 @@
     "itemRemovedDesc": "{name} has been removed from your cart.",
     "cartCleared": "Cart Cleared",
     "cartClearedDesc": "All items have been removed from your cart.",
-    "price": "Price",
+    "price": "Price:",
     "quantityFor": "Quantity for {name}",
     "remove": "Remove {name} from cart",
     "clearCart": "Clear Cart",
@@ -271,6 +271,8 @@
     "scentLabel": "Scent:",
     "materialLabel": "Material:",
     "dimensionsLabel": "Dimensions:",
+    "burningTimeLabel": "Burning Time:",
+    "attributesLabel": "Other Attributes:",
     "outOfStockButton": "Out of Stock",
     "fastDispatch": "Fast Dispatch",
     "secureCheckout": "Secure Checkout",
@@ -303,7 +305,7 @@
     "searchResultsTitle": "Search results for \"{searchTerm}\"",
     "productsFound": "{count} product found",
     "productsFound_plural": "{count} products found",
-    "productsFound_few": "{count} products found",
+    "productsFound_few": "{count} products found", 
     "noProductsFound": "No Products Found",
     "searchNoMatch": "Your search for \"{searchTerm}\" did not match any products.",
     "filterNoMatch": "We couldn't find products matching your current filters.",
@@ -378,5 +380,3 @@
     "errorPasswordsDontMatch": "Passwords do not match."
   }
 }
-
-    

@@ -209,7 +209,7 @@
     "itemRemovedDesc": "{name} был удален из вашей корзины.",
     "cartCleared": "Корзина очищена",
     "cartClearedDesc": "Все товары были удалены из вашей корзины.",
-    "price": "Цена",
+    "price": "Цена:",
     "quantityFor": "Количество для {name}",
     "remove": "Удалить {name} из корзины",
     "clearCart": "Очистить корзину",
@@ -271,6 +271,8 @@
     "scentLabel": "Аромат:",
     "materialLabel": "Материал:",
     "dimensionsLabel": "Размеры:",
+    "burningTimeLabel": "Время горения:",
+    "attributesLabel": "Прочие характеристики:",
     "outOfStockButton": "Нет в Наличии",
     "fastDispatch": "Быстрая отправка",
     "secureCheckout": "Безопасная оплата",
@@ -303,7 +305,7 @@
     "searchResultsTitle": "Результаты поиска по запросу \"{searchTerm}\"",
     "productsFound": "Найден {count} товар",
     "productsFound_plural": "Найдено {count} товаров",
-    "productsFound_few": "Найдено {count} товара",
+    "productsFound_few": "Найдено {count} товара", 
     "noProductsFound": "Товары не найдены",
     "searchNoMatch": "По вашему запросу \"{searchTerm}\" ничего не найдено.",
     "filterNoMatch": "Мы не смогли найти товары, соответствующие вашим текущим фильтрам.",
@@ -378,5 +380,3 @@
     "errorPasswordsDontMatch": "Пароли не совпадают."
   }
 }
-
-    

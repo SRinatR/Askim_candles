@@ -1,12 +1,12 @@
 
 "use client";
 
-import { mockProducts } from '@/lib/mock-data';
+import { mockProducts, mockCategories } from '@/lib/mock-data';
 import { notFound, useParams } from 'next/navigation';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Zap, ShieldCheck, Package } from 'lucide-react';
+import { ShoppingCart, Zap, ShieldCheck, Package, Clock, Tag, Palette, Droplets, Ruler } from 'lucide-react'; // Added Icons
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +14,6 @@ import Link from 'next/link';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
-import Image from 'next/image'; // Keep if used elsewhere, otherwise can be removed
 import { ProductCard, type ProductCardDictionary } from '@/components/products/ProductCard';
 
 
@@ -24,7 +23,6 @@ import uzMessages from '@/dictionaries/uz.json';
 
 type Dictionary = typeof enMessages;
 type ProductDetailPageStrings = Dictionary['productDetailPage'];
-type ProductCardStrings = Dictionary['productCard'];
 
 const dictionaries: Record<Locale, Dictionary> = {
   en: enMessages,
@@ -35,27 +33,34 @@ const dictionaries: Record<Locale, Dictionary> = {
 const getProductDetailPageDictionaryBundle = (locale: Locale) => {
   const dict = dictionaries[locale] || dictionaries.en;
   return {
-    page: dict.productDetailPage || { // Fallback for page strings
-      home: "Home (Fallback)",
-      products: "Products (Fallback)",
-      onlyLeftInStock: "Only {stock} left in stock! (Fallback)",
-      outOfStock: "Out of Stock (Fallback)",
-      categoryLabel: "Category: (Fallback)",
-      scentLabel: "Scent: (Fallback)",
-      materialLabel: "Material: (Fallback)",
-      dimensionsLabel: "Dimensions: (Fallback)",
-      outOfStockButton: "Out of Stock (Fallback)",
-      fastDispatch: "Fast Dispatch (Fallback)",
-      secureCheckout: "Secure Checkout (Fallback)",
-      easyReturns: "Easy Returns (Fallback)",
-      relatedProductsTitle: "You Might Also Like (Fallback)"
+    page: dict.productDetailPage || { 
+      home: "Home",
+      products: "Products",
+      onlyLeftInStock: "Only {stock} left in stock!",
+      outOfStock: "Out of Stock",
+      categoryLabel: "Category:",
+      scentLabel: "Scent:",
+      materialLabel: "Material:",
+      dimensionsLabel: "Dimensions:",
+      burningTimeLabel: "Burning Time:",
+      attributesLabel: "Other Attributes:",
+      outOfStockButton: "Out of Stock",
+      fastDispatch: "Fast Dispatch",
+      secureCheckout: "Secure Checkout",
+      easyReturns: "Easy Returns",
+      relatedProductsTitle: "You Might Also Like"
     },
-    productCard: dict.productCard || { // Fallback for productCard strings
+    productCard: dict.productCard || { 
       addToCart: "Add to Cart (Detail Page Fallback)",
       addedToCartTitle: "Added to cart (Detail Page Fallback)",
       addedToCartDesc: "{productName} has been added (Detail Page Fallback).",
       outOfStock: "Out of Stock (Detail Page Fallback)"
     },
+     categories: dict.categories || {
+      "artisanal-candles": "Artisanal Candles",
+      "wax-figures": "Wax Figures",
+      "gypsum-products": "Gypsum Products"
+    }
   };
 };
 
@@ -66,6 +71,7 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
   const dictionaryBundle = getProductDetailPageDictionaryBundle(locale);
   const dictionary = dictionaryBundle.page;
   const productCardDict = dictionaryBundle.productCard as ProductCardDictionary;
+  const categoriesDict = dictionaryBundle.categories;
 
 
   const product = mockProducts.find(p => p.id === routeParams.id);
@@ -86,6 +92,8 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
 
   const relatedProducts = mockProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0,3);
   const productCategorySlug = product.category.toLowerCase().replace(/\s+/g, '-');
+  const productCategoryName = categoriesDict[productCategorySlug as keyof typeof categoriesDict] || product.category;
+
 
   return (
     <div className="space-y-10">
@@ -124,14 +132,23 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
 
           <Separator />
 
-          <div className="space-y-3">
-            {product.category && <p><strong className="font-medium">{dictionary.categoryLabel}</strong> <Link href={`/${locale}/products?category=${productCategorySlug}`} className="text-primary hover:underline">{product.category}</Link></p>}
-            {product.scent && <p><strong className="font-medium">{dictionary.scentLabel}</strong> {product.scent}</p>}
-            {product.material && <p><strong className="font-medium">{dictionary.materialLabel}</strong> {product.material}</p>}
-            {product.dimensions && <p><strong className="font-medium">{dictionary.dimensionsLabel}</strong> {product.dimensions}</p>}
-            {product.attributes && product.attributes.map(attr => (
-              <p key={attr.key}><strong className="font-medium">{attr.key}:</strong> {attr.value}</p>
-            ))}
+          <div className="space-y-3 text-sm">
+            {product.category && <p className="flex items-center"><Tag className="mr-2 h-4 w-4 text-muted-foreground"/> <strong className="font-medium">{dictionary.categoryLabel}</strong> <Link href={`/${locale}/products?category=${productCategorySlug}`} className="text-primary hover:underline ml-1">{productCategoryName}</Link></p>}
+            {product.scent && <p className="flex items-center"><Droplets className="mr-2 h-4 w-4 text-muted-foreground"/> <strong className="font-medium">{dictionary.scentLabel}</strong> <span className="ml-1">{product.scent}</span></p>}
+            {product.material && <p className="flex items-center"><Palette className="mr-2 h-4 w-4 text-muted-foreground"/> <strong className="font-medium">{dictionary.materialLabel}</strong> <span className="ml-1">{product.material}</span></p>}
+            {product.dimensions && <p className="flex items-center"><Ruler className="mr-2 h-4 w-4 text-muted-foreground"/> <strong className="font-medium">{dictionary.dimensionsLabel}</strong> <span className="ml-1">{product.dimensions}</span></p>}
+            {product.burningTime && <p className="flex items-center"><Clock className="mr-2 h-4 w-4 text-muted-foreground"/> <strong className="font-medium">{dictionary.burningTimeLabel}</strong> <span className="ml-1">{product.burningTime}</span></p>}
+            
+            {product.attributes && product.attributes.length > 0 && (
+                <div className="pt-2">
+                    <h4 className="font-medium mb-1">{dictionary.attributesLabel}</h4>
+                    <ul className="list-disc list-inside space-y-1 pl-1">
+                        {product.attributes.map(attr => (
+                        <li key={attr.key}><strong className="font-normal">{attr.key}:</strong> {attr.value}</li>
+                        ))}
+                    </ul>
+                </div>
+            )}
           </div>
 
           <Button
@@ -180,4 +197,3 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
     </div>
   );
 }
-    

@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useForm, Controller, FormProvider } from "react-hook-form"; // Ensure FormProvider is imported
+import { useForm, Controller, FormProvider } from "react-hook-form"; 
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -22,11 +22,15 @@ import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
 const productSchema = z.object({
   name: z.string().min(3, { message: "Product name must be at least 3 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  price: z.coerce.number().positive({ message: "Price must be a positive number." }),
+  price: z.coerce.number().positive({ message: "Price must be a positive number (in UZS)." }),
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL."})).min(1, { message: "At least one image is required." }),
-  mainImageId: z.string().optional(), // Will store the ID of the main image from UploadedImage array, or the URL if it's an existing one
+  mainImageId: z.string().optional(), 
+  scent: z.string().optional(),
+  material: z.string().optional(),
+  dimensions: z.string().optional(),
+  burningTime: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -50,16 +54,22 @@ export default function EditProductPage() {
     if (foundProduct) {
       setProductToEdit(foundProduct);
       const initialImageUrls = foundProduct.images || [];
-      const initialMainImageUrl = foundProduct.images && foundProduct.images.length > 0 ? foundProduct.images[0] : undefined;
+      // The mainImageId should be the ID of the UploadedImage, or the URL if it's an existing one.
+      // For mock data, let's assume foundProduct.mainImage or images[0] is the main image URL.
+      const initialMainImageUrl = foundProduct.mainImage || (foundProduct.images && foundProduct.images.length > 0 ? foundProduct.images[0] : undefined);
 
       reset({
         name: foundProduct.name,
         description: foundProduct.description,
-        price: foundProduct.price, // Assuming price in mock-data is already in base currency unit
+        price: foundProduct.price, 
         category: foundProduct.category,
         stock: foundProduct.stock,
-        images: initialImageUrls, // Store array of image URLs
-        mainImageId: initialMainImageUrl, // Store the URL of the main image
+        images: initialImageUrls, 
+        mainImageId: initialMainImageUrl, 
+        scent: foundProduct.scent || "",
+        material: foundProduct.material || "",
+        dimensions: foundProduct.dimensions || "",
+        burningTime: foundProduct.burningTime || "",
       });
     } else {
       toast({ title: "Error", description: "Product not found.", variant: "destructive" });
@@ -150,6 +160,31 @@ export default function EditProductPage() {
                     />
                     {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
                     </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="scent">Scent</Label>
+                            <Input id="scent" {...register("scent")} />
+                            {errors.scent && <p className="text-sm text-destructive">{errors.scent.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="material">Material</Label>
+                            <Input id="material" {...register("material")} />
+                            {errors.material && <p className="text-sm text-destructive">{errors.material.message}</p>}
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="dimensions">Dimensions</Label>
+                            <Input id="dimensions" {...register("dimensions")} />
+                            {errors.dimensions && <p className="text-sm text-destructive">{errors.dimensions.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="burningTime">Burning Time</Label>
+                            <Input id="burningTime" {...register("burningTime")} />
+                            {errors.burningTime && <p className="text-sm text-destructive">{errors.burningTime.message}</p>}
+                        </div>
+                    </div>
                 </CardContent>
                 </Card>
             </div>
@@ -157,26 +192,29 @@ export default function EditProductPage() {
                 <Card>
                     <CardHeader>
                     <CardTitle>Product Images</CardTitle>
-                    <CardDescription>Upload new images. Select a main image.</CardDescription>
+                    <CardDescription>Upload new images or manage existing ones. Select a main image.</CardDescription>
                     </CardHeader>
                     <CardContent>
                          <Controller
                             name="images" 
                             control={control}
-                            render={({ field }) => (
+                            render={({ field }) => ( // field here represents the 'images' field (array of strings)
                             <ImageUploadArea
                                 onImagesChange={(imagesData, mainImgIdFromUploadArea) => {
+                                    // imagesData contains UploadedImage objects (file, preview, id)
+                                    // We need to store an array of preview URLs (Data URLs or existing HTTP URLs) in the form
                                     const newImagePreviews = imagesData.map(img => img.preview);
                                     setValue("images", newImagePreviews, { shouldValidate: true });
 
+                                    // mainImgIdFromUploadArea is the ID of the UploadedImage marked as main
+                                    // We need to find its corresponding preview URL to store in mainImageId form field
                                     const mainImgObject = imagesData.find(img => img.id === mainImgIdFromUploadArea);
                                     const finalMainImagePreview = mainImgObject ? mainImgObject.preview : (newImagePreviews.length > 0 ? newImagePreviews[0] : undefined);
-                                    // Ensure mainImageId is always a string URL if set, or undefined
-                                    setValue("mainImageId", finalMainImagePreview || undefined);
+                                    setValue("mainImageId", finalMainImagePreview);
                                 }}
                                 maxFiles={5}
-                                initialImageUrls={productToEdit.images} // Pass existing HTTP URLs from mock data
-                                initialMainImageUrl={watch("mainImageId") || (productToEdit.images && productToEdit.images.length > 0 ? productToEdit.images[0] : undefined)}
+                                initialImageUrls={productToEdit.images} 
+                                initialMainImageUrl={watch("mainImageId") || productToEdit.mainImage || (productToEdit.images && productToEdit.images.length > 0 ? productToEdit.images[0] : undefined)}
                             />
                             )}
                         />

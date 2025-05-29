@@ -14,18 +14,20 @@
 ## 2. Core App Features (from PRD & User Requests):
 
 *   **Main Site (i18n: UZ (default), RU, EN):**
-    *   Product Catalog (browse, details, filter, sort).
-    *   Shopping Cart & Checkout.
+    *   Product Catalog (browse, details, filter, sort). Price range filter is dynamic. Scent/Material filters are dynamic.
+    *   Shopping Cart & Checkout (forced login before checkout).
     *   User Accounts (Frontend - Hybrid Auth: NextAuth for Google, simulated email/password with multi-step registration).
-    *   Localized content for key pages.
+    *   Localized content for key pages. Prices displayed in UZS.
+    *   Compact mobile language switcher.
 *   **Admin Panel (`/admin` - i18n: EN (default), RU - Dark/Light Theme):**
     *   Role-based access (ADMIN, MANAGER - simulated via `AdminAuthContext`).
-    *   Dashboard with statistics (UI stubs with mock values).
-    *   **Product Management:** UI for listing, adding, editing products (client-side simulated).
-    *   **User/Manager Management (Admin Only):** UI for listing managers and form for adding new managers (client-side simulated).
+    *   Dashboard with statistics (UI stubs with mock values, "Recent Activity" from simulated logs).
+    *   **Product Management:** UI for listing (with image display), adding, editing products (client-side simulated). Forms include image upload (drag-and-drop, main image selection - Data URL based) and fields for scent, material, dimensions, burningTime.
+    *   **User/Manager Management (Admin Only):** UI for listing managers and form for adding new managers (client-side simulated via `localStorage`).
+    *   **Clients:** UI for listing mock clients with search and simulated block/unblock.
+    *   **Logs (Admin Only):** UI for displaying simulated admin action logs from `localStorage`, with a "Clear All Logs" function.
     *   Orders, Discounts, Content, Settings sections (mostly stubs).
-    *   **Logs:** Placeholder page for system/session logs.
-    *   Collapsible sidebar, theme/language toggles.
+    *   Collapsible sidebar, theme/language toggles, mobile access restriction, version display.
 *   Payment Processing: Stripe integration (future goal).
 *   **Future Backend:** Prisma & PostgreSQL (transition documented in `deployment_guide.md`).
 

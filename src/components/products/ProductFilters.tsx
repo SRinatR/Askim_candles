@@ -28,38 +28,57 @@ interface ProductFiltersProps {
   onApplyFilters?: () => void; // Optional callback for mobile sheet
 }
 
+// Consistent price divisor for filter logic
+const PRICE_DIVISOR = 1; // Assuming prices in mockProducts are now direct UZS values
+
 export function ProductFilters({ dictionary, categoriesData, allProducts, onApplyFilters }: ProductFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const routeParams = useParams();
   const locale = routeParams.locale as Locale || 'uz';
 
+  const { minProductPrice, maxProductPrice } = useMemo(() => {
+    if (!allProducts || allProducts.length === 0) {
+      return { minProductPrice: 0, maxProductPrice: 500000 }; // Default if no products
+    }
+    const prices = allProducts.map(p => p.price / PRICE_DIVISOR);
+    return {
+      minProductPrice: Math.floor(Math.min(...prices)),
+      maxProductPrice: Math.ceil(Math.max(...prices)),
+    };
+  }, [allProducts]);
+
   const initialCategories = useMemo(() => searchParams.getAll('category') || [], [searchParams]);
   const initialScents = useMemo(() => searchParams.getAll('scent') || [], [searchParams]);
   const initialMaterials = useMemo(() => searchParams.getAll('material') || [], [searchParams]);
-  const initialMinPrice = useMemo(() => Number(searchParams.get('minPrice')) || 0, [searchParams]);
-  const initialMaxPrice = useMemo(() => Number(searchParams.get('maxPrice')) || 200, [searchParams]);
+  const initialMinPrice = useMemo(() => Number(searchParams.get('minPrice')) || minProductPrice, [searchParams, minProductPrice]);
+  const initialMaxPrice = useMemo(() => Number(searchParams.get('maxPrice')) || maxProductPrice, [searchParams, maxProductPrice]);
 
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories);
   const [selectedScents, setSelectedScents] = useState<string[]>(initialScents);
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>(initialMaterials);
-  const [priceRange, setPriceRange] = useState<[number, number]>([initialMinPrice, initialMaxPrice]);
   
+  const [priceRange, setPriceRange] = useState<[number, number]>([initialMinPrice, initialMaxPrice]);
   const [minPriceInput, setMinPriceInput] = useState(String(initialMinPrice));
   const [maxPriceInput, setMaxPriceInput] = useState(String(initialMaxPrice));
 
-  // Update local state if searchParams change externally (e.g. browser back/forward)
+  // Update internal state if searchParams change externally or if product price range changes
   useEffect(() => {
+    const searchMin = Number(searchParams.get('minPrice'));
+    const searchMax = Number(searchParams.get('maxPrice'));
+
+    const currentMin = isNaN(searchMin) || searchMin < minProductPrice ? minProductPrice : searchMin;
+    const currentMax = isNaN(searchMax) || searchMax > maxProductPrice ? maxProductPrice : searchMax;
+    
     setSelectedCategories(searchParams.getAll('category') || []);
     setSelectedScents(searchParams.getAll('scent') || []);
     setSelectedMaterials(searchParams.getAll('material') || []);
-    const min = Number(searchParams.get('minPrice')) || 0;
-    const max = Number(searchParams.get('maxPrice')) || 200;
-    setPriceRange([min, max]);
-    setMinPriceInput(String(min));
-    setMaxPriceInput(String(max));
-  }, [searchParams]);
+    
+    setPriceRange([currentMin, currentMax]);
+    setMinPriceInput(String(currentMin));
+    setMaxPriceInput(String(currentMax));
+  }, [searchParams, minProductPrice, maxProductPrice]);
 
 
   const uniqueScents = useMemo(() => {
@@ -88,13 +107,12 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
     params.delete('material');
     selectedMaterials.forEach(mat => params.append('material', mat));
 
-    if (priceRange[0] > 0) {
+    if (priceRange[0] > minProductPrice) {
       params.set('minPrice', String(priceRange[0]));
     } else {
       params.delete('minPrice');
     }
-    // Adjusted max price condition based on common usage
-    if (priceRange[1] < 200 || (priceRange[1] === 200 && searchParams.has('maxPrice'))) { 
+    if (priceRange[1] < maxProductPrice) {
       params.set('maxPrice', String(priceRange[1]));
     } else {
       params.delete('maxPrice');
@@ -102,14 +120,14 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
     
     router.push(`/${locale}/products?${params.toString()}`, { scroll: false });
     if(onApplyFilters) {
-        onApplyFilters(); // Close sheet if callback provided
+        onApplyFilters(); 
     }
-  }, [selectedCategories, selectedScents, selectedMaterials, priceRange, searchParams, router, locale, onApplyFilters]);
+  }, [selectedCategories, selectedScents, selectedMaterials, priceRange, searchParams, router, locale, onApplyFilters, minProductPrice, maxProductPrice]);
 
-  // Auto-apply filters on desktop (if onApplyFilters is not provided)
   useEffect(() => {
-    if (!onApplyFilters) { // Only auto-apply if it's not in a sheet controlled by a button
-      applyFiltersToURL();
+    if (!onApplyFilters) { 
+      const timeoutId = setTimeout(applyFiltersToURL, 300); // Debounce slightly for non-mobile
+      return () => clearTimeout(timeoutId);
     }
   }, [selectedCategories, selectedScents, selectedMaterials, priceRange, onApplyFilters, applyFiltersToURL]);
 
@@ -126,50 +144,54 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
   };
 
   const handlePriceInputChange = (type: 'min' | 'max', value: string) => {
-    const numValue = Number(value);
+    let numValue = parseInt(value, 10);
+    if (isNaN(numValue)) numValue = type === 'min' ? minProductPrice : maxProductPrice;
+
     if (type === 'min') {
-      setMinPriceInput(value);
-      if (!isNaN(numValue) && numValue >=0 && numValue <= priceRange[1]) {
-        setPriceRange(current => [numValue, current[1]]);
-      }
+      setMinPriceInput(value); // Keep input as string
+      setPriceRange(current => [Math.max(minProductPrice, Math.min(numValue, current[1])), current[1]]);
     } else {
-      setMaxPriceInput(value);
-      if (!isNaN(numValue) && numValue <= 200 && numValue >= priceRange[0]) {
-         setPriceRange(current => [current[0], numValue]);
-      }
+      setMaxPriceInput(value); // Keep input as string
+      setPriceRange(current => [current[0], Math.min(maxProductPrice, Math.max(numValue, current[0]))]);
     }
   };
+  
+  const handlePriceInputBlur = () => {
+    // This function could be used to trigger URL update if not auto-applying
+    if (onApplyFilters) { 
+      // For mobile, explicit apply button is used, so blur might not be needed
+    } else {
+      applyFiltersToURL(); // Apply on blur for desktop if not using apply button
+    }
+  }
 
   const handleSliderCommit = (newRange: [number, number]) => {
     setPriceRange(newRange);
     setMinPriceInput(String(newRange[0]));
     setMaxPriceInput(String(newRange[1]));
+    // applyFiltersToURL(); // Already handled by useEffect or apply button
   };
   
   const clearFilters = () => {
     setSelectedCategories([]);
     setSelectedScents([]);
     setSelectedMaterials([]);
-    setPriceRange([0, 200]);
-    setMinPriceInput('0');
-    setMaxPriceInput('200');
-    // After clearing, apply to URL
+    setPriceRange([minProductPrice, maxProductPrice]);
+    setMinPriceInput(String(minProductPrice));
+    setMaxPriceInput(String(maxProductPrice));
+    
     const params = new URLSearchParams(searchParams.toString());
-    params.delete('category');
-    params.delete('scent');
-    params.delete('material');
-    params.delete('minPrice');
-    params.delete('maxPrice');
+    ['category', 'scent', 'material', 'minPrice', 'maxPrice'].forEach(p => params.delete(p));
     router.push(`/${locale}/products?${params.toString()}`, { scroll: false });
-     if(onApplyFilters) { // Also close sheet if it's open
+
+     if(onApplyFilters) { 
         onApplyFilters();
     }
   };
 
-  const hasActiveFilters = selectedCategories.length > 0 || selectedScents.length > 0 || selectedMaterials.length > 0 || priceRange[0] > 0 || priceRange[1] < 200;
+  const hasActiveFilters = selectedCategories.length > 0 || selectedScents.length > 0 || selectedMaterials.length > 0 || priceRange[0] > minProductPrice || priceRange[1] < maxProductPrice;
 
   return (
-    // Removed bg-card as SheetContent has its own background
     <aside className="w-full space-y-4 p-4 lg:border lg:border-border/60 lg:rounded-lg lg:shadow-sm lg:bg-card">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">{dictionary.filtersTitle}</h3>
@@ -186,7 +208,7 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
             {categoriesData.map(category => (
               <div key={category.id} className="flex items-center space-x-2">
                 <Checkbox
-                  id={`cat-${category.slug}-${onApplyFilters ? 'mobile' : 'desktop'}`} // Unique ID for mobile/desktop
+                  id={`cat-${category.slug}-${onApplyFilters ? 'mobile' : 'desktop'}`}
                   checked={selectedCategories.includes(category.slug)}
                   onCheckedChange={() => handleCheckboxChange(category.slug, selectedCategories, setSelectedCategories)}
                 />
@@ -201,31 +223,33 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
           <AccordionContent className="space-y-4 pt-3">
             <Slider
               value={priceRange}
-              min={0}
-              max={200} // Assuming 200 is a reasonable max for mock data
-              step={5}
-              onValueCommit={handleSliderCommit}
-              onValueChange={setPriceRange}
+              min={minProductPrice} 
+              max={maxProductPrice} 
+              step={Math.max(100, Math.floor((maxProductPrice - minProductPrice) / 100))} // Dynamic step
+              onValueChange={setPriceRange} // Live update slider visual
+              onValueCommit={handleSliderCommit} // Update inputs and trigger filter logic on commit
               className="my-2"
             />
             <div className="flex justify-between items-center space-x-2">
               <div className="relative">
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">UZS</span>
                 <Input 
-                  type="number" 
+                  type="text" // Use text to allow intermediate typing
                   value={minPriceInput}
-                  onChange={(e) => handlePriceInputChange('min', e.target.value)}
-                  className="w-full pl-10 h-9 text-sm" // Increased padding for UZS
+                  onChange={(e) => setMinPriceInput(e.target.value)}
+                  onBlur={() => handlePriceInputChange('min', minPriceInput)}
+                  className="w-full pl-10 h-9 text-sm" 
                 />
               </div>
               <span className="text-muted-foreground">-</span>
               <div className="relative">
                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">UZS</span>
                 <Input 
-                  type="number" 
+                  type="text" 
                   value={maxPriceInput}
-                  onChange={(e) => handlePriceInputChange('max', e.target.value)}
-                  className="w-full pl-10 h-9 text-sm" // Increased padding for UZS
+                  onChange={(e) => setMaxPriceInput(e.target.value)}
+                  onBlur={() => handlePriceInputChange('max', maxPriceInput)}
+                  className="w-full pl-10 h-9 text-sm"
                 />
               </div>
             </div>
@@ -276,5 +300,3 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
     </aside>
   );
 }
-
-    

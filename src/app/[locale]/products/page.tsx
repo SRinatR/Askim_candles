@@ -12,7 +12,7 @@ import type { Locale } from '@/lib/i1n-config';
 import type { ProductCardDictionary } from '@/components/products/ProductCard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 
 // Importing main dictionaries
 import enMessages from '@/dictionaries/en.json';
@@ -20,6 +20,8 @@ import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type FullDictionary = typeof enMessages; // Assuming en.json has all keys
+// Consistent price divisor for filter logic
+const PRICE_DIVISOR = 1; // Assuming prices in mockProducts are direct UZS values
 
 const dictionaries: Record<Locale, FullDictionary> = {
   en: enMessages,
@@ -30,13 +32,43 @@ const dictionaries: Record<Locale, FullDictionary> = {
 const getCombinedDictionary = (locale: Locale) => {
   const dict = dictionaries[locale] || dictionaries.en;
   return {
-    productsPage: dict.productsPage,
-    productFilters: dict.productFilters,
-    productSort: dict.productSort,
+    productsPage: dict.productsPage || {
+      homeBreadcrumb: "Home",
+      productsBreadcrumb: "Products",
+      allProductsTitle: "All Products",
+      searchResultsTitle: "Search results for \"{searchTerm}\"",
+      productsFound: "{count} product found",
+      productsFound_plural: "{count} products found",
+      productsFound_few: "{count} products found",
+      noProductsFound: "No Products Found",
+      searchNoMatch: "Your search for \"{searchTerm}\" did not match any products.",
+      filterNoMatch: "We couldn't find products matching your current filters.",
+      tryAdjusting: "Try adjusting your search or filters."
+    },
+    productFilters: dict.productFilters || {
+      filtersTitle: "Filters",
+      clearAllButton: "Clear All",
+      categoryTitle: "Category",
+      priceRangeTitle: "Price Range",
+      scentTitle: "Scent",
+      materialTitle: "Material",
+      applyFiltersButton: "Show Results"
+    },
+    productSort: dict.productSort || {
+      sortByLabel: "Sort by:",
+      sortPlaceholder: "Sort by",
+      relevanceOption: "Relevance",
+      priceAscOption: "Price: Low to High",
+      priceDescOption: "Price: High to Low",
+      nameAscOption: "Name: A to Z",
+      nameDescOption: "Name: Z to A",
+      newestOption: "Newest Arrivals"
+    },
     productCard: dict.productCard || { 
       addToCart: "Add to Cart (ProductsPage Fallback)",
       addedToCartTitle: "Added to cart (ProductsPage Fallback)",
-      addedToCartDesc: "{productName} has been added (ProductsPage Fallback)."
+      addedToCartDesc: "{productName} has been added (ProductsPage Fallback).",
+      outOfStock: "Out of Stock (ProductsPage Fallback)"
     },
   };
 };
@@ -54,12 +86,29 @@ export default function ProductsPage() {
 
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
+  const { minProductPrice, maxProductPrice } = useMemo(() => {
+    if (!mockProducts || mockProducts.length === 0) {
+      return { minProductPrice: 0, maxProductPrice: 500000 }; // Default if no products
+    }
+    const prices = mockProducts.map(p => p.price / PRICE_DIVISOR);
+    return {
+      minProductPrice: Math.floor(Math.min(...prices)),
+      maxProductPrice: Math.ceil(Math.max(...prices)),
+    };
+  }, []);
+
+
   const searchTerm = searchParams.get('search')?.toLowerCase();
   const categories = searchParams.getAll('category');
   const scents = searchParams.getAll('scent');
   const materials = searchParams.getAll('material');
-  const minPrice = Number(searchParams.get('minPrice')) || 0;
-  const maxPrice = Number(searchParams.get('maxPrice')) || Infinity; // Adjusted default max price for filtering logic
+
+  const minPriceParam = searchParams.get('minPrice');
+  const maxPriceParam = searchParams.get('maxPrice');
+
+  const minPrice = minPriceParam !== null ? Number(minPriceParam) : minProductPrice;
+  const maxPrice = maxPriceParam !== null ? Number(maxPriceParam) : maxProductPrice;
+  
   const sortOption = searchParams.get('sort') || 'relevance';
 
   const filteredProducts = mockProducts.filter(product => {
@@ -68,7 +117,7 @@ export default function ProductsPage() {
     const matchesCategory = categories.length > 0 ? categories.includes(productCategorySlug) : true;
     const matchesScent = scents.length > 0 && product.scent ? scents.includes(product.scent) : scents.length === 0;
     const matchesMaterial = materials.length > 0 && product.material ? materials.includes(product.material) : materials.length === 0;
-    const productPrice = product.price / 10000; // Assuming prices in mock-data are in UZS smallest unit
+    const productPrice = product.price / PRICE_DIVISOR;
     const matchesPrice = productPrice >= minPrice && productPrice <= maxPrice;
 
 
@@ -78,21 +127,22 @@ export default function ProductsPage() {
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortOption) {
       case 'price-asc':
-        return a.price - b.price;
+        return (a.price / PRICE_DIVISOR) - (b.price / PRICE_DIVISOR);
       case 'price-desc':
-        return b.price - a.price;
+        return (b.price / PRICE_DIVISOR) - (a.price / PRICE_DIVISOR);
       case 'name-asc':
         return a.name.localeCompare(b.name);
       case 'name-desc':
         return b.name.localeCompare(a.name);
       case 'newest':
-         const idA = parseInt(a.id, 10);
-         const idB = parseInt(b.id, 10);
+         // Assuming newer products have higher IDs (or timestamp in real data)
+         const idA = parseInt(a.id.replace (/[^0-9]/g, ""), 10); // Extract numbers from ID
+         const idB = parseInt(b.id.replace (/[^0-9]/g, ""), 10);
          if (!isNaN(idA) && !isNaN(idB)) {
-           return idB - idA;
+           return idB - idA; 
          }
-         return b.id.localeCompare(a.id);
-      default:
+         return b.id.localeCompare(a.id); // Fallback to string comparison
+      default: // relevance or unknown
         return 0;
     }
   });
@@ -143,15 +193,18 @@ export default function ProductsPage() {
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="p-0 w-full max-w-xs sm:max-w-sm">
-                <SheetHeader className="p-4 border-b">
+                <SheetHeader className="p-4 border-b flex flex-row justify-between items-center">
                   <SheetTitle>{filtersDictionary.filtersTitle}</SheetTitle>
+                  <SheetClose asChild>
+                     <Button variant="ghost" size="icon"><X className="h-5 w-5"/></Button>
+                  </SheetClose>
                 </SheetHeader>
-                <div className="overflow-y-auto p-1"> {/* Reduced padding for content area */}
+                <div className="overflow-y-auto p-1">
                   <ProductFilters 
                     dictionary={filtersDictionary} 
                     categoriesData={mockCategories}
                     allProducts={mockProducts}
-                    onApplyFilters={() => setIsMobileFiltersOpen(false)} // Close sheet on apply
+                    onApplyFilters={() => setIsMobileFiltersOpen(false)}
                   />
                 </div>
               </SheetContent>
@@ -186,5 +239,3 @@ export default function ProductsPage() {
     </div>
   );
 }
-
-    

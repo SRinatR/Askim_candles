@@ -75,6 +75,7 @@ This document outlines the key steps and considerations for deploying the Askim 
           scent         String?
           material      String?
           dimensions    String?
+          burningTime   String?   // e.g., "Approx. 40 hours"
           // attributes Json?    // For flexible key-value attributes
           createdAt     DateTime  @default(now())
           updatedAt     DateTime  @updatedAt
@@ -137,7 +138,16 @@ This document outlines the key steps and considerations for deploying the Askim 
           details   Json?    // Any additional details as JSON
         }
         
-        // ... other models for DiscountCode, Client (if distinct from User), etc.
+        // Model for non-registered clients or a separate client list if needed
+        // model Client {
+        //   id        String   @id @default(cuid())
+        //   email     String   @unique
+        //   name      String?
+        //   phone     String?
+        //   // ... other client-specific fields
+        //   createdAt DateTime @default(now())
+        //   updatedAt DateTime @updatedAt
+        // }
         ```
 5.  **Database Migrations:**
     *   Create your first migration: `npx prisma migrate dev --name init` (this will also apply it).
@@ -188,9 +198,10 @@ This document outlines the key steps and considerations for deploying the Askim 
 *   **Replace Mock Data:**
     *   For product listings (`/admin/products`, main site), product details, categories, etc., replace fetching from `mock-data.ts` with Prisma Client queries via Server Actions or API Route Handlers.
     *   Admin panel forms (add/edit product) will submit to these Server Actions/API Routes, which will then use Prisma to CUD data.
-    *   Client list in `/admin/clients` will fetch from the `User` table (filtering by role or a separate `Client` model).
+    *   Client list in `/admin/clients` will fetch from the `User` table (filtering by role or a separate `Client` model if you decide to create one for non-registered clients).
     *   Log entries in `/admin/logs` will be written to and read from the `AdminLog` table.
 *   **Server Components:** Leverage Server Components for data fetching where possible to improve performance.
+*   **Image Uploads:** Transition `ImageUploadArea.tsx` from Data URLs to actual file uploads to a storage service (e.g., Firebase Storage, Cloudinary, or self-hosted) and store URLs in the database.
 
 ## 5. Environment Variables for Production
 
@@ -200,7 +211,7 @@ Ensure your `.env.production` (or server environment variables) are set correctl
 *   `GOOGLE_CLIENT_SECRET`
 *   `NEXTAUTH_SECRET` (a strong, unique secret)
 *   `NEXTAUTH_URL` (your production domain, e.g., `https://askimcandles.com`)
-*   Any other API keys or service credentials (e.g., for email sending, address lookup).
+*   Any other API keys or service credentials (e.g., for email sending, address lookup, image storage).
 
 ## 6. Building and Deploying to VPS
 

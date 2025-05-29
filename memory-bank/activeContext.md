@@ -1,55 +1,59 @@
 
 # Active Context: Askim candles
 
-## Date: 2024-07-30 (Simulated Date of Update)
+## Date: 2024-07-29 (Simulated Date of Update)
 
 ## 1. Current Focus
-*   **Admin Panel Feature Implementation (Simulated):**
-    *   Displaying main product images in the `/admin/products` list.
-    *   Building out the UI for the `/admin/clients` section using mock client data, including table display and client-side search.
-    *   Implementing a basic simulated logging system for admin actions (`/admin/logs`) using `localStorage`, including log display and a "Clear All Logs" function.
-    *   Integrating log calls into key admin actions (login, logout, product delete, manager add).
-    *   Adding a "Recent Activity" feed to the admin dashboard based on the new logger.
+*   **Main Site Filter & Sorting Enhancements:**
+    *   Making the price range filter in `ProductFilters.tsx` dynamic based on actual product prices.
+    *   Verifying and ensuring all sorting options in `src/app/[locale]/products/page.tsx` work correctly with current mock data.
+*   **Admin Panel - Product Attribute Expansion:**
+    *   Adding new fields (Scent, Material, Burning Time, Dimensions) to the product type, mock data, admin product forms (new/edit), and product detail page display.
+*   **Price Representation:** Ensuring consistent display and handling of prices in UZS across the application.
 
 ## 2. Recent Changes (Leading to this state)
-*   **Branding Update:** Changed brand name to "Askim candles" in `Logo.tsx` and key dictionary entries.
+*   **Admin Panel - Initial Product, Client, and Log Management UI & Simulation:**
+    *   Product list in admin now displays main images.
+    *   Client section (`/admin/clients`) implemented with mock data, client-side search, and simulated block/unblock functionality.
+    *   Basic simulated logging system (`/admin/logs`) using `localStorage` implemented, including log display and "Clear All Logs" function. Log calls integrated into key admin actions (login, logout, product delete, manager add).
+    *   Admin dashboard (`/admin/dashboard`) enhanced with a "Recent Activity" feed based on the new logger.
+*   **Admin Panel - Mobile Access Restriction & Version Display:**
+    *   Mobile users trying to access admin pages (except login) are shown a message to use a desktop.
+    *   Admin panel footer displays a simulated version number and last update date.
+*   **Admin Panel - Collapsible Sidebar & Logout Button Visibility:**
+    *   Implemented a collapsible sidebar for the admin panel.
+    *   Ensured the logout button is correctly visible and positioned in both expanded and collapsed sidebar states, and in the mobile menu.
+*   **Branding & UI Adjustments:**
+    *   Brand name updated to "Askim candles" in `Logo.tsx` and key dictionary entries.
+    *   Main site's mobile menu language switcher made more compact (horizontal).
+*   **Full Site Internationalization (i18n) - UZ (default), RU, EN (Main Site):**
+    *   Path-based i18n (`/[locale]/...`) fully implemented.
+    *   All key e-commerce flow pages and account section pages moved to `/[locale]/...` structure and adapted to use dictionaries.
+    *   Functional language switcher in Header (desktop dropdown, horizontal list for mobile).
+    *   `middleware.ts` handles locale redirection.
+    *   Pages `About`, `Cart`, `Checkout`, `Product Detail`, and `Account` section pages have been localized.
 *   **Admin Panel i18n (EN/RU) & Dark Theme:**
-    *   Implemented client-side language switching (EN default, RU) for the admin panel using `localStorage` and admin-specific dictionaries.
+    *   Implemented client-side language switching (EN default, RU) for the admin panel layout text using `localStorage` and admin-specific dictionaries.
     *   Added a dark/light theme toggle to the admin panel, with preference stored in `localStorage`.
-*   **Main Site Mobile Language Switcher:** Made more compact (horizontal) in the mobile menu.
-*   **Admin Panel Mobile Access Restriction:** Users on mobile devices attempting to access admin pages (except login) are shown a message to use a desktop/laptop.
-*   **Admin Panel Version Display:** Added a footer in the admin panel showing a simulated version number and last update date.
 *   **Granular Admin Access Control (Refined):**
-    *   Ensured navigation items in `AdminLayout.tsx` are strictly visible based on 'ADMIN' or 'MANAGER' roles (e.g., "User Management" and "Settings" for ADMIN only).
-    *   Strengthened page-level access control for admin-only pages (`/admin/users`, `/admin/settings`) by adding explicit role checks within the page components and redirecting if access is denied.
+    *   Navigation items in `AdminLayout.tsx` are strictly visible based on 'ADMIN' or 'MANAGER' roles.
+    *   Page-level access control for admin-only pages (`/admin/users`, `/admin/settings`, `/admin/logs`) with redirection.
     *   Verified "Add New Manager" functionality (simulated via `localStorage` in `AdminAuthContext`) for ADMIN users.
-*   **Product Image Management Foundation:**
-    *   Created `ImageUploadArea.tsx` component with drag-and-drop, preview, and main image selection (simulated, uses Data URLs).
+*   **Product Image Management Foundation (Admin):**
+    *   `ImageUploadArea.tsx` component created with drag-and-drop, preview, and main image selection (simulated, uses Data URLs).
     *   Integrated into `/admin/products/new/page.tsx` and `/admin/products/edit/[id]/page.tsx`.
 *   **Forced Login/Registration for Checkout:** Implemented redirect to login if an unauthenticated user tries to checkout.
-*   **Prices in UZS:** Updated mock data and display components to show prices in UZS.
-*   **Dynamic Filters:** Product filters for Scent and Material are now dynamically generated from `mockProducts`.
-*   **Full Site Internationalization (i18n) - UZ (default), RU, EN (Main Site):**
-    *   Implemented path-based i18n (`/[locale]/...`).
-    *   Created dictionary files (`src/dictionaries/*.json`) and `getDictionary.ts`.
-    *   Moved all main site pages into `src/app/[locale]/...` structure.
-    *   Adapted pages to use dictionaries (client-side pages use local dictionary getters importing main JSONs; server-side uses `getDictionary`).
-    *   Updated `Header.tsx` with a functional language switcher (desktop dropdown, horizontal list for mobile).
-    *   Updated `middleware.ts` for locale handling.
-    *   Localized most static text on key e-commerce flow pages (Product Detail, Cart, Checkout) and Account section pages.
+*   **Prices in UZS:** Updated mock data and display components to show prices in UZS using `toLocaleString('en-US')`.
 
-## 3. Next Steps (Immediate for Me)
-1.  **Implement Product Images in Admin List:** Modify `src/app/admin/products/page.tsx` to display the first image of each product.
-2.  **Implement Clients Section UI:**
-    *   Add `mockAdminClients` to `src/lib/mock-data.ts`.
-    *   Update `src/app/admin/clients/page.tsx` to display these clients in a table with search and placeholder actions.
-3.  **Implement Simulated Logging:**
-    *   Create `src/admin/lib/admin-logger.ts`.
-    *   Integrate `logAdminAction` calls into `AdminAuthContext` (login/logout), `admin/products/page.tsx` (delete), `admin/users/new-manager/page.tsx` (add manager).
-    *   Update `src/app/admin/logs/page.tsx` to display logs and allow clearing.
-4.  **Enhance Admin Dashboard:** Add "Recent Activity" section using the logger.
-5.  **Update all Memory Bank files** to reflect these changes.
-6.  Present changes to the user.
+## 3. Next Steps (Immediate for Me - based on user's latest request)
+1.  **Dynamic Price Range Filter:** Update `ProductFilters.tsx` to calculate min/max price from `allProducts`.
+2.  **Verify Sorting:** Ensure all sorting options in `products/page.tsx` work as expected.
+3.  **Admin Product Attributes:**
+    *   Update `Product` type in `types.ts`.
+    *   Add new attributes (scent, material, dimensions, burningTime) to `mockProducts`.
+    *   Update Zod schema and forms in `/admin/products/new/page.tsx` and `/admin/products/edit/[id]/page.tsx` to include these new fields.
+4.  **Display New Attributes:** Update `src/app/[locale]/products/[id]/page.tsx` to show the new product attributes.
+5.  **Update Memory Bank:** Reflect these changes.
 
 ## 4. Active Decisions & Considerations
 *   **Admin Panel Access:** `/admin` path. Client-side simulated authentication (`AdminAuthContext`) with 'ADMIN' and 'MANAGER' roles. Admins can "add" new managers (simulated via `localStorage`).
@@ -60,5 +64,7 @@
 *   **Backend Plan:** Prisma/PostgreSQL, documented in `deployment_guide.md`.
 *   **Focus on MVP:** Features are being built iteratively, prioritizing UI and simulated functionality first, with backend integration as a subsequent major phase.
 *   **Granular per-manager/per-block permissions:** A future consideration dependent on backend.
-*   **Admin Logs:** Will be client-side (`localStorage`) and capped for now. Real logging requires backend.
-*   **Client Management:** Will use new `mockAdminClients` for UI display simulation.
+*   **Admin Logs:** Client-side (`localStorage`) and capped. Real logging requires backend.
+*   **Client Management:** Uses `mockAdminClients` for UI display simulation.
+*   **Product Attribute Management (Admin):** Focus on adding specified fields as text inputs for now. More complex UI for `attributes` array (key-value pairs) can be a future step.
+*   **Price Representation:** Prices in `mock-data.ts` are integers (e.g., 229900 UZS). Filter logic might use a divisor (e.g., 1 or 100 for display calculations). Display on frontend uses `toLocaleString`.

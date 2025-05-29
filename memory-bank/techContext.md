@@ -18,8 +18,9 @@
     *   **ORM:** Prisma
 *   **AI Integration (Planned):** Genkit
 *   **Internationalization (i18n):**
-    *   **Main Site:** Path-based (`/[locale]/...`) with UZ (default), RU, EN. Uses dictionary files in `src/dictionaries/`. Client components use local getters importing main dictionaries.
+    *   **Main Site:** Path-based (`/[locale]/...`) with UZ (default), RU, EN. Uses dictionary files in `src/dictionaries/`. Client components use local getters importing main dictionaries or receive dictionaries as props.
     *   **Admin Panel:** Client-side preference (EN default, RU) using `localStorage`. Uses dictionary files in `src/admin/dictionaries/`.
+*   **Form Handling:** `react-hook-form` and `Zod` for validation.
 
 ## 2. Development Setup
 
@@ -44,7 +45,7 @@
 *   **ShadCN UI:** Prefer ShadCN components. Theme is in `src/app/globals.css`.
 *   **Icons:** Use `lucide-react`. Do not hallucinate icons.
 *   **Admin Panel Theme:** Supports Dark/Light mode toggle, managed client-side.
-*   **Forms:** `react-hook-form` and `zod` for validation (Zod messages not yet localized).
+*   **Product Attributes (Admin):** Forms for products now include fields for scent, material, dimensions, burningTime. Image uploads use `ImageUploadArea.tsx` for drag-and-drop and main image selection (Data URL based).
 
 ## 4. Key Project Files (Structure Overview)
 
@@ -57,11 +58,13 @@
 *   `src/app/globals.css`: Global styles and ShadCN theme.
 *   `src/app/providers.tsx`: Groups client-side context providers for the main site.
 *   `src/components/`: Reusable React components.
+    *   `admin/ImageUploadArea.tsx`: Component for image uploads in admin.
 *   `src/contexts/`: `AuthContext` (main site simulated), `AdminAuthContext` (admin simulated), `CartContext`.
 *   `src/lib/`: Utility functions, mock data, type definitions, main site i18n config, NextAuth options.
 *   `src/dictionaries/`: JSON translation files for the main site.
 *   `src/admin/dictionaries/`: JSON translation files for the admin panel.
-*   `src/admin/lib/`: Admin-specific i18n config and dictionary getter.
+*   `src/admin/lib/`: Admin-specific i18n config and dictionary getter, admin logger.
+*   `src/hooks/use-mobile.tsx`: Hook for mobile detection.
 *   `memory-bank/`: Contextual documents, including `deployment_guide.md`.
 *   **Planned (but not yet existing in full):**
     *   `prisma/schema.prisma`: For database schema definition (basic structure outlined in `deployment_guide.md`).

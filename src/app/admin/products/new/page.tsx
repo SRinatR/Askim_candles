@@ -16,18 +16,21 @@ import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
 import { mockCategories } from "@/lib/mock-data";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
-import type { UploadedImage } from '@/components/admin/ImageUploadArea';
-import React, { useEffect } from "react";
+import React from "react";
 
 // Updated Zod schema for products
 const productSchema = z.object({
   name: z.string().min(3, { message: "Product name must be at least 3 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
-  price: z.coerce.number().positive({ message: "Price must be a positive number." }),
+  price: z.coerce.number().positive({ message: "Price must be a positive number (in UZS)." }),
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL (Data URL in this case)."})).min(1, { message: "At least one image is required." }),
   mainImageId: z.string().optional(), // ID/URL of the image marked as main
+  scent: z.string().optional(),
+  material: z.string().optional(),
+  dimensions: z.string().optional(),
+  burningTime: z.string().optional(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -46,18 +49,20 @@ export default function NewProductPage() {
       stock: 0,
       images: [],
       mainImageId: undefined,
+      scent: "",
+      material: "",
+      dimensions: "",
+      burningTime: "",
     },
   });
 
-  const { register, handleSubmit, control, formState, setValue, watch } = formMethods; // Destructure formState here
-  const { errors, isSubmitting } = formState; // Now you can get errors and isSubmitting from formState
+  const { register, handleSubmit, control, formState, setValue, watch } = formMethods; 
+  const { errors, isSubmitting } = formState; 
   
-  const watchedImages = watch("images");
-  const watchedMainImageId = watch("mainImageId");
-
-
   const onSubmit = (data: ProductFormValues) => {
     console.log("New Product Data (Simulated):", data);
+    // Here you would typically send data to your backend API
+    // For now, we just show a toast and redirect
     toast({
       title: "Product Added (Simulated)",
       description: `${data.name} has been 'added'. This change is client-side only. Image data URLs are in console.`,
@@ -134,6 +139,32 @@ export default function NewProductPage() {
                     />
                     {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
                   </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="scent">Scent</Label>
+                        <Input id="scent" {...register("scent")} placeholder="e.g., Lavender, Vanilla Bean" />
+                        {errors.scent && <p className="text-sm text-destructive">{errors.scent.message}</p>}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="material">Material</Label>
+                        <Input id="material" {...register("material")} placeholder="e.g., Soy Wax, Beeswax Blend" />
+                        {errors.material && <p className="text-sm text-destructive">{errors.material.message}</p>}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="dimensions">Dimensions</Label>
+                        <Input id="dimensions" {...register("dimensions")} placeholder="e.g., 8cm x 10cm" />
+                        {errors.dimensions && <p className="text-sm text-destructive">{errors.dimensions.message}</p>}
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="burningTime">Burning Time</Label>
+                        <Input id="burningTime" {...register("burningTime")} placeholder="e.g., Approx. 45 hours" />
+                        {errors.burningTime && <p className="text-sm text-destructive">{errors.burningTime.message}</p>}
+                    </div>
+                  </div>
+
                 </CardContent>
               </Card>
             </div>
@@ -147,7 +178,7 @@ export default function NewProductPage() {
                    <Controller
                     name="images" 
                     control={control}
-                    render={({ field }) => ( // field here represents the 'images' field array
+                    render={({ field }) => ( 
                       <ImageUploadArea 
                         onImagesChange={(imagesData, mainImgIdFromUpload) => {
                           const newImagePreviews = imagesData.map(img => img.preview);

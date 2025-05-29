@@ -209,7 +209,7 @@
     "itemRemovedDesc": "{name} savatingizdan o'chirildi.",
     "cartCleared": "Savatcha tozalandi",
     "cartClearedDesc": "Barcha mahsulotlar savatingizdan o'chirildi.",
-    "price": "Narx",
+    "price": "Narx:",
     "quantityFor": "{name} uchun miqdor",
     "remove": "{name}ni savatdan olib tashlash",
     "clearCart": "Savatni tozalash",
@@ -271,6 +271,8 @@
     "scentLabel": "Xushbo'ylik:",
     "materialLabel": "Material:",
     "dimensionsLabel": "O'lchamlari:",
+    "burningTimeLabel": "Yonish vaqti:",
+    "attributesLabel": "Boshqa xususiyatlar:",
     "outOfStockButton": "Sotuvda Yo'q",
     "fastDispatch": "Tez jo'natish",
     "secureCheckout": "Xavfsiz to'lov",
@@ -302,7 +304,7 @@
     "allProductsTitle": "Barcha Mahsulotlar",
     "searchResultsTitle": "\"{searchTerm}\" uchun qidiruv natijalari",
     "productsFound": "{count} ta mahsulot topildi",
-    "productsFound_plural": "{count} ta mahsulot topildi",
+    "productsFound_plural": "{count} ta mahsulot topildi", 
     "productsFound_few": "{count} ta mahsulot topildi",
     "noProductsFound": "Mahsulotlar Topilmadi",
     "searchNoMatch": "Sizning \"{searchTerm}\" qidiruvingiz hech qanday mahsulotga mos kelmadi.",
@@ -378,5 +380,3 @@
     "errorPasswordsDontMatch": "Parollar mos kelmadi."
   }
 }
-
-    

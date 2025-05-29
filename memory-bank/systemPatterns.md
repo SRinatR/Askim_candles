@@ -15,18 +15,18 @@
     *   Admin panel theme (Dark/Light) managed client-side in `AdminLayout` using `localStorage`.
     *   Admin panel language (EN/RU) preference managed client-side in `AdminLayout` using `localStorage`.
 *   **Data Fetching/Mutation (Current):**
-    *   Relies on mock data (`src/lib/mock-data.ts`) for products, orders, categories, and mock admin clients.
+    *   Relies on mock data (`src/lib/mock-data.ts`) for products, orders, categories, and mock admin clients. Product data now includes more attributes like scent, material, dimensions, burningTime.
     *   User data for main site email/password auth is simulated in `localStorage` via `AuthContext`.
-    *   Admin product CRUD operations are simulated client-side.
+    *   Admin product CRUD operations are simulated client-side (forms exist, but data manipulation is not persistent beyond session or doesn't update `mock-data.ts` permanently).
     *   Admin manager creation is simulated client-side via `localStorage`.
     *   Admin logs are simulated client-side via `localStorage`.
 *   **Data Fetching/Mutation (Planned Backend - Prisma/PostgreSQL):**
     *   Server Actions or Next.js Route Handlers will be used for form submissions and data mutations, interacting with Prisma.
 *   **Internationalization (i18n):**
     *   **Main Site:** Path-based localization (`/[locale]/...`) for UZ (default), RU, EN. Dictionaries are in `src/dictionaries/`. `getDictionary.ts` for loading. Client components use local getters that import main dictionaries.
-    *   **Admin Panel:** Client-side language preference (EN default, RU). Dictionaries in `src/admin/dictionaries/`. `getAdminDictionary.ts` for loading. Admin panel UI elements are progressively being localized.
+    *   **Admin Panel:** Client-side language preference (EN default, RU). Dictionaries in `src/admin/dictionaries/`. `getAdminDictionary.ts` for loading. Admin panel layout and some pages (Dashboard, Login) are localized.
 *   **Logging (Admin Panel - Simulated):**
-    *   A client-side logger (`src/admin/lib/admin-logger.ts`) stores admin actions in `localStorage`.
+    *   A client-side logger (`src/admin/lib/admin-logger.ts`) stores admin actions in `localStorage`, capped at 100 entries.
 *   **AI Integration (Planned/Genkit):**
     *   Genkit flows (`ai.defineFlow`) to wrap prompts (`ai.definePrompt`).
     *   Prompts to use Handlebars templating.
@@ -48,10 +48,11 @@
     *   Located at `/admin`.
     *   Separate layout (`src/app/admin/layout.tsx`) with role-based navigation, protection, theme toggle, and language switcher.
     *   Collapsible sidebar.
-    *   CRUD operations for products and manager creation are currently simulated client-side.
+    *   CRUD operations for products (with expanded attributes and image upload via `ImageUploadArea.tsx`) and manager creation are currently simulated client-side.
     *   Clients section displays mock data with simulated block/unblock.
     *   Logs section displays simulated logs from `localStorage`.
 *   **Mobile Detection:** `useIsMobile` hook for client-side responsive logic (e.g., admin panel restriction).
+*   **Dynamic Filters (Main Site):** Scent and Material filters on the product listing page are dynamically generated from product data. Price range filter is being enhanced for dynamic min/max.
 
 ## 3. Component Relationships (High-Level)
 
