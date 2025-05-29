@@ -1,5 +1,7 @@
+
 "use client";
 
+import React from "react"; // Added import for React.use()
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -25,10 +27,16 @@ function getStatusBadgeVariant(status: Order['status']): "default" | "secondary"
   }
 }
 
+// Define the shape of the resolved params
+interface ResolvedOrderParams {
+  orderId: string;
+}
 
-export default function OrderDetailPage({ params }: { params: { orderId: string } }) {
+export default function OrderDetailPage({ params: paramsPromise }: { params: Promise<ResolvedOrderParams> }) {
   const router = useRouter();
-  const order = mockOrders.find(o => o.id === params.orderId || o.orderNumber === params.orderId);
+  const resolvedParams = React.use(paramsPromise); // Unwrap the promise
+
+  const order = mockOrders.find(o => o.id === resolvedParams.orderId || o.orderNumber === resolvedParams.orderId);
 
   if (!order) {
     notFound();
