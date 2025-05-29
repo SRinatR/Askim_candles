@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut } from 'lucide-react';
+import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut, Globe } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -12,13 +12,19 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import { Input } from '@/components/ui/input';
 import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import type { Locale, I18nConfig } from '@/lib/i1n-config'; // Assuming i18n config is here
+import type { Locale } from '@/lib/i1n-config';
 import { i18n } from '@/lib/i1n-config';
-import { cn } from '@/lib/utils'; // Ensure this import is present
+import { cn } from '@/lib/utils';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
   locale: Locale;
-  dictionary: { // Define the expected shape of the dictionary for navigation
+  dictionary: {
     home: string;
     products: string;
     about: string;
@@ -46,12 +52,10 @@ export function Header({ locale, dictionary }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
-  // Correctly check for admin paths, considering locale might be present
   const isAdminPath = pathname.startsWith(`/${locale}/admin`) || pathname.startsWith('/admin');
   if (isAdminPath) {
     return null;
   }
-
 
   const navLinks = [
     { href: '/', label: dictionary.home },
@@ -93,29 +97,40 @@ export function Header({ locale, dictionary }: HeaderProps) {
     userName = simulatedUser.email;
   }
 
-  // Basic language switcher UI
   const LanguageSwitcher = () => {
-    // Filter out the current locale from the path
     const currentPathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
     
+    const getLangName = (loc: Locale) => {
+      if (loc === 'uz') return dictionary.langUz;
+      if (loc === 'ru') return dictionary.langRu;
+      return dictionary.langEn;
+    }
+
     return (
-      <div className="flex items-center space-x-2 text-sm ml-4">
-        {i18n.locales.map((loc) => (
-          <Link
-            key={loc}
-            href={`/${loc}${currentPathWithoutLocale}`}
-            className={cn(
-              "hover:text-primary",
-              locale === loc ? "font-semibold text-primary" : "text-muted-foreground"
-            )}
-          >
-            {loc === 'uz' ? dictionary.langUz : loc === 'ru' ? dictionary.langRu : dictionary.langEn}
-          </Link>
-        ))}
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" aria-label="Change language">
+            <Globe className="h-5 w-5" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {i18n.locales.map((loc) => (
+            <DropdownMenuItem key={loc} asChild>
+              <Link
+                href={`/${loc}${currentPathWithoutLocale}`}
+                className={cn(
+                  "w-full flex items-center",
+                  locale === loc ? "font-semibold text-primary" : ""
+                )}
+              >
+                {getLangName(loc)}
+              </Link>
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   };
-
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -173,7 +188,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
             </Link>
           </Button>
           
-          <div className="hidden md:flex">
+          <div className="hidden md:flex"> {/* Language switcher for desktop */}
             <LanguageSwitcher />
           </div>
 
@@ -218,8 +233,23 @@ export function Header({ locale, dictionary }: HeaderProps) {
                       </Link>
                     ))}
                   </nav>
-                  <div className="pt-4 border-t">
-                     <LanguageSwitcher />
+                  <div className="pt-4 border-t md:hidden"> {/* Language switcher for mobile */}
+                     <p className="text-sm text-muted-foreground mb-2">Language:</p>
+                     <div className="flex flex-col space-y-2">
+                        {i18n.locales.map((loc) => (
+                          <Link
+                            key={loc}
+                            href={`/${loc}${currentPathWithoutLocale}`}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={cn(
+                              "block p-2 rounded-md hover:bg-muted",
+                              locale === loc ? "font-semibold text-primary bg-muted" : ""
+                            )}
+                          >
+                            {loc === 'uz' ? dictionary.langUz : loc === 'ru' ? dictionary.langRu : dictionary.langEn}
+                          </Link>
+                        ))}
+                     </div>
                   </div>
                 </div>
                 
