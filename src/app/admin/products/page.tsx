@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { mockProducts } from "@/lib/mock-data";
 import type { Product } from "@/lib/types";
-import { PlusCircle, Edit3, Trash2, Search } from "lucide-react"; 
+import { PlusCircle, Edit3, Trash2, Search } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import React, { useState, useEffect, useMemo } from "react";
@@ -37,7 +38,7 @@ export default function AdminProductsPage() {
     const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
     const localeToLoad = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
     setAdminLocale(localeToLoad);
-    
+
     async function loadDictionary() {
       const fullDict = await getAdminDictionary(localeToLoad);
       setDict(fullDict.adminProductsPage);
@@ -46,10 +47,10 @@ export default function AdminProductsPage() {
   }, []);
 
   const filteredProducts = useMemo(() => {
-    if (!dict || !products) return []; 
+    if (!dict || !products) return [];
     return products.filter(product => {
         const nameInAdminLocale = product.name[adminLocale] || product.name.en || '';
-        const category = product.category || ''; 
+        const category = product.category || '';
         const sku = product.sku || '';
         return (
             nameInAdminLocale.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -96,7 +97,7 @@ export default function AdminProductsPage() {
   };
 
   if (!isClient || !dict) {
-    return <div>Loading products...</div>;
+    return <div>Loading products...</div>; // Or a skeleton loader
   }
 
   return (
@@ -133,27 +134,27 @@ export default function AdminProductsPage() {
         </CardHeader>
         <CardContent>
           {filteredProducts.length > 0 ? (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto"> {/* This allows horizontal scroll if content overflows */}
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[50px]">{dict.idHeader}</TableHead>
-                    <TableHead className="w-[60px]">{dict.imageHeader}</TableHead>
-                    <TableHead className="w-[80px]">{dict.skuHeader}</TableHead>
-                    <TableHead className="min-w-[150px]">{dict.nameHeader.replace('{locale}', adminLocale.toUpperCase())}</TableHead>
-                    <TableHead className="w-[120px]">{dict.categoryHeader}</TableHead>
-                    <TableHead className="text-right w-[90px]">{dict.priceHeader}</TableHead>
-                    <TableHead className="text-right w-[90px]">{dict.costPriceHeader}</TableHead>
-                    <TableHead className="text-center w-[60px]">{dict.stockHeader}</TableHead>
-                    <TableHead className="text-center w-[110px]">{dict.statusHeader}</TableHead>
-                    <TableHead className="text-center w-[140px]">{dict.actionsHeader}</TableHead>
+                    <TableHead className="w-[40px] px-2">{dict.idHeader}</TableHead>
+                    <TableHead className="w-[50px] px-2">{dict.imageHeader}</TableHead>
+                    <TableHead className="w-[70px] px-2">{dict.skuHeader}</TableHead>
+                    <TableHead className="min-w-[140px] px-2">{dict.nameHeader.replace('{locale}', adminLocale.toUpperCase())}</TableHead>
+                    <TableHead className="w-[110px] px-2">{dict.categoryHeader}</TableHead>
+                    <TableHead className="text-right w-[80px] px-2">{dict.priceHeader}</TableHead>
+                    <TableHead className="text-right w-[80px] px-2">{dict.costPriceHeader}</TableHead>
+                    <TableHead className="text-center w-[50px] px-2">{dict.stockHeader}</TableHead>
+                    <TableHead className="text-center w-[100px] px-2">{dict.statusHeader}</TableHead>
+                    <TableHead className="text-center w-[130px] px-2">{dict.actionsHeader}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredProducts.map((product) => (
                     <TableRow key={product.id}>
-                      <TableCell className="text-xs align-top">{product.id}</TableCell>
-                      <TableCell className="align-top">
+                      <TableCell className="text-xs align-top px-2">{product.id}</TableCell>
+                      <TableCell className="align-top px-2">
                         <div className="relative h-10 w-10 rounded-md overflow-hidden border">
                           <Image
                             src={product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : "https://placehold.co/100x100.png?text=No+Image")}
@@ -165,13 +166,13 @@ export default function AdminProductsPage() {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="text-xs align-top">{product.sku || '-'}</TableCell>
-                      <TableCell className="font-medium align-top whitespace-normal">{product.name[adminLocale] || product.name.en}</TableCell>
-                      <TableCell className="align-top">{product.category}</TableCell>
-                      <TableCell className="text-right align-top">{product.price.toLocaleString('en-US')}</TableCell>
-                      <TableCell className="text-right align-top">{product.costPrice?.toLocaleString('en-US') || '-'}</TableCell>
-                      <TableCell className="text-center align-top">{product.stock}</TableCell>
-                      <TableCell className="text-center align-top">
+                      <TableCell className="text-xs align-top px-2">{product.sku || '-'}</TableCell>
+                      <TableCell className="font-medium align-top whitespace-normal px-2">{product.name[adminLocale] || product.name.en}</TableCell>
+                      <TableCell className="align-top px-2">{product.category}</TableCell>
+                      <TableCell className="text-right align-top px-2">{product.price.toLocaleString('en-US')}</TableCell>
+                      <TableCell className="text-right align-top px-2">{product.costPrice?.toLocaleString('en-US') || '-'}</TableCell>
+                      <TableCell className="text-center align-top px-2">{product.stock}</TableCell>
+                      <TableCell className="text-center align-top px-2">
                         <div className="flex flex-col items-center justify-center space-y-1">
                           <Switch
                             id={`status-${product.id}`}
@@ -184,21 +185,23 @@ export default function AdminProductsPage() {
                           </Badge>
                         </div>
                       </TableCell>
-                      <TableCell className="text-center align-top space-y-1 sm:space-y-0 sm:space-x-1">
-                        <Button variant="outline" size="sm" asChild title={`${dict.editAction} ${product.name[adminLocale] || product.name.en}`}>
-                          <Link href={`/admin/products/edit/${product.id}`}>
-                            <Edit3 className="mr-1 h-3 w-3" /> {dict.editButton}
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
-                          onClick={() => handleDeleteProduct(product.id, product.name)}
-                          title={`${dict.deleteAction} ${product.name[adminLocale] || product.name.en}`}
-                        >
-                          <Trash2 className="mr-1 h-3 w-3" /> {dict.deleteButton}
-                        </Button>
+                      <TableCell className="text-center align-top px-2">
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-1">
+                            <Button variant="outline" size="sm" asChild className="h-7 px-2 py-1 text-xs" title={`${dict.editAction} ${product.name[adminLocale] || product.name.en}`}>
+                            <Link href={`/admin/products/edit/${product.id}`}>
+                                <Edit3 className="mr-1 h-3 w-3" /> {dict.editButton}
+                            </Link>
+                            </Button>
+                            <Button
+                            variant="outline"
+                            size="sm"
+                            className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive h-7 px-2 py-1 text-xs"
+                            onClick={() => handleDeleteProduct(product.id, product.name)}
+                            title={`${dict.deleteAction} ${product.name[adminLocale] || product.name.en}`}
+                            >
+                            <Trash2 className="mr-1 h-3 w-3" /> {dict.deleteButton}
+                            </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
