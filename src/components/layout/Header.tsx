@@ -1,0 +1,135 @@
+"use client";
+
+import Link from 'next/link';
+import { ShoppingBag, User, Menu, Search, X } from 'lucide-react';
+import { Logo } from '@/components/icons/Logo';
+import { Button } from '@/components/ui/button';
+import { useCart } from '@/contexts/CartContext';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Input } from '@/components/ui/input';
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+const navLinks = [
+  { href: '/', label: 'Home' },
+  { href: '/products', label: 'Products' },
+  // { href: '/about', label: 'About Us' },
+  // { href: '/contact', label: 'Contact' },
+];
+
+export function Header() {
+  const { cartCount } = useCart();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const router = useRouter();
+
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const searchQuery = formData.get('search') as string;
+    if (searchQuery.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="flex items-center" aria-label="Back to homepage">
+          <Logo className="h-8 w-auto" />
+        </Link>
+
+        <nav className="hidden items-center space-x-6 md:flex">
+          {navLinks.map(link => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
+            >
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        
+        <div className="flex items-center space-x-3">
+          <form onSubmit={handleSearch} className="hidden sm:flex items-center relative">
+            <Input type="search" name="search" placeholder="Search products..." className="h-9 pr-10 w-48 lg:w-64" />
+            <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-9 w-9">
+              <Search className="h-4 w-4" />
+              <span className="sr-only">Search</span>
+            </Button>
+          </form>
+
+          <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex">
+            <Link href="/account" aria-label="My Account">
+              <User className="h-5 w-5" />
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/cart" className="relative" aria-label={`Shopping Cart, ${cartCount} items`}>
+              <ShoppingBag className="h-5 w-5" />
+              {cartCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+          </Button>
+
+          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu">
+                <Menu className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-full max-w-xs bg-background p-6">
+              <div className="flex flex-col space-y-6">
+                <div className="flex justify-between items-center">
+                   <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Logo className="h-7 w-auto" />
+                   </Link>
+                   <SheetClose asChild>
+                      <Button variant="ghost" size="icon">
+                         <X className="h-6 w-6" />
+                      </Button>
+                   </SheetClose>
+                </div>
+
+                <form onSubmit={(e) => { handleSearch(e); setIsMobileMenuOpen(false); }} className="flex items-center relative">
+                  <Input type="search" name="search" placeholder="Search products..." className="h-10 pr-12 w-full" />
+                  <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10">
+                    <Search className="h-5 w-5" />
+                    <span className="sr-only">Search</span>
+                  </Button>
+                </form>
+
+                <nav className="flex flex-col space-y-4">
+                  {navLinks.map(link => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </nav>
+                <div className="border-t border-border pt-4">
+                  <Link
+                    href="/account"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
+                    aria-label="My Account"
+                  >
+                    <User className="h-5 w-5" />
+                    <span>My Account</span>
+                  </Link>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </div>
+    </header>
+  );
+}
