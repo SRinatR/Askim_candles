@@ -75,8 +75,9 @@ export default function AboutUsPage() {
           <Image 
             src="https://placehold.co/600x400.png" 
             alt="Artisanal workshop" 
-            layout="fill" 
-            objectFit="cover"
+            fill
+            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
             data-ai-hint="artisanal workshop"
           />
         </div>
@@ -130,8 +131,3 @@ export default function AboutUsPage() {
     </div>
   );
 }
-
-// Create directory src/app/[locale]/about if it doesn't exist
-// Then move the original src/app/about/page.tsx to src/app/[locale]/about/page.tsx
-// The content above is the new content for src/app/[locale]/about/page.tsx
-// The original src/app/about/page.tsx should be deleted.

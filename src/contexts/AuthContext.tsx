@@ -147,7 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setRegistrationData(null); 
     localStorage.removeItem('scentSationalSimulatedRegData');
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
-    router.push(`/${locale}/`); // Redirect to localized home
+    router.push(`/${locale}/login`); // Redirect to localized login
   };
 
   return (

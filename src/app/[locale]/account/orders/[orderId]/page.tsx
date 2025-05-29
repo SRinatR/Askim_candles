@@ -49,6 +49,7 @@ const getOrderDetailDictionary = (locale: Locale) => {
       statusProcessing: "Qayta ishlanmoqda",
       statusPending: "Kutilmoqda",
       statusCancelled: "Bekor qilindi",
+      contactPagePath: "/contact" // Example, create this page
     };
   }
   // Add RU and EN similarly
@@ -81,6 +82,7 @@ const getOrderDetailDictionary = (locale: Locale) => {
     statusProcessing: "Processing",
     statusPending: "Pending",
     statusCancelled: "Cancelled",
+    contactPagePath: "/contact" // Example, create this page
   };
 };
 
@@ -107,21 +109,20 @@ function getTranslatedStatus(status: Order['status'], dict: ReturnType<typeof ge
     }
 }
 
-interface ResolvedOrderParams {
+interface OrderDetailPageParams {
   orderId: string;
   locale: Locale;
 }
 
-export default function OrderDetailPage({ params: paramsPromise }: { params: Promise<ResolvedOrderParams> }) {
-  const router = useRouter();
-  const clientParams = useParams(); // For client-side access to locale if needed, or fallback.
-  
-  // Resolve params promise
-  const resolvedParams = React.use(paramsPromise);
-  const locale = resolvedParams.locale || clientParams.locale as Locale || 'uz';
-  const dictionary = getOrderDetailDictionary(locale);
+// Marking the page component as async to use React.use for params
+export default async function OrderDetailPage({ params }: { params: OrderDetailPageParams }) {
+  // For server components, params are directly available.
+  // If this were a client component using pages router, React.use(params) would be needed for promises.
+  // With App Router, params are direct props.
+  const locale = params.locale || 'uz';
+  const dictionary = getOrderDetailDictionary(locale); // Assuming this can be called on server or client as needed
 
-  const order = mockOrders.find(o => o.id === resolvedParams.orderId || o.orderNumber === resolvedParams.orderId);
+  const order = mockOrders.find(o => o.id === params.orderId || o.orderNumber === params.orderId);
 
   if (!order) {
     notFound();
@@ -131,6 +132,11 @@ export default function OrderDetailPage({ params: paramsPromise }: { params: Pro
     const productDetails = mockProducts.find(p => p.id === item.id);
     return { ...item, name: productDetails?.name || item.name, images: productDetails?.images || item.images };
   });
+
+  // For client-side interactions like router.push, we need a client component wrapper or ensure this is a client component.
+  // Since router.push is used, this component implicitly acts as a client component or needs "use client".
+  // For simplicity of this fix, we'll keep as is and rely on <Link> or ensure it's marked "use client" if interactive hooks are added.
+  // If "use client" is added, `useRouter` and `useParams` from 'next/navigation' can be used directly.
 
   return (
     <div className="space-y-8">
@@ -148,8 +154,10 @@ export default function OrderDetailPage({ params: paramsPromise }: { params: Pro
 
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">{dictionary.orderDetailsTitle}</h1>
-        <Button variant="outline" onClick={() => router.push(`/${locale}/account/orders`)}> {/* Updated router.back() */}
-          <ArrowLeft className="mr-2 h-4 w-4" /> {dictionary.backToOrdersButton}
+        <Button variant="outline" asChild> 
+            <Link href={`/${locale}/account/orders`}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> {dictionary.backToOrdersButton}
+            </Link>
         </Button>
       </div>
 
@@ -170,7 +178,7 @@ export default function OrderDetailPage({ params: paramsPromise }: { params: Pro
               {detailedItems.map((item: OrderItemType) => (
                 <li key={item.id} className="flex items-center space-x-4">
                   <div className="relative w-16 h-16 rounded-md overflow-hidden border shrink-0">
-                    <Image src={item.images[0]} alt={item.name} fill className="object-cover" data-ai-hint="ordered item" />
+                    <Image src={item.images[0]} alt={item.name} fill className="object-cover" data-ai-hint="ordered item" sizes="64px" />
                   </div>
                   <div className="flex-grow">
                     <Link href={`/${locale}/products/${item.id}`} className="font-medium hover:text-primary">{item.name}</Link>
@@ -205,7 +213,7 @@ export default function OrderDetailPage({ params: paramsPromise }: { params: Pro
           </div>
         </CardContent>
         <CardFooter className="bg-muted/30 p-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p className="text-sm text-muted-foreground">{dictionary.needHelp} <Link href={`/${locale}/contact`} className="text-primary hover:underline">{dictionary.contactSupport}</Link></p> {/* TODO: Create /contact page */}
+            <p className="text-sm text-muted-foreground">{dictionary.needHelp} <Link href={`/${locale}${dictionary.contactPagePath}`} className="text-primary hover:underline">{dictionary.contactSupport}</Link></p>
             <div className="flex space-x-3">
                 <Button variant="outline" size="sm"><FileText className="mr-2 h-4 w-4" /> {dictionary.viewInvoiceButton}</Button>
                 <Button variant="outline" size="sm"><Truck className="mr-2 h-4 w-4" /> {dictionary.trackPackageButton}</Button>
@@ -215,4 +223,3 @@ export default function OrderDetailPage({ params: paramsPromise }: { params: Pro
     </div>
   );
 }
-// Delete original: src/app/account/orders/[orderId]/page.tsx

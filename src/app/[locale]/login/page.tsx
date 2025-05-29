@@ -114,7 +114,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (nextAuthStatus === "authenticated" || simulatedUser) {
-      router.replace(callbackUrl);
+      router.replace(callbackUrl); // callbackUrl should already be localized or handled by middleware
     }
   }, [nextAuthStatus, simulatedUser, router, callbackUrl]);
 
@@ -129,6 +129,9 @@ export default function LoginPage() {
         setIsSubmittingSocial("");
         return;
       }
+      // NextAuth signIn will handle redirection.
+      // Callback URL is set in authOptions, or NextAuth will redirect to current page or homepage.
+      // We ensure callbackUrl is localized if it comes from query param.
       const result = await signIn(provider, { callbackUrl });
       if (result?.error) {
         toast({
@@ -152,7 +155,7 @@ export default function LoginPage() {
   const handleEmailPasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmittingEmail(true);
-    const success = await simulatedLogin(email, password); // AuthContext will show toasts
+    const success = await simulatedLogin(email, password); 
     if (success) {
       // useEffect will handle redirect because simulatedUser will be set
     }
@@ -264,4 +267,3 @@ export default function LoginPage() {
     </div>
   );
 }
-// Delete original: src/app/login/page.tsx

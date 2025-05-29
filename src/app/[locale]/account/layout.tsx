@@ -102,8 +102,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         await nextAuthSignOut({ callbackUrl: `/${locale}/login` });
       }
       if (simulatedUser) {
-        simulatedLogout(); // AuthContext logout
-        router.push(`/${locale}/login`); 
+        simulatedLogout(); // AuthContext logout (already redirects to /${locale}/login via context)
       }
       toast({
         title: dictionary.loggedOutTitle,
@@ -171,5 +170,3 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     </div>
   );
 }
-
-// Delete original: src/app/account/layout.tsx

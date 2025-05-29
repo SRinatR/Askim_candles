@@ -274,5 +274,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-// Delete original: src/app/register/page.tsx

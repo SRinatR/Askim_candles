@@ -18,9 +18,11 @@ export function Footer({ locale, dictionary }: FooterProps) {
   const pathname = usePathname();
   const currentYear = new Date().getFullYear();
 
-  // Check if the current path starts with `/admin` or is exactly `/admin`
-  // The path from usePathname will include the locale, so we need to check for `/${locale}/admin`
-  if (pathname.startsWith(`/${locale}/admin`) || pathname.startsWith(`/admin`)) {
+  // Check if the current path starts with the admin path, irrespective of locale
+  // e.g., /admin, /uz/admin, /en/admin
+  const isAdminPath = pathname.split('/').includes('admin');
+
+  if (isAdminPath) {
     return null;
   }
   
@@ -29,9 +31,8 @@ export function Footer({ locale, dictionary }: FooterProps) {
       <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
         <p>&copy; {currentYear} ScentSational Showcase. {dictionary.rightsReserved}</p>
         <div className="flex space-x-4">
-          {/* TODO: Update Link hrefs with locale */}
-          <Link href={`/${locale}/privacy`} className="hover:text-foreground">{dictionary.privacyPolicy}</Link>
-          <Link href={`/${locale}/terms`} className="hover:text-foreground">{dictionary.termsOfService}</Link>
+          <Link href={`/${locale}/privacy`} className="hover:text-foreground">{dictionary.privacyPolicy}</Link> {/* TODO: Create /privacy page */}
+          <Link href={`/${locale}/terms`} className="hover:text-foreground">{dictionary.termsOfService}</Link> {/* TODO: Create /terms page */}
         </div>
       </div>
     </footer>

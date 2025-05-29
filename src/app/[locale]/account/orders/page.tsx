@@ -146,5 +146,3 @@ export default function OrderHistoryPage() {
     </div>
   );
 }
-
-// Delete original: src/app/account/orders/page.tsx

@@ -219,7 +219,7 @@ export default function CheckoutPage() {
                 <div key={item.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="relative w-12 h-12 rounded-md overflow-hidden border">
-                      <Image src={item.images[0]} alt={item.name} fill className="object-cover" data-ai-hint="checkout item" />
+                      <Image src={item.images[0]} alt={item.name} fill className="object-cover" data-ai-hint="checkout item" sizes="48px"/>
                     </div>
                     <div>
                       <p className="font-medium text-sm">{item.name}</p>
@@ -307,5 +307,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
-// Delete original: src/app/checkout/page.tsx

@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -7,11 +8,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import React, { useCallback } from "react";
+import type { Locale } from '@/lib/i1n-config';
 
 const sortOptions = [
-  { value: "relevance", label: "Relevance" },
+  { value: "relevance", label: "Relevance" }, // TODO: Localize labels
   { value: "price-asc", label: "Price: Low to High" },
   { value: "price-desc", label: "Price: High to Low" },
   { value: "name-asc", label: "Name: A to Z" },
@@ -22,6 +24,8 @@ const sortOptions = [
 export function ProductSort() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const routeParams = useParams();
+  const locale = routeParams.locale as Locale || 'uz';
   const currentSort = searchParams.get("sort") || "relevance";
 
   const handleSortChange = useCallback(
@@ -32,22 +36,22 @@ export function ProductSort() {
       } else {
         params.set("sort", value);
       }
-      router.push(`/products?${params.toString()}`, { scroll: false });
+      router.push(`/${locale}/products?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams]
+    [router, searchParams, locale]
   );
 
   return (
     <div className="flex items-center space-x-2">
-      <span className="text-sm text-muted-foreground">Sort by:</span>
+      <span className="text-sm text-muted-foreground">Sort by:</span> {/* TODO: Localize */}
       <Select value={currentSort} onValueChange={handleSortChange}>
         <SelectTrigger className="w-[180px] h-9">
-          <SelectValue placeholder="Sort by" />
+          <SelectValue placeholder="Sort by" /> {/* TODO: Localize */}
         </SelectTrigger>
         <SelectContent>
           {sortOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              {option.label} {/* TODO: Localize */}
             </SelectItem>
           ))}
         </SelectContent>

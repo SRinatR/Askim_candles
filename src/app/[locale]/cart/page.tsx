@@ -162,7 +162,7 @@ export default function CartPage() {
           {cartItems.map(item => (
             <Card key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center p-4 gap-4 shadow-sm">
               <div className="relative w-full sm:w-24 h-32 sm:h-24 aspect-square rounded-md overflow-hidden shrink-0">
-                <Image src={item.images[0]} alt={item.name} fill className="object-cover" data-ai-hint="cart item" />
+                <Image src={item.images[0]} alt={item.name} fill className="object-cover" data-ai-hint="cart item" sizes="(max-width: 640px) 100vw, 96px" />
               </div>
               <div className="flex-grow space-y-1">
                 <Link href={`/${locale}/products/${item.id}`} className="text-lg font-medium hover:text-primary">{item.name}</Link>
@@ -234,8 +234,3 @@ export default function CartPage() {
     </div>
   );
 }
-
-// Create directory src/app/[locale]/cart if it doesn't exist
-// Then move the original src/app/cart/page.tsx to src/app/[locale]/cart/page.tsx
-// The content above is the new content for src/app/[locale]/cart/page.tsx
-// The original src/app/cart/page.tsx should be deleted.

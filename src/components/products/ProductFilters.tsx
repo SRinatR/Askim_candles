@@ -1,3 +1,4 @@
+
 "use client";
 
 import { mockCategories } from '@/lib/mock-data';
@@ -8,8 +9,9 @@ import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import React, { useState, useEffect, useCallback } from 'react';
+import type { Locale } from '@/lib/i1n-config';
 
 const scents = ['Lavender', 'Vanilla Bean', 'Fresh Roses', 'Citrus Burst', 'Sandalwood']; // Example scents
 const materials = ['Soy Wax', 'Beeswax Blend', 'Paraffin Wax', 'Natural Gypsum']; // Example materials
@@ -17,6 +19,8 @@ const materials = ['Soy Wax', 'Beeswax Blend', 'Paraffin Wax', 'Natural Gypsum']
 export function ProductFilters() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const routeParams = useParams();
+  const locale = routeParams.locale as Locale || 'uz';
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>(searchParams.getAll('category') || []);
   const [selectedScents, setSelectedScents] = useState<string[]>(searchParams.getAll('scent') || []);
@@ -59,10 +63,8 @@ export function ProductFilters() {
 
   useEffect(() => {
     const newQueryString = createQueryString();
-    // Debounce or apply on button click to avoid too many re-renders / API calls
-    // For now, apply immediately for simplicity in example
-    router.push(`/products?${newQueryString}`, { scroll: false });
-  }, [createQueryString, router]);
+    router.push(`/${locale}/products?${newQueryString}`, { scroll: false });
+  }, [createQueryString, router, locale]);
 
 
   const handleCheckboxChange = (
@@ -104,7 +106,7 @@ export function ProductFilters() {
     setPriceRange([0, 200]);
     setMinPriceInput('0');
     setMaxPriceInput('200');
-    router.push('/products', { scroll: false });
+    router.push(`/${locale}/products`, { scroll: false });
   };
 
   const hasActiveFilters = selectedCategories.length > 0 || selectedScents.length > 0 || selectedMaterials.length > 0 || priceRange[0] > 0 || priceRange[1] < 200 || searchParams.get('search');
@@ -113,16 +115,16 @@ export function ProductFilters() {
   return (
     <aside className="w-full lg:w-72 lg:sticky lg:top-20 self-start space-y-6 p-4 border border-border/60 rounded-lg shadow-sm bg-card">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Filters</h3>
+        <h3 className="text-lg font-semibold">Filters</h3> {/* TODO: Localize */}
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" onClick={clearFilters} className="text-xs text-muted-foreground hover:text-foreground">
-            <X className="mr-1 h-3 w-3" /> Clear All
+            <X className="mr-1 h-3 w-3" /> Clear All {/* TODO: Localize */}
           </Button>
         )}
       </div>
       <Accordion type="multiple" defaultValue={['category', 'price']} className="w-full">
         <AccordionItem value="category">
-          <AccordionTrigger className="text-base">Category</AccordionTrigger>
+          <AccordionTrigger className="text-base">Category</AccordionTrigger> {/* TODO: Localize */}
           <AccordionContent className="space-y-2 pt-2">
             {mockCategories.map(category => (
               <div key={category.id} className="flex items-center space-x-2">
@@ -131,14 +133,14 @@ export function ProductFilters() {
                   checked={selectedCategories.includes(category.slug)}
                   onCheckedChange={() => handleCheckboxChange(category.slug, selectedCategories, setSelectedCategories)}
                 />
-                <Label htmlFor={`cat-${category.id}`} className="font-normal text-sm">{category.name}</Label>
+                <Label htmlFor={`cat-${category.id}`} className="font-normal text-sm">{category.name}</Label> {/* TODO: Localize */}
               </div>
             ))}
           </AccordionContent>
         </AccordionItem>
 
         <AccordionItem value="price">
-          <AccordionTrigger className="text-base">Price Range</AccordionTrigger>
+          <AccordionTrigger className="text-base">Price Range</AccordionTrigger> {/* TODO: Localize */}
           <AccordionContent className="space-y-4 pt-3">
             <Slider
               defaultValue={[0, 200]}
@@ -178,7 +180,7 @@ export function ProductFilters() {
         </AccordionItem>
 
         <AccordionItem value="scent">
-          <AccordionTrigger className="text-base">Scent</AccordionTrigger>
+          <AccordionTrigger className="text-base">Scent</AccordionTrigger> {/* TODO: Localize */}
           <AccordionContent className="space-y-2 pt-2">
             {scents.map(scent => (
               <div key={scent} className="flex items-center space-x-2">
@@ -187,14 +189,14 @@ export function ProductFilters() {
                   checked={selectedScents.includes(scent)}
                   onCheckedChange={() => handleCheckboxChange(scent, selectedScents, setSelectedScents)}
                 />
-                <Label htmlFor={`scent-${scent.toLowerCase().replace(' ', '-')}`} className="font-normal text-sm">{scent}</Label>
+                <Label htmlFor={`scent-${scent.toLowerCase().replace(' ', '-')}`} className="font-normal text-sm">{scent}</Label> {/* TODO: Localize */}
               </div>
             ))}
           </AccordionContent>
         </AccordionItem>
         
         <AccordionItem value="material">
-          <AccordionTrigger className="text-base">Material</AccordionTrigger>
+          <AccordionTrigger className="text-base">Material</AccordionTrigger> {/* TODO: Localize */}
           <AccordionContent className="space-y-2 pt-2">
             {materials.map(material => (
               <div key={material} className="flex items-center space-x-2">
@@ -203,7 +205,7 @@ export function ProductFilters() {
                   checked={selectedMaterials.includes(material)}
                   onCheckedChange={() => handleCheckboxChange(material, selectedMaterials, setSelectedMaterials)}
                 />
-                <Label htmlFor={`material-${material.toLowerCase().replace(' ', '-')}`} className="font-normal text-sm">{material}</Label>
+                <Label htmlFor={`material-${material.toLowerCase().replace(' ', '-')}`} className="font-normal text-sm">{material}</Label> {/* TODO: Localize */}
               </div>
             ))}
           </AccordionContent>
