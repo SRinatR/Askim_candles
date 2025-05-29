@@ -1,33 +1,40 @@
 
 # Active Context: Askim candles
 
-## Date: 2024-07-29 (Simulated Date of Update)
+## Date: 2024-07-30 (Simulated Date of Update)
 
 ## 1. Current Focus
-*   **Admin Panel - CRUD for Product Attributes (Categories, Materials, Scents):** Implement UI and client-side logic (localStorage) for managing these attributes. Update product forms to use `Select` inputs populated with these attributes.
-*   **Version/Date Display in Main Site Footer:** Add simulated version and last update date to the main site's footer.
+*   **Finalize Product Filters & "Last Updated" Date:**
+    *   Ensure product filters (`ProductFilters.tsx`, `ProductsPage.tsx`) are robust, especially dynamic price range from active products and handling of empty filter results.
+    *   Adjust main site footer (`Footer.tsx`) to only show version number to regular users. "Last Updated" date will be removed from public footer. Admin footer will keep its simulated date.
+*   **Implement Multilingual Product Name & Description:**
+    *   Update `Product` type for `name` and `description` to support UZ/RU/EN.
+    *   Update mock data.
+    *   Update admin product forms (`new`, `edit`) with inputs for each language.
+    *   Update main site components (`ProductCard`, `ProductDetailPage`, cart/checkout summaries, order history) to display localized names/descriptions.
+    *   Update admin product list to show name in admin's current language.
 
 ## 2. Recent Changes (Leading to this state)
-*   **Category & Header "Полезное" Update:** Product categories updated as per user request. "Полезное" section in header now links to a new `/info` page listing articles. Homepage category display improved.
-*   **Corporate Color Palette Applied:** Updated `src/app/globals.css` for the entire application.
-*   **Admin Panel Log Filtering & Sorting:** Implemented client-side filtering and sorting for logs.
-*   **Admin Panel Placeholders & Log Enhancements:** Sales, Marketing, Reports pages in admin updated. Logs section enhanced.
+*   **Admin Attributes CRUD:** Implemented UI and `localStorage` logic for managing custom Categories, Materials, and Scents. Product forms updated to use `Select` inputs for these.
+*   **Version Display in Main Footer:** Added simulated version and "Last Updated" date to the main site footer (this will be revised).
+*   **Dropdown Fix in Admin Layout:** Corrected `DropdownMenu` usage for sidebar items with sub-menus.
 
 ## 3. Next Steps (Immediate for Me - based on user's latest request)
-1.  **Implement Version Display in Main Site Footer:**
-    *   Modify `src/components/layout/Footer.tsx`.
-2.  **Implement Admin CRUD for Product Attributes (Categories, Materials, Scents):**
-    *   Create pages: `/admin/attributes/categories/page.tsx`, `/admin/attributes/materials/page.tsx`, `/admin/attributes/scents/page.tsx`.
-    *   Implement UI for adding/listing/deleting (custom) attributes, using `localStorage`.
-    *   Update admin navigation in `/admin/layout.tsx`.
-    *   Update admin dictionaries for new labels.
-    *   Modify product forms (`/admin/products/new`, `/admin/products/edit/[id]`) to use `Select` components for Category, Material, Scent, populated from `mock-data` and `localStorage`.
-3.  **Update Memory Bank:** Reflect these new features.
+1.  **Refine Product Filters:**
+    *   Verify dynamic price range calculation in `ProductFilters.tsx` based on *active* products.
+    *   Handle edge cases like empty product lists for filter generation.
+2.  **Adjust "Last Updated" Date Display:**
+    *   Modify `src/components/layout/Footer.tsx` to remove "Last Updated" for regular users.
+3.  **Implement Multilingual Product Data:**
+    *   Update `src/lib/types.ts` (`Product` interface).
+    *   Update `src/lib/mock-data.ts` with multilingual names/descriptions.
+    *   Modify admin forms: `src/app/admin/products/new/page.tsx`, `src/app/admin/products/edit/[id]/page.tsx`.
+    *   Modify display components: `src/components/products/ProductCard.tsx`, `src/app/[locale]/products/[id]/page.tsx`, `src/app/[locale]/cart/page.tsx`, `src/app/[locale]/checkout/page.tsx`, `src/app/[locale]/account/orders/page.tsx`, `src/app/[locale]/account/orders/[id]/page.tsx`.
+    *   Modify admin product list: `src/app/admin/products/page.tsx`.
+4.  **Update Memory Bank:** Reflect all these changes.
 
 ## 4. Active Decisions & Considerations
-*   **Attribute Management Scope:** "Dimensions" and "Burning Time" remain free-text inputs in product forms. Management as selectable lists is for Category, Material, and Scent.
-*   **Data Storage for Attributes:** Custom attributes created in admin will be stored in `localStorage` for simulation.
-*   **Admin Panel i18n & Theme:** Corporate color palette applies. Basic EN/RU i18n setup for admin.
-*   **Main Site i18n:** Path-based (UZ/RU/EN). Corporate client focus noted.
-*   **Backend Plan:** Prisma/PostgreSQL, documented in `deployment_guide.md`.
-
+*   **Admin "Last Updated" Date:** The admin panel footer will continue to show its own simulated "Last Updated" date (current render date). The request to make this editable by admin for display in the admin footer will be a future consideration if needed.
+*   **Multilingual Product Input:** For `name` and `description`, admin forms will have separate inputs for UZ, RU, EN.
+*   **Selectable Attributes (Category, Scent, Material):** These will remain single-value fields on the product model. Their *labels* in the admin `Select` components will be translated based on the admin's current language, but the stored value will be a consistent key (e.g., English name or a slug).
+*   **Filter Robustness:** Ensure filters don't break if no products match or if price ranges are unusual.

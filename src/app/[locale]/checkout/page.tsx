@@ -14,11 +14,11 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter, useParams, usePathname } from 'next/navigation'; // Added usePathname
+import { useRouter, useParams, usePathname } from 'next/navigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
-import React, { useEffect } from 'react'; // Added React
+import React, { useEffect } from 'react'; 
 import { useSession } from 'next-auth/react';
 import { useAuth as useSimulatedAuth } from '@/contexts/AuthContext';
 
@@ -41,7 +41,6 @@ const getCheckoutDictionary = (locale: Locale): CheckoutPageDictionary => {
   return dict.checkoutPage;
 };
 
-// TODO: Translate Zod validation messages
 const checkoutSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
   firstName: z.string().min(1, { message: "First name is required." }),
@@ -78,7 +77,6 @@ export default function CheckoutPage() {
     if (!isAuthenticated && cartItems.length > 0) {
       router.push(`/${locale}/login?callbackUrl=${pathname}`);
     } else if (cartItems.length === 0 && typeof window !== 'undefined') {
-      // Only redirect if not already on products page and cart is empty
       if (pathname !== `/${locale}/products`) {
         router.replace(`/${locale}/products`);
       }
@@ -123,7 +121,6 @@ export default function CheckoutPage() {
   }
   
   if (!isAuthenticated && cartItems.length > 0) {
-     // Shows a loading/redirecting state while useEffect triggers redirect
     return <div className="text-center py-12"><p>Redirecting to login...</p></div>;
   }
 
@@ -164,20 +161,30 @@ export default function CheckoutPage() {
               <CardTitle className="text-2xl">{dictionary.orderSummaryTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {cartItems.map(item => (
+              {cartItems.map(item => {
+                const itemName = item.name[locale] || item.name.en || "Item";
+                return (
                 <div key={item.id} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="relative w-12 h-12 rounded-md overflow-hidden border">
-                      <Image src={item.images[0]} alt={item.name} fill className="object-cover" data-ai-hint="checkout item" sizes="48px"/>
+                      <Image 
+                        src={item.mainImage || item.images[0]} 
+                        alt={itemName} 
+                        fill 
+                        className="object-cover" 
+                        data-ai-hint="checkout item" 
+                        sizes="48px"
+                      />
                     </div>
                     <div>
-                      <p className="font-medium text-sm">{item.name}</p>
+                      <p className="font-medium text-sm">{itemName}</p>
                       <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                     </div>
                   </div>
                   <p className="text-sm font-medium">{(item.price * item.quantity).toLocaleString('en-US')} UZS</p>
                 </div>
-              ))}
+                );
+              })}
               <Separator />
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>{dictionary.subtotal}</span>
@@ -256,5 +263,3 @@ export default function CheckoutPage() {
     </div>
   );
 }
-
-    

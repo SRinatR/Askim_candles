@@ -5,7 +5,7 @@ export const mockCategories: Category[] = [
   { id: 'corporate-sets', name: 'Корпоративные наборы', slug: 'corporate-sets', description: 'Эксклюзивные наборы для корпоративных клиентов.' },
   { id: 'wedding-favors', name: 'Свадебные комплименты', slug: 'wedding-favors', description: 'Изящные комплименты для гостей на свадьбу.' },
   { id: 'scented-candles', name: 'Аромасвечи', slug: 'scented-candles', description: 'Ароматические свечи ручной работы с уникальными запахами.' },
-  { id: 'tasty-home', name: 'Вкусный дом', slug: 'tasty-home', description: 'Товары для создания уюта и приятной атмосферы в доме.' }, // Slug 'tasty-home' for RU/UZ, 'home-fragrances' for EN
+  { id: 'tasty-home', name: 'Вкусный дом', slug: 'tasty-home', description: 'Товары для создания уюта и приятной атмосферы в доме.' },
   { id: 'gypsum-paradise', name: 'Гипсовый рай', slug: 'gypsum-paradise', description: 'Элегантные изделия из гипса для декора.' },
 ];
 
@@ -13,10 +13,18 @@ export const mockProducts: Product[] = [
   {
     id: '1',
     sku: 'ASKM-LAV-001',
-    name: 'Lavender Bliss Candle',
-    description: 'Soothing lavender scented candle, perfect for relaxation. Made with natural soy wax.',
+    name: {
+      en: 'Lavender Bliss Candle',
+      ru: 'Свеча "Лавандовое Блаженство"',
+      uz: 'Lavanda Rohari Shami',
+    },
+    description: {
+      en: 'Soothing lavender scented candle, perfect for relaxation. Made with natural soy wax.',
+      ru: 'Успокаивающая свеча с ароматом лаванды, идеально подходит для релаксации. Изготовлена из натурального соевого воска.',
+      uz: 'Tinchlantiruvchi lavanda hidli sham, dam olish uchun mukammal. Tabiiy soya mumidan tayyorlangan.',
+    },
     price: 229900,
-    category: 'Аромасвечи', // Changed category
+    category: 'Аромасвечи', 
     images: ['https://placehold.co/600x400.png?text=Lavender+Candle+1', 'https://placehold.co/600x400.png?text=Lavender+Candle+2', 'https://placehold.co/600x400.png?text=Lavender+Candle+3'],
     mainImage: 'https://placehold.co/600x400.png?text=Lavender+Candle+1',
     scent: 'Лаванда',
@@ -30,10 +38,18 @@ export const mockProducts: Product[] = [
   {
     id: '2',
     sku: 'ASKM-VAN-002',
-    name: 'Vanilla Dream Candle',
-    description: 'A warm and inviting vanilla bean fragrance that fills your home with comfort.',
+    name: {
+      en: 'Vanilla Dream Candle',
+      ru: 'Свеча "Ванильная Мечта"',
+      uz: 'Vanil Orzusi Shami',
+    },
+    description: {
+      en: 'A warm and inviting vanilla bean fragrance that fills your home with comfort.',
+      ru: 'Теплый и манящий аромат ванильных бобов, наполняющий ваш дом уютом.',
+      uz: 'Uyingizni shinamlik bilan to\'ldiradigan iliq va jozibali vanil donalari ifori.',
+    },
     price: 245000,
-    category: 'Аромасвечи', // Changed category
+    category: 'Аромасвечи', 
     images: ['https://placehold.co/600x400.png?text=Vanilla+Candle+1', 'https://placehold.co/600x400.png?text=Vanilla+Candle+2'],
     mainImage: 'https://placehold.co/600x400.png?text=Vanilla+Candle+1',
     scent: 'Ваниль',
@@ -47,14 +63,22 @@ export const mockProducts: Product[] = [
   {
     id: '3',
     sku: 'ASKM-SWA-003',
-    name: 'Elegant Swan Wax Figure',
-    description: 'A beautifully detailed wax figure of a swan, perfect as a centerpiece.',
+    name: {
+      en: 'Elegant Swan Gypsum Figure',
+      ru: 'Элегантная гипсовая фигурка "Лебедь"',
+      uz: 'Nafis gipsli "Oqqush" haykalchasi',
+    },
+    description: {
+      en: 'A beautifully detailed gypsum figure of a swan, perfect as a centerpiece.',
+      ru: 'Красиво детализированная гипсовая фигурка лебедя, идеально подходящая в качестве центрального элемента декора.',
+      uz: 'Markaziy element sifatida juda mos keladigan, chiroyli tarzda ishlangan oqqush gips haykalchasi.',
+    },
     price: 350000,
-    category: 'Гипсовый рай', // Placeholder, fits better than wax figures if it's gypsum like
+    category: 'Гипсовый рай', 
     images: ['https://placehold.co/600x400.png?text=Swan+Figure'],
     mainImage: 'https://placehold.co/600x400.png?text=Swan+Figure',
     scent: 'Без запаха',
-    material: 'Гипс', // Assuming it's gypsum as per new category
+    material: 'Гипс',
     dimensions: '15см x 12см x 10см',
     stock: 8,
     attributes: [{key: 'Цвет', value: 'Белый'}],
@@ -63,14 +87,23 @@ export const mockProducts: Product[] = [
   {
     id: '4',
     sku: 'ASKM-GYP-004',
-    name: 'Geometric Gypsum Planter',
-    description: 'Modern gypsum planter with a minimalist geometric design. Ideal for succulents.',
+    name: {
+      en: 'Geometric Gypsum Planter',
+      ru: 'Геометрический гипсовый кашпо',
+      uz: 'Geometrik gipsli gul tuvak',
+    },
+    description: {
+      en: 'Modern gypsum planter with a minimalist geometric design. Ideal for succulents.',
+      ru: 'Современное гипсовое кашпо с минималистичным геометрическим дизайном. Идеально подходит для суккулентов.',
+      uz: 'Minimalistik geometrik dizayndagi zamonaviy gipsli gul tuvak. Sukkulentlar uchun juda mos.',
+    },
     price: 187500,
     category: 'Гипсовый рай',
     images: ['https://placehold.co/600x400.png?text=Gypsum+Planter'],
     mainImage: 'https://placehold.co/600x400.png?text=Gypsum+Planter',
     material: 'Натуральный гипс',
     dimensions: '10см x 10см x 8см',
+    burningTime: 'N/A',
     stock: 25,
     attributes: [{key: 'Отделка', value: 'Матово-белая'}],
     isActive: true,
@@ -78,8 +111,16 @@ export const mockProducts: Product[] = [
   {
     id: '5',
     sku: 'ASKM-ROS-005',
-    name: 'Rose Garden Candle',
-    description: 'Experience the fragrance of a blooming rose garden with this exquisite candle.',
+    name: {
+      en: 'Rose Garden Candle',
+      ru: 'Свеча "Розовый Сад"',
+      uz: 'Atirgul Bog\'i Shami',
+    },
+    description: {
+      en: 'Experience the fragrance of a blooming rose garden with this exquisite candle.',
+      ru: 'Ощутите аромат цветущего розового сада с этой изысканной свечой.',
+      uz: 'Ushbu nafis sham bilan gullab-yashnayotgan atirgul bog\'ining iforini his eting.',
+    },
     price: 260000,
     category: 'Аромасвечи',
     images: ['https://placehold.co/600x400.png?text=Rose+Candle'],
@@ -95,14 +136,23 @@ export const mockProducts: Product[] = [
   {
     id: '6',
     sku: 'ASKM-COA-006',
-    name: 'Abstract Gypsum Coasters (Set of 4)',
-    description: 'Protect your surfaces with style using these unique abstract design gypsum coasters.',
+    name: {
+      en: 'Abstract Gypsum Coasters (Set of 4)',
+      ru: 'Абстрактные гипсовые подставки (набор из 4 шт.)',
+      uz: 'Abstrakt gipsli tagliklar (4 dona to\'plam)',
+    },
+    description: {
+      en: 'Protect your surfaces with style using these unique abstract design gypsum coasters.',
+      ru: 'Защитите свои поверхности стильно с помощью этих уникальных гипсовых подставок с абстрактным дизайном.',
+      uz: 'Ushbu noyob abstrakt dizayndagi gipsli tagliklar yordamida sirtlaringizni zamonaviy tarzda himoya qiling.',
+    },
     price: 299900,
     category: 'Гипсовый рай',
     images: ['https://placehold.co/600x400.png?text=Gypsum+Coasters'],
     mainImage: 'https://placehold.co/600x400.png?text=Gypsum+Coasters',
     material: 'Усиленный гипс',
     dimensions: 'Диаметр 10см, толщина 1см (каждая)',
+    burningTime: 'N/A',
     stock: 0,
     attributes: [{key: 'Узор', value: 'Абстрактный вихрь'}],
     isActive: true,
@@ -110,8 +160,16 @@ export const mockProducts: Product[] = [
   {
     id: '7',
     sku: 'ASKM-CORP-001',
-    name: 'Corporate Gift Set "Prestige"',
-    description: 'A premium selection of scented candles and gypsum accessories, perfect for corporate gifting.',
+    name: {
+      en: 'Corporate Gift Set "Prestige"',
+      ru: 'Корпоративный подарочный набор "Престиж"',
+      uz: '"Prestige" korporativ sovg\'a to\'plami',
+    },
+    description: {
+      en: 'A premium selection of scented candles and gypsum accessories, perfect for corporate gifting.',
+      ru: 'Премиальный набор ароматических свечей и гипсовых аксессуаров, идеально подходящий для корпоративных подарков.',
+      uz: 'Korporativ sovg\'alar uchun juda mos keladigan xushbo\'y shamlar va gips aksessuarlarining premium to\'plami.',
+    },
     price: 750000,
     category: 'Корпоративные наборы',
     images: ['https://placehold.co/600x400.png?text=Corporate+Set+Prestige'],
@@ -119,6 +177,7 @@ export const mockProducts: Product[] = [
     scent: 'Assorted Premium Scents',
     material: 'Soy Wax, Gypsum',
     dimensions: 'Varies per item',
+    burningTime: 'Varies',
     stock: 50,
     attributes: [{key: 'Packaging', value: 'Premium Gift Box'}],
     isActive: true,
@@ -126,15 +185,24 @@ export const mockProducts: Product[] = [
   {
     id: '8',
     sku: 'ASKM-WED-001',
-    name: 'Wedding Favor Scented Sachet',
-    description: 'Elegant scented sachets, a lovely token of appreciation for your wedding guests.',
-    price: 45000, // Price per piece
+    name: {
+      en: 'Wedding Favor Scented Sachet',
+      ru: 'Аромасаше "Свадебный комплимент"',
+      uz: 'To\'y uchun xushbo\'y sashe',
+    },
+    description: {
+      en: 'Elegant scented sachets, a lovely token of appreciation for your wedding guests.',
+      ru: 'Элегантные аромасаше, прекрасный знак внимания для ваших свадебных гостей.',
+      uz: 'Nafis xushbo\'y sashelar, to\'y mehmonlaringiz uchun ajoyib minnatdorchilik belgisi.',
+    },
+    price: 45000, 
     category: 'Свадебные комплименты',
     images: ['https://placehold.co/600x400.png?text=Wedding+Sachet'],
     mainImage: 'https://placehold.co/600x400.png?text=Wedding+Sachet',
     scent: 'Jasmine & Lily',
     material: 'Fabric, Scented Beads',
     dimensions: '8cm x 12cm',
+    burningTime: 'N/A',
     stock: 200,
     attributes: [{key: 'Custom Tag', value: 'Available upon request'}],
     isActive: true,
@@ -142,8 +210,16 @@ export const mockProducts: Product[] = [
    {
     id: '9',
     sku: 'ASKM-HOME-001',
-    name: 'Home Fragrance Diffuser "Citrus Grove"',
-    description: 'Brighten your home with the uplifting scent of citrus fruits.',
+    name: {
+      en: 'Home Fragrance Diffuser "Citrus Grove"',
+      ru: 'Аромадиффузор для дома "Цитрусовая Роща"',
+      uz: '"Sitrus Bog\'i" uy uchun aromadiffuzor',
+    },
+    description: {
+      en: 'Brighten your home with the uplifting scent of citrus fruits.',
+      ru: 'Освежите свой дом бодрящим ароматом цитрусовых фруктов.',
+      uz: 'Sitrus mevalarining tetiklantiruvchi ifori bilan uyingizni yoritib yuboring.',
+    },
     price: 320000,
     category: 'Вкусный дом',
     images: ['https://placehold.co/600x400.png?text=Citrus+Diffuser'],
@@ -151,6 +227,7 @@ export const mockProducts: Product[] = [
     scent: 'Citrus Blend',
     material: 'Glass, Reed Sticks',
     dimensions: '200ml Bottle',
+    burningTime: 'N/A (Diffuser)',
     stock: 30,
     attributes: [{key: 'Duration', value: 'Approx. 3 months'}],
     isActive: true,
@@ -163,10 +240,10 @@ export const mockOrders: Order[] = [
     orderNumber: 'ASKM-001',
     date: '2023-10-26',
     status: 'Delivered',
-    totalAmount: mockProducts.find(p=>p.id==='1')!.price + mockProducts.find(p=>p.id==='4')!.price,
+    totalAmount: (mockProducts.find(p=>p.id==='1')?.price || 0) + (mockProducts.find(p=>p.id==='4')?.price || 0),
     items: [
-      { ...mockProducts.find(p=>p.id==='1')!, quantity: 1, price: mockProducts.find(p=>p.id==='1')!.price },
-      { ...mockProducts.find(p=>p.id==='4')!, quantity: 1, price: mockProducts.find(p=>p.id==='4')!.price },
+      { ...(mockProducts.find(p=>p.id==='1')!), quantity: 1, price: mockProducts.find(p=>p.id==='1')!.price },
+      { ...(mockProducts.find(p=>p.id==='4')!), quantity: 1, price: mockProducts.find(p=>p.id==='4')!.price },
     ],
   },
   {
@@ -174,18 +251,18 @@ export const mockOrders: Order[] = [
     orderNumber: 'ASKM-002',
     date: '2023-11-05',
     status: 'Shipped',
-    totalAmount: mockProducts.find(p=>p.id==='2')!.price,
-    items: [{ ...mockProducts.find(p=>p.id==='2')!, quantity: 1, price: mockProducts.find(p=>p.id==='2')!.price }],
+    totalAmount: mockProducts.find(p=>p.id==='2')?.price || 0,
+    items: [{ ...(mockProducts.find(p=>p.id==='2')!), quantity: 1, price: mockProducts.find(p=>p.id==='2')!.price }],
   },
   {
     id: 'order125',
     orderNumber: 'ASKM-003',
     date: '2023-11-10',
     status: 'Processing',
-    totalAmount: mockProducts.find(p=>p.id==='3')!.price + (mockProducts.find(p=>p.id==='5')?.price || 0), // Handled if product 5 is missing
+    totalAmount: (mockProducts.find(p=>p.id==='3')?.price || 0) + (mockProducts.find(p=>p.id==='5')?.price || 0), 
     items: [
-      { ...mockProducts.find(p=>p.id==='3')!, quantity: 1, price: mockProducts.find(p=>p.id==='3')!.price },
-      ...(mockProducts.find(p=>p.id==='5') ? [{ ...mockProducts.find(p=>p.id==='5')!, quantity: 1, price: mockProducts.find(p=>p.id==='5')!.price }] : [])
+      { ...(mockProducts.find(p=>p.id==='3')!), quantity: 1, price: mockProducts.find(p=>p.id==='3')!.price },
+      ...(mockProducts.find(p=>p.id==='5') ? [{ ...(mockProducts.find(p=>p.id==='5')!), quantity: 1, price: mockProducts.find(p=>p.id==='5')!.price }] : [])
     ],
   },
 ];
@@ -197,5 +274,3 @@ export const mockAdminClients: MockAdminClient[] = [
   { id: 'client-004', name: 'Dildora Ahmedova', email: 'dildora.a@example.com', registrationDate: '2023-07-01T11:00:00Z', totalOrders: 1, totalSpent: 2299000, isBlocked: false },
   { id: 'client-005', name: 'Rustam Qosimov', email: 'rustam.q@example.com', registrationDate: '2023-08-19T18:45:00Z', totalOrders: 12, totalSpent: 35000000, isBlocked: false },
 ];
-
-    

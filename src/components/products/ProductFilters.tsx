@@ -24,11 +24,11 @@ interface ProductFiltersProps {
     applyFiltersButton?: string; 
   };
   categoriesData: Category[];
-  allProducts: Product[];
+  allProducts: Product[]; // Should be pre-filtered for active status by the parent
   onApplyFilters?: () => void; 
 }
 
-const PRICE_DIVISOR = 1; // Assuming prices in mockProducts are direct UZS values
+const PRICE_DIVISOR = 1; 
 
 export function ProductFilters({ dictionary, categoriesData, allProducts, onApplyFilters }: ProductFiltersProps) {
   const router = useRouter();
@@ -42,16 +42,28 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
     }
     const prices = allProducts.map(p => p.price / PRICE_DIVISOR);
     return {
-      minProductPrice: Math.floor(Math.min(...prices)),
-      maxProductPrice: Math.ceil(Math.max(...prices)),
+      minProductPrice: Math.floor(Math.min(...prices) || 0),
+      maxProductPrice: Math.ceil(Math.max(...prices) || 500000),
     };
   }, [allProducts]);
 
   const getInitialState = useCallback(() => {
     const searchMin = Number(searchParams.get('minPrice'));
     const searchMax = Number(searchParams.get('maxPrice'));
-    const currentMin = isNaN(searchMin) || searchMin < minProductPrice ? minProductPrice : searchMin;
-    const currentMax = isNaN(searchMax) || searchMax > maxProductPrice ? maxProductPrice : searchMax;
+    
+    let currentMin = minProductPrice;
+    if (!isNaN(searchMin) && searchMin >= minProductPrice && searchMin <= maxProductPrice) {
+        currentMin = searchMin;
+    }
+
+    let currentMax = maxProductPrice;
+    if (!isNaN(searchMax) && searchMax <= maxProductPrice && searchMax >= minProductPrice) {
+        currentMax = searchMax;
+    }
+    // Ensure min is not greater than max after reading from params
+    if (currentMin > currentMax) {
+        currentMin = currentMax; 
+    }
     
     return {
       selectedCategories: searchParams.getAll('category') || [],
@@ -82,6 +94,7 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
 
 
   const uniqueScents = useMemo(() => {
+    if (!allProducts) return [];
     const scents = allProducts
       .map(p => p.scent)
       .filter((s): s is string => typeof s === 'string' && s.trim() !== '');
@@ -89,6 +102,7 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
   }, [allProducts]);
 
   const uniqueMaterials = useMemo(() => {
+    if (!allProducts) return [];
     const materials = allProducts
       .map(p => p.material)
       .filter((m): m is string => typeof m === 'string' && m.trim() !== '');
@@ -126,7 +140,7 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
 
   useEffect(() => {
     if (!onApplyFilters) { 
-      const timeoutId = setTimeout(applyFiltersToURL, 500); // Increased debounce for desktop
+      const timeoutId = setTimeout(applyFiltersToURL, 500); 
       return () => clearTimeout(timeoutId);
     }
   }, [selectedCategories, selectedScents, selectedMaterials, priceRange, onApplyFilters, applyFiltersToURL]);
@@ -144,34 +158,44 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
   };
 
   const handlePriceInputChange = (type: 'min' | 'max', value: string) => {
+    const numValue = parseInt(value, 10);
     if (type === 'min') {
-      setMinPriceInput(value);
+      setMinPriceInput(value); // Update input visually immediately
+      if (!isNaN(numValue)) {
+        const newMin = Math.max(minProductPrice, Math.min(numValue, priceRange[1]));
+        setPriceRange([newMin, priceRange[1]]);
+      }
     } else {
-      setMaxPriceInput(value);
+      setMaxPriceInput(value); // Update input visually immediately
+      if (!isNaN(numValue)) {
+        const newMax = Math.min(maxProductPrice, Math.max(numValue, priceRange[0]));
+        setPriceRange([priceRange[0], newMax]);
+      }
     }
   };
   
-  const handlePriceInputBlur = (type: 'min' | 'max') => {
+  const handlePriceInputCommit = (type: 'min' | 'max') => {
     let numValue = parseInt(type === 'min' ? minPriceInput : maxPriceInput, 10);
-    if (isNaN(numValue)) numValue = type === 'min' ? minProductPrice : maxProductPrice;
-
+    
     if (type === 'min') {
+      if (isNaN(numValue) || numValue < minProductPrice || numValue > priceRange[1]) numValue = minProductPrice;
       const newMin = Math.max(minProductPrice, Math.min(numValue, priceRange[1]));
-      setPriceRange([newMin, priceRange[1]]);
-      setMinPriceInput(String(newMin)); // Reflect validated value
+      setPriceRange(prev => [newMin, prev[1]]);
+      setMinPriceInput(String(newMin));
     } else {
+      if (isNaN(numValue) || numValue > maxProductPrice || numValue < priceRange[0]) numValue = maxProductPrice;
       const newMax = Math.min(maxProductPrice, Math.max(numValue, priceRange[0]));
-      setPriceRange([priceRange[0], newMax]);
-      setMaxPriceInput(String(newMax)); // Reflect validated value
+      setPriceRange(prev => [prev[0], newMax]);
+      setMaxPriceInput(String(newMax));
     }
-    // applyFiltersToURL(); // Now handled by useEffect or explicit apply button
-  }
+    // Filter application is handled by useEffect or explicit button for mobile
+  };
+  
 
   const handleSliderCommit = (newRange: [number, number]) => {
     setPriceRange(newRange);
     setMinPriceInput(String(newRange[0]));
     setMaxPriceInput(String(newRange[1]));
-    // applyFiltersToURL(); // Now handled by useEffect or explicit apply button
   };
   
   const clearFilters = () => {
@@ -227,9 +251,8 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
               value={priceRange}
               min={minProductPrice} 
               max={maxProductPrice} 
-              step={Math.max(1000, Math.floor((maxProductPrice - minProductPrice) / 100))} // Adjusted for UZS
-              onValueChange={setPriceRange} 
-              onValueCommit={handleSliderCommit} 
+              step={Math.max(1000, Math.floor((maxProductPrice - minProductPrice) / 100))} 
+              onValueChange={handleSliderCommit} // Use onValueChange for smoother slider updates if preferred, or keep onValueCommit
               className="my-2"
             />
             <div className="flex justify-between items-center space-x-2">
@@ -239,8 +262,8 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
                   type="text"
                   value={minPriceInput}
                   onChange={(e) => handlePriceInputChange('min', e.target.value)}
-                  onBlur={() => handlePriceInputBlur('min')}
-                  className="w-full pl-12 h-9 text-sm" // Adjusted padding for UZS
+                  onBlur={() => handlePriceInputCommit('min')}
+                  className="w-full pl-12 h-9 text-sm" 
                 />
               </div>
               <span className="text-muted-foreground">-</span>
@@ -250,8 +273,8 @@ export function ProductFilters({ dictionary, categoriesData, allProducts, onAppl
                   type="text" 
                   value={maxPriceInput}
                   onChange={(e) => handlePriceInputChange('max', e.target.value)}
-                  onBlur={() => handlePriceInputBlur('max')}
-                  className="w-full pl-12 h-9 text-sm" // Adjusted padding for UZS
+                  onBlur={() => handlePriceInputCommit('max')}
+                  className="w-full pl-12 h-9 text-sm" 
                 />
               </div>
             </div>

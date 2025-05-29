@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { mockProducts } from "@/lib/mock-data";
 import type { Product } from "@/lib/types";
-import { PlusCircle, Edit3, Trash2, Search, Eye, ToggleLeft, ToggleRight } from "lucide-react";
+import { PlusCircle, Edit3, Trash2, Search } from "lucide-react"; // Removed Eye, ToggleLeft, ToggleRight
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import React, { useState, useEffect, useMemo } from "react";
@@ -16,23 +16,37 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { logAdminAction } from '@/admin/lib/admin-logger';
-
-// TODO: Localize texts when admin i18n is fully implemented
+import type { Locale } from "@/lib/i1n-config"; // Import Locale
 
 export default function AdminProductsPage() {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [searchTerm, setSearchTerm] = useState("");
   const { currentAdminUser } = useAdminAuth();
+  const [adminLocale, setAdminLocale] = useState<Locale>('en');
 
-  const filteredProducts = useMemo(() => 
-    products.filter(product =>
-      (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase())))
-    ), [products, searchTerm]);
+  useEffect(() => {
+    const storedLocale = localStorage.getItem('admin-lang') as Locale | null;
+    if (storedLocale) {
+      setAdminLocale(storedLocale);
+    }
+  }, []);
 
-  const handleDeleteProduct = (productId: string, productName: string) => {
+  const filteredProducts = useMemo(() => {
+    return products.filter(product => {
+        const nameInAdminLocale = product.name[adminLocale] || product.name.en || '';
+        const category = product.category || ''; // Assuming category is a simple string for now
+        const sku = product.sku || '';
+        return (
+            nameInAdminLocale.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            sku.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    });
+  }, [products, searchTerm, adminLocale]);
+
+  const handleDeleteProduct = (productId: string, productNameObj: Product['name']) => {
+    const productName = productNameObj[adminLocale] || productNameObj.en;
     setProducts(prev => prev.filter(p => p.id !== productId));
     if (currentAdminUser?.email) {
       logAdminAction(currentAdminUser.email, "Product Deleted (Simulated)", { productId, productName });
@@ -51,11 +65,12 @@ export default function AdminProductsPage() {
     );
     const product = products.find(p => p.id === productId);
     if (product && currentAdminUser?.email) {
-      logAdminAction(currentAdminUser.email, `Product ${product.isActive ? "Deactivated" : "Activated"} (Simulated)`, { productId: product.id, productName: product.name });
+      const productName = product.name[adminLocale] || product.name.en;
+      logAdminAction(currentAdminUser.email, `Product ${product.isActive ? "Deactivated" : "Activated"} (Simulated)`, { productId: product.id, productName });
     }
     toast({
       title: `Product Status Changed (Simulated)`,
-      description: `Product "${product?.name}" is now ${product?.isActive ? "Inactive" : "Active"}. Client-side only.`,
+      description: `Product "${product?.name[adminLocale] || product?.name.en}" is now ${product?.isActive ? "Inactive" : "Active"}. Client-side only.`,
     });
   };
 
@@ -100,7 +115,7 @@ export default function AdminProductsPage() {
                   <TableHead className="w-[60px]">Image</TableHead>
                   <TableHead className="w-[80px]">ID</TableHead>
                   <TableHead className="w-[120px]">SKU</TableHead>
-                  <TableHead>Name</TableHead>
+                  <TableHead>Name ({adminLocale.toUpperCase()})</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead className="text-right">Price (UZS)</TableHead>
                   <TableHead className="text-center">Stock</TableHead>
@@ -114,8 +129,8 @@ export default function AdminProductsPage() {
                     <TableCell>
                       <div className="relative h-10 w-10 rounded-md overflow-hidden border">
                         <Image
-                          src={product.images[0] || "https://placehold.co/100x100.png?text=No+Image"}
-                          alt={product.name}
+                          src={product.mainImage || product.images[0] || "https://placehold.co/100x100.png?text=No+Image"}
+                          alt={product.name[adminLocale] || product.name.en || 'Product Image'}
                           fill
                           sizes="40px"
                           className="object-cover"
@@ -125,7 +140,7 @@ export default function AdminProductsPage() {
                     </TableCell>
                     <TableCell className="text-xs">{product.id}</TableCell>
                     <TableCell className="text-xs">{product.sku || '-'}</TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell className="font-medium">{product.name[adminLocale] || product.name.en}</TableCell>
                     <TableCell>{product.category}</TableCell>
                     <TableCell className="text-right">{product.price.toLocaleString('en-US')}</TableCell>
                     <TableCell className="text-center">{product.stock}</TableCell>
@@ -143,7 +158,7 @@ export default function AdminProductsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-center space-x-1">
-                      <Button variant="outline" size="sm" asChild title={`Edit ${product.name}`}>
+                      <Button variant="outline" size="sm" asChild title={`Edit ${product.name[adminLocale] || product.name.en}`}>
                         <Link href={`/admin/products/edit/${product.id}`}>
                           <Edit3 className="mr-1 h-3 w-3" /> Edit
                         </Link>
@@ -153,7 +168,7 @@ export default function AdminProductsPage() {
                         size="sm"
                         className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => handleDeleteProduct(product.id, product.name)}
-                        title={`Delete ${product.name}`}
+                        title={`Delete ${product.name[adminLocale] || product.name.en}`}
                       >
                         <Trash2 className="mr-1 h-3 w-3" /> Delete
                       </Button>

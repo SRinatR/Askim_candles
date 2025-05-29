@@ -1,20 +1,22 @@
 
+import type { Locale } from './i1n-config';
+
 export interface Product {
   id: string;
-  sku?: string; // Stock Keeping Unit
-  name: string;
-  description: string;
-  price: number; // Represents the price in the smallest currency unit (e.g., tiyin for UZS)
-  category: string;
-  images: string[]; // Array of image URLs
-  mainImage?: string; // URL of the main image
+  sku?: string;
+  name: { [key in Locale]?: string } & { en: string }; // Ensure 'en' is always there as a fallback
+  description: { [key in Locale]?: string } & { en: string }; // Ensure 'en' is always there
+  price: number; 
+  category: string; // Stores the category name/slug
+  images: string[];
+  mainImage?: string;
   scent?: string;
   material?: string;
-  dimensions?: string; // e.g., "10cm x 5cm x 5cm"
-  burningTime?: string; // e.g., "Approx. 40 hours"
-  stock: number; // Available stock
-  attributes?: { key: string; value: string }[]; // For other attributes like color, size
-  isActive: boolean; // New field to control visibility on the main site
+  dimensions?: string;
+  burningTime?: string;
+  stock: number;
+  attributes?: { key: string; value: string }[];
+  isActive: boolean;
 }
 
 export interface CartItem extends Product {
@@ -22,33 +24,31 @@ export interface CartItem extends Product {
 }
 
 export interface Category {
-  id: string;
-  name: string;
+  id: string; // Typically the slug
+  name: string; // Base name, often English or a key for translation
   slug: string;
   description?: string;
 }
 
-// User type for client-side email/password auth simulation (FRONTEND USERS)
 export interface SimulatedUser {
   id: string;
   email: string;
   name?: string;
-  firstName?: string; // For registration step
-  lastName?: string; // For registration step
-  password?: string; // Only for form handling/mock storage, not secure
+  firstName?: string;
+  lastName?: string;
+  password?: string;
   isRegistered?: boolean;
   isConfirmed?: boolean;
   phone?: string; 
 }
 
-// User type for client-side ADMIN PANEL auth simulation
 export type AdminRole = 'ADMIN' | 'MANAGER';
 export interface AdminUser {
   id: string;
   email: string;
   name: string;
   role: AdminRole;
-  password?: string; // For form handling/mock storage in simulation
+  password?: string;
 }
 
 
@@ -65,10 +65,10 @@ export interface Address {
 export interface Order {
   id: string;
   orderNumber: string;
-  date: string; // Or Date object
+  date: string; 
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
-  totalAmount: number; // Represents the total amount in the smallest currency unit
-  items: CartItem[]; // Simplified, ideally OrderItem with price snapshot
+  totalAmount: number; 
+  items: CartItem[];
 }
 
 export interface MockAdminClient {
@@ -77,6 +77,6 @@ export interface MockAdminClient {
   email: string;
   registrationDate: string;
   totalOrders: number;
-  totalSpent: number; // in UZS
+  totalSpent: number; 
   isBlocked: boolean;
 }

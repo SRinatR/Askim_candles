@@ -43,7 +43,8 @@ export default function CartPage() {
   const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
   const { toast } = useToast();
 
-  const handleRemove = (productId: string, productName: string) => {
+  const handleRemove = (productId: string, productNameObj: Product['name']) => {
+    const productName = productNameObj[locale] || productNameObj.en || "Product";
     removeFromCart(productId);
     toast({
       title: dictionary.itemRemoved,
@@ -90,13 +91,22 @@ export default function CartPage() {
       
       <div className="grid lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2 space-y-6">
-          {cartItems.map(item => (
+          {cartItems.map(item => {
+            const itemName = item.name[locale] || item.name.en || "Item";
+            return (
             <Card key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center p-4 gap-4 shadow-sm">
               <div className="relative w-full sm:w-24 h-32 sm:h-24 aspect-square rounded-md overflow-hidden shrink-0">
-                <Image src={item.images[0]} alt={item.name} fill className="object-cover" data-ai-hint="cart item" sizes="(max-width: 640px) 100vw, 96px" />
+                <Image 
+                    src={item.mainImage || item.images[0]} 
+                    alt={itemName} 
+                    fill 
+                    className="object-cover" 
+                    data-ai-hint="cart item" 
+                    sizes="(max-width: 640px) 100vw, 96px" 
+                />
               </div>
               <div className="flex-grow space-y-1">
-                <Link href={`/${locale}/products/${item.id}`} className="text-lg font-medium hover:text-primary">{item.name}</Link>
+                <Link href={`/${locale}/products/${item.id}`} className="text-lg font-medium hover:text-primary">{itemName}</Link>
                 <p className="text-sm text-muted-foreground">{dictionary.price} {item.price.toLocaleString('en-US')} UZS</p>
               </div>
               <div className="flex items-center space-x-3 shrink-0 mt-2 sm:mt-0">
@@ -107,15 +117,16 @@ export default function CartPage() {
                   value={item.quantity}
                   onChange={e => updateQuantity(item.id, parseInt(e.target.value))}
                   className="w-20 h-9 text-center"
-                  aria-label={dictionary.quantityFor.replace('{name}', item.name)}
+                  aria-label={dictionary.quantityFor.replace('{name}', itemName)}
                 />
-                <Button variant="ghost" size="icon" onClick={() => handleRemove(item.id, item.name)} aria-label={dictionary.remove.replace('{name}', item.name)}>
+                <Button variant="ghost" size="icon" onClick={() => handleRemove(item.id, item.name)} aria-label={dictionary.remove.replace('{name}', itemName)}>
                   <Trash2 className="h-5 w-5 text-destructive" />
                 </Button>
               </div>
               <p className="sm:ml-auto text-lg font-semibold w-full sm:w-auto text-right sm:text-left mt-2 sm:mt-0">{(item.price * item.quantity).toLocaleString('en-US')} UZS</p>
             </Card>
-          ))}
+          );
+        })}
           {cartItems.length > 0 && (
              <div className="flex justify-end pt-4">
                <Button variant="outline" onClick={handleClearCart} className="text-destructive border-destructive hover:bg-destructive/10">
@@ -165,5 +176,3 @@ export default function CartPage() {
     </div>
   );
 }
-
-    

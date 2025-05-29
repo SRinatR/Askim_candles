@@ -21,7 +21,8 @@ export function Footer({ locale, dictionary }: FooterProps) {
   const pathname = usePathname();
   const currentYear = new Date().getFullYear();
 
-  const isAdminPath = pathname.split('/').includes('admin');
+  // Admin path check should be robust for localized admin paths if they exist in future
+  const isAdminPath = pathname.startsWith('/admin') || (pathname.startsWith(`/${locale}/admin`));
 
   if (isAdminPath) {
     return null;
@@ -32,8 +33,9 @@ export function Footer({ locale, dictionary }: FooterProps) {
       <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
         <div className="flex flex-col sm:flex-row items-center gap-x-4 gap-y-2">
             <p>&copy; {currentYear} Askim candles. {dictionary.rightsReserved}</p>
+            {/* Display version for all users. "Last Updated" is removed from main site footer. */}
             <p className="text-xs">
-              v0.1.0 (Simulated) - Last Updated: {new Date().toLocaleDateString()} (Simulated)
+              v0.1.0 (Simulated)
             </p>
         </div>
         <div className="flex space-x-4">

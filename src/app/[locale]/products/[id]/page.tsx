@@ -6,7 +6,7 @@ import { notFound, useParams } from 'next/navigation';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Zap, ShieldCheck, Package, Clock, Tag, Palette, Droplets, Ruler } from 'lucide-react'; // Added Icons
+import { ShoppingCart, Zap, ShieldCheck, Package, Clock, Tag, Palette, Droplets, Ruler, Info } from 'lucide-react';
 import { useCart } from '@/contexts/CartContext';
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +23,9 @@ import uzMessages from '@/dictionaries/uz.json';
 
 type Dictionary = typeof enMessages;
 type ProductDetailPageStrings = Dictionary['productDetailPage'];
+type CategoriesStrings = Dictionary['categories'];
+type ProductCardStrings = Dictionary['productCard'];
+
 
 const dictionaries: Record<Locale, Dictionary> = {
   en: enMessages,
@@ -36,6 +39,7 @@ const getProductDetailPageDictionaryBundle = (locale: Locale) => {
     page: dict.productDetailPage || { 
       home: "Home",
       products: "Products",
+      skuLabel: "SKU:",
       onlyLeftInStock: "Only {stock} left in stock!",
       outOfStock: "Out of Stock",
       categoryLabel: "Category:",
@@ -56,11 +60,7 @@ const getProductDetailPageDictionaryBundle = (locale: Locale) => {
       addedToCartDesc: "{productName} has been added (Detail Page Fallback).",
       outOfStock: "Out of Stock (Detail Page Fallback)"
     },
-     categories: dict.categories || {
-      "artisanal-candles": "Artisanal Candles",
-      "wax-figures": "Wax Figures",
-      "gypsum-products": "Gypsum Products"
-    }
+     categories: dict.categories || {}
   };
 };
 
@@ -71,7 +71,7 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
   const dictionaryBundle = getProductDetailPageDictionaryBundle(locale);
   const dictionary = dictionaryBundle.page;
   const productCardDict = dictionaryBundle.productCard as ProductCardDictionary;
-  const categoriesDict = dictionaryBundle.categories;
+  const categoriesDict = dictionaryBundle.categories as CategoriesStrings;
 
 
   const product = mockProducts.find(p => p.id === routeParams.id);
@@ -82,16 +82,19 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
     notFound();
   }
 
+  const productName = product.name[locale] || product.name.en;
+  const productDescription = product.description[locale] || product.description.en;
+
   const handleAddToCart = () => {
     addToCart(product);
     toast({
       title: productCardDict.addedToCartTitle,
-      description: productCardDict.addedToCartDesc.replace('{productName}', product.name),
+      description: productCardDict.addedToCartDesc.replace('{productName}', productName),
     });
   };
 
-  const relatedProducts = mockProducts.filter(p => p.category === product.category && p.id !== product.id).slice(0,3);
-  const productCategorySlug = product.category.toLowerCase().replace(/\s+/g, '-');
+  const relatedProducts = mockProducts.filter(p => p.category === product.category && p.id !== product.id && p.isActive).slice(0,3);
+  const productCategorySlug = product.category.toLowerCase().replace(/\s+/g, '-'); // This might need adjustment if category is stored as slug
   const productCategoryName = categoriesDict[productCategorySlug as keyof typeof categoriesDict] || product.category;
 
 
@@ -108,17 +111,17 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
           </BreadcrumbItem>
           <BreadcrumbSeparator><Slash /></BreadcrumbSeparator>
           <BreadcrumbItem>
-            <BreadcrumbPage>{product.name}</BreadcrumbPage>
+            <BreadcrumbPage>{productName}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
       <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
-        <ProductImageGallery images={product.images} altText={product.name} />
+        <ProductImageGallery images={product.images} altText={productName} />
 
         <div className="space-y-6">
           <div className="space-y-2">
-            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">{product.name}</h1>
+            <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">{productName}</h1>
             <p className="text-2xl font-semibold text-primary">{product.price.toLocaleString('en-US')} UZS</p>
             {product.stock > 0 && product.stock <= 5 && (
               <Badge variant="destructive" className="text-xs">{dictionary.onlyLeftInStock.replace('{stock}', String(product.stock))}</Badge>
@@ -126,13 +129,17 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
             {product.stock === 0 && (
               <Badge variant="outline" className="text-xs">{dictionary.outOfStock}</Badge>
             )}
+             {!product.isActive && (
+              <Badge variant="destructive" className="text-sm ml-2">Currently Unavailable</Badge>
+            )}
           </div>
 
-          <p className="text-base text-muted-foreground leading-relaxed">{product.description}</p>
+          <p className="text-base text-muted-foreground leading-relaxed">{productDescription}</p>
 
           <Separator />
 
           <div className="space-y-3 text-sm">
+            {product.sku && <p className="flex items-center"><Info className="mr-2 h-4 w-4 text-muted-foreground"/> <strong className="font-medium">{dictionary.skuLabel}</strong> <span className="ml-1">{product.sku}</span></p>}
             {product.category && <p className="flex items-center"><Tag className="mr-2 h-4 w-4 text-muted-foreground"/> <strong className="font-medium">{dictionary.categoryLabel}</strong> <Link href={`/${locale}/products?category=${productCategorySlug}`} className="text-primary hover:underline ml-1">{productCategoryName}</Link></p>}
             {product.scent && <p className="flex items-center"><Droplets className="mr-2 h-4 w-4 text-muted-foreground"/> <strong className="font-medium">{dictionary.scentLabel}</strong> <span className="ml-1">{product.scent}</span></p>}
             {product.material && <p className="flex items-center"><Palette className="mr-2 h-4 w-4 text-muted-foreground"/> <strong className="font-medium">{dictionary.materialLabel}</strong> <span className="ml-1">{product.material}</span></p>}
@@ -155,11 +162,11 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
             size="lg"
             className="w-full bg-accent text-accent-foreground hover:bg-accent/90 shadow-md hover:shadow-lg transition-all transform hover:scale-105"
             onClick={handleAddToCart}
-            disabled={product.stock === 0}
-            aria-label={`${productCardDict.addToCart} ${product.name}`}
+            disabled={product.stock === 0 || !product.isActive}
+            aria-label={`${productCardDict.addToCart} ${productName}`}
           >
             <ShoppingCart className="mr-2 h-5 w-5" />
-            {product.stock > 0 ? productCardDict.addToCart : (dictionary.outOfStockButton || "Out of Stock")}
+            {product.stock === 0 ? (dictionary.outOfStockButton || "Out of Stock") : productCardDict.addToCart}
           </Button>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 text-sm">

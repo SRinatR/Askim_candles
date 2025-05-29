@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { mockOrders, mockProducts } from "@/lib/mock-data"; 
-import type { Order, CartItem as OrderItemType } from "@/lib/types"; 
+import type { Order, CartItem as OrderItemType, Product } from "@/lib/types"; 
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation"; 
@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
-import { getDictionary } from "@/lib/getDictionary"; // Using the main dictionary getter
+import { getDictionary } from "@/lib/getDictionary";
 
 function getStatusBadgeVariant(status: Order['status']): "default" | "secondary" | "destructive" | "outline" {
   switch (status) {
@@ -26,7 +26,6 @@ function getStatusBadgeVariant(status: Order['status']): "default" | "secondary"
   }
 }
 
-// Type for the dictionary specific to this page
 type AccountOrderDetailPageDictionary = Awaited<ReturnType<typeof getDictionary>>['accountOrderDetailPage'];
 
 function getTranslatedStatus(status: Order['status'], dict: AccountOrderDetailPageDictionary): string {
@@ -58,9 +57,13 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
     notFound();
   }
 
+  // Augment order items with full product details for name and image, considering multilingual names
   const detailedItems = order.items.map(item => {
     const productDetails = mockProducts.find(p => p.id === item.id);
-    return { ...item, name: productDetails?.name || item.name, images: productDetails?.images || item.images };
+    const itemName = productDetails?.name[locale] || productDetails?.name.en || item.name[locale] || item.name.en || "Unknown Product";
+    const itemImages = productDetails?.images || item.images || ["https://placehold.co/100x100.png?text=No+Image"];
+    const mainImage = productDetails?.mainImage || itemImages[0];
+    return { ...item, name: itemName, images: itemImages, mainImage: mainImage }; // Ensure name is the localized one
   });
 
   return (
@@ -100,10 +103,10 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
           <div>
             <h3 className="text-lg font-semibold mb-3">{dictionary.itemsOrdered}</h3>
             <ul className="space-y-4">
-              {detailedItems.map((item: OrderItemType) => (
+              {detailedItems.map((item) => (
                 <li key={item.id} className="flex items-center space-x-4">
                   <div className="relative w-16 h-16 rounded-md overflow-hidden border shrink-0">
-                    <Image src={item.images[0]} alt={item.name} fill className="object-cover" data-ai-hint="ordered item" sizes="64px" />
+                    <Image src={item.mainImage} alt={item.name as string} fill className="object-cover" data-ai-hint="ordered item" sizes="64px" />
                   </div>
                   <div className="flex-grow">
                     <Link href={`/${locale}/products/${item.id}`} className="font-medium hover:text-primary">{item.name}</Link>
@@ -148,4 +151,3 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
     </div>
   );
 }
-

@@ -2,7 +2,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,20 +14,25 @@ import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Languages } from "lucide-react";
 import { mockCategories, mockProducts } from "@/lib/mock-data";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
-import React, { useEffect, useState, useMemo } from "react"; // Added useEffect, useState, useMemo
+import React, { useEffect, useState, useMemo } from "react"; 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"; // For multilingual input
 
 const productSchema = z.object({
-  name: z.string().min(3, { message: "Product name must be at least 3 characters." }),
+  name_en: z.string().min(1, { message: "English product name is required." }),
+  name_ru: z.string().min(1, { message: "Russian product name is required." }),
+  name_uz: z.string().min(1, { message: "Uzbek product name is required." }),
+  description_en: z.string().min(1, { message: "English description is required." }),
+  description_ru: z.string().min(1, { message: "Russian description is required." }),
+  description_uz: z.string().min(1, { message: "Uzbek description is required." }),
   sku: z.string().optional(),
-  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
   price: z.coerce.number().positive({ message: "Price must be a positive number (in UZS)." }),
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL (Data URL in this case)."})).min(1, { message: "At least one image is required." }),
-  mainImageId: z.string().optional(), // This will store the Data URL of the main image
+  mainImageId: z.string().optional(),
   scent: z.string().optional(),
   material: z.string().optional(),
   dimensions: z.string().optional(),
@@ -52,27 +57,23 @@ export default function NewProductPage() {
 
 
   useEffect(() => {
-    // Load custom categories
     const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
     const customCats = storedCustomCategories ? JSON.parse(storedCustomCategories) : [];
     const combinedCategories = [
       ...mockCategories,
       ...customCats.map((catName: string) => ({ id: catName.toLowerCase().replace(/\s+/g, '-'), name: catName, slug: catName.toLowerCase().replace(/\s+/g, '-') }))
     ];
-    // Filter out duplicates by name (preferring mockCategories if names clash)
     const uniqueCombinedCategories = combinedCategories.filter((category, index, self) =>
         index === self.findIndex((c) => c.name === category.name)
     );
     setAvailableCategories(uniqueCombinedCategories);
     
-    // Load custom materials and combine with unique materials from mockProducts
     const storedCustomMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
     const customMats = storedCustomMaterials ? JSON.parse(storedCustomMaterials) : [];
     const initialMaterialsFromProducts = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m)));
     const combinedMaterials = Array.from(new Set([...initialMaterialsFromProducts, ...customMats])).sort();
     setAvailableMaterials(combinedMaterials);
 
-    // Load custom scents and combine with unique scents from mockProducts
     const storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
     const customScnts = storedCustomScents ? JSON.parse(storedCustomScents) : [];
     const initialScentsFromProducts = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s)));
@@ -85,9 +86,9 @@ export default function NewProductPage() {
   const formMethods = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: "",
+      name_en: "", name_ru: "", name_uz: "",
+      description_en: "", description_ru: "", description_uz: "",
       sku: "",
-      description: "",
       price: 0,
       category: "",
       stock: 0,
@@ -107,13 +108,24 @@ export default function NewProductPage() {
   const onSubmit = (data: ProductFormValues) => {
     const newProductData = {
       id: `prod-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      ...data,
-      mainImage: data.mainImageId, // Assign mainImageId (which is a URL) to mainImage
+      name: { en: data.name_en, ru: data.name_ru, uz: data.name_uz },
+      description: { en: data.description_en, ru: data.description_ru, uz: data.description_uz },
+      sku: data.sku,
+      price: data.price,
+      category: data.category,
+      stock: data.stock,
+      images: data.images,
+      mainImage: data.mainImageId, 
+      scent: data.scent,
+      material: data.material,
+      dimensions: data.dimensions,
+      burningTime: data.burningTime,
+      isActive: data.isActive,
     };
     console.log("New Product Data (Simulated):", newProductData);
     toast({
       title: "Product Added (Simulated)",
-      description: `${data.name} has been 'added'. This change is client-side only. Image data URLs are in console.`,
+      description: `${data.name_en} has been 'added'. This change is client-side only. Image data URLs are in console.`,
     });
     router.push("/admin/products");
   };
@@ -138,29 +150,65 @@ export default function NewProductPage() {
             <div className="lg:col-span-2 space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Product Details</CardTitle>
-                  <CardDescription>Provide essential information for the product.</CardDescription>
+                  <CardTitle>Product Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="en" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 mb-4">
+                      <TabsTrigger value="en">English</TabsTrigger>
+                      <TabsTrigger value="ru">Русский</TabsTrigger>
+                      <TabsTrigger value="uz">O'zbekcha</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="en" className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name_en">Product Name (EN)</Label>
+                        <Input id="name_en" {...register("name_en")} />
+                        {errors.name_en && <p className="text-sm text-destructive">{errors.name_en.message}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description_en">Description (EN)</Label>
+                        <Textarea id="description_en" {...register("description_en")} />
+                        {errors.description_en && <p className="text-sm text-destructive">{errors.description_en.message}</p>}
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="ru" className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name_ru">Название продукта (RU)</Label>
+                        <Input id="name_ru" {...register("name_ru")} />
+                        {errors.name_ru && <p className="text-sm text-destructive">{errors.name_ru.message}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description_ru">Описание (RU)</Label>
+                        <Textarea id="description_ru" {...register("description_ru")} />
+                        {errors.description_ru && <p className="text-sm text-destructive">{errors.description_ru.message}</p>}
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="uz" className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name_uz">Mahsulot nomi (UZ)</Label>
+                        <Input id="name_uz" {...register("name_uz")} />
+                        {errors.name_uz && <p className="text-sm text-destructive">{errors.name_uz.message}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description_uz">Tavsifi (UZ)</Label>
+                        <Textarea id="description_uz" {...register("description_uz")} />
+                        {errors.description_uz && <p className="text-sm text-destructive">{errors.description_uz.message}</p>}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader>
+                    <CardTitle>General Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Product Name</Label>
-                      <Input id="name" {...register("name")} placeholder="e.g., Lavender Bliss Candle" />
-                      {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-                    </div>
                      <div className="space-y-2">
                       <Label htmlFor="sku">SKU (Stock Keeping Unit)</Label>
                       <Input id="sku" {...register("sku")} placeholder="e.g., CAND-LAV-01" />
                       {errors.sku && <p className="text-sm text-destructive">{errors.sku.message}</p>}
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" {...register("description")} placeholder="Describe the product..." />
-                    {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
-                  </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="price">Price (UZS)</Label>
@@ -207,6 +255,7 @@ export default function NewProductPage() {
                                     <SelectValue placeholder="Select a scent" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="">None</SelectItem>
                                     {availableScents.map(scent => (
                                     <SelectItem key={scent} value={scent}>{scent}</SelectItem>
                                     ))}
@@ -227,6 +276,7 @@ export default function NewProductPage() {
                                     <SelectValue placeholder="Select a material" />
                                 </SelectTrigger>
                                 <SelectContent>
+                                    <SelectItem value="">None</SelectItem>
                                     {availableMaterials.map(material => (
                                     <SelectItem key={material} value={material}>{material}</SelectItem>
                                     ))}
@@ -279,13 +329,13 @@ export default function NewProductPage() {
                 </CardHeader>
                 <CardContent>
                    <Controller
-                    name="images" // This name must match the Zod schema
+                    name="images"
                     control={control}
                     render={({ field }) => (
                       <ImageUploadArea
                         onImagesChange={(imageDataUrls, mainImageDataUrl) => {
                            setValue("images", imageDataUrls, { shouldValidate: true });
-                           setValue("mainImageId", mainImageDataUrl); // mainImageId is the URL of the main image
+                           setValue("mainImageId", mainImageDataUrl);
                         }}
                         maxFiles={5}
                       />
@@ -297,12 +347,12 @@ export default function NewProductPage() {
               </Card>
             </div>
           </div>
-          <div className="mt-6 flex justify-end">
+          <CardFooter className="mt-6 flex justify-end">
             <Button type="submit" disabled={isSubmitting}>
               <Save className="mr-2 h-4 w-4" />
               {isSubmitting ? "Saving..." : "Save Product (Simulated)"}
             </Button>
-          </div>
+          </CardFooter>
         </form>
         <p className="text-sm text-muted-foreground text-center pt-4">
             Note: Product creation is simulated. Image data (as Data URLs) will be logged to console but not persisted.

@@ -3,7 +3,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,20 +15,26 @@ import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft, Save, Languages } from "lucide-react";
 import { mockCategories, mockProducts } from "@/lib/mock-data";
 import type { Product } from "@/lib/types";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
+import type { Locale } from "@/lib/i1n-config"; // Assuming this is your Locale type
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const productSchema = z.object({
-  name: z.string().min(3, { message: "Product name must be at least 3 characters." }),
+  name_en: z.string().min(1, { message: "English product name is required." }),
+  name_ru: z.string().min(1, { message: "Russian product name is required." }),
+  name_uz: z.string().min(1, { message: "Uzbek product name is required." }),
+  description_en: z.string().min(1, { message: "English description is required." }),
+  description_ru: z.string().min(1, { message: "Russian description is required." }),
+  description_uz: z.string().min(1, { message: "Uzbek description is required." }),
   sku: z.string().optional(),
-  description: z.string().min(10, { message: "Description must be at least 10 characters." }),
   price: z.coerce.number().positive({ message: "Price must be a positive number (in UZS)." }),
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL."})).min(1, { message: "At least one image is required." }),
-  mainImageId: z.string().optional(), // Will store the URL of the main image from the 'images' array
+  mainImageId: z.string().optional(), 
   scent: z.string().optional(),
   material: z.string().optional(),
   dimensions: z.string().optional(),
@@ -47,6 +53,8 @@ export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
+  const adminLocale = (localStorage.getItem('admin-lang') as Locale) || 'en';
+
 
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   
@@ -68,14 +76,18 @@ export default function EditProductPage() {
       const initialMainImageUrl = foundProduct.mainImage || (initialImageUrls.length > 0 ? initialImageUrls[0] : undefined);
 
       reset({
-        name: foundProduct.name,
+        name_en: foundProduct.name.en || "",
+        name_ru: foundProduct.name.ru || "",
+        name_uz: foundProduct.name.uz || "",
+        description_en: foundProduct.description.en || "",
+        description_ru: foundProduct.description.ru || "",
+        description_uz: foundProduct.description.uz || "",
         sku: foundProduct.sku || "",
-        description: foundProduct.description,
         price: foundProduct.price,
         category: foundProduct.category,
         stock: foundProduct.stock,
-        images: initialImageUrls, // These are existing URLs
-        mainImageId: initialMainImageUrl, // This is an existing URL
+        images: initialImageUrls,
+        mainImageId: initialMainImageUrl,
         scent: foundProduct.scent || "",
         material: foundProduct.material || "",
         dimensions: foundProduct.dimensions || "",
@@ -87,7 +99,6 @@ export default function EditProductPage() {
       router.push("/admin/products");
     }
 
-    // Load custom attributes for select dropdowns
     const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
     const customCats = storedCustomCategories ? JSON.parse(storedCustomCategories) : [];
     const combinedCategories = [
@@ -112,21 +123,30 @@ export default function EditProductPage() {
     setAvailableScents(combinedScents);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productId, reset, router, toast]); // `productToEdit` removed from deps to avoid re-fetch loop on form change
+  }, [productId, reset, router, toast]); 
 
 
   const onSubmit = (data: ProductFormValues) => {
-    // The `data.images` will contain a mix of original URLs and new Data URLs if any were added.
-    // `data.mainImageId` will be the URL (original or Data URL) of the selected main image.
     const updatedProductData = { 
       id: productId, 
-      ...data,
-      mainImage: data.mainImageId, // Ensure the mainImage field in the data is set correctly
+      name: { en: data.name_en, ru: data.name_ru, uz: data.name_uz },
+      description: { en: data.description_en, ru: data.description_ru, uz: data.description_uz },
+      sku: data.sku,
+      price: data.price,
+      category: data.category,
+      stock: data.stock,
+      images: data.images,
+      mainImage: data.mainImageId,
+      scent: data.scent,
+      material: data.material,
+      dimensions: data.dimensions,
+      burningTime: data.burningTime,
+      isActive: data.isActive,
     };
     console.log("Updated Product Data (Simulated):", updatedProductData);
     toast({
       title: "Product Updated (Simulated)",
-      description: `${data.name} has been 'updated'. This change is client-side only. Image data in console.`,
+      description: `${data.name_en} has been 'updated'. This change is client-side only. Image data in console.`,
     });
     router.push("/admin/products");
   };
@@ -153,44 +173,78 @@ export default function EditProductPage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-                <Card>
+              <Card>
                 <CardHeader>
-                    <CardTitle>Product Details</CardTitle>
-                    <CardDescription>Update information for this product.</CardDescription>
+                  <CardTitle>Product Information</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Tabs defaultValue="en" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3 mb-4">
+                      <TabsTrigger value="en">English</TabsTrigger>
+                      <TabsTrigger value="ru">Русский</TabsTrigger>
+                      <TabsTrigger value="uz">O'zbekcha</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="en" className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name_en">Product Name (EN)</Label>
+                        <Input id="name_en" {...register("name_en")} />
+                        {errors.name_en && <p className="text-sm text-destructive">{errors.name_en.message}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description_en">Description (EN)</Label>
+                        <Textarea id="description_en" {...register("description_en")} />
+                        {errors.description_en && <p className="text-sm text-destructive">{errors.description_en.message}</p>}
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="ru" className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name_ru">Название продукта (RU)</Label>
+                        <Input id="name_ru" {...register("name_ru")} />
+                        {errors.name_ru && <p className="text-sm text-destructive">{errors.name_ru.message}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description_ru">Описание (RU)</Label>
+                        <Textarea id="description_ru" {...register("description_ru")} />
+                        {errors.description_ru && <p className="text-sm text-destructive">{errors.description_ru.message}</p>}
+                      </div>
+                    </TabsContent>
+                    <TabsContent value="uz" className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name_uz">Mahsulot nomi (UZ)</Label>
+                        <Input id="name_uz" {...register("name_uz")} />
+                        {errors.name_uz && <p className="text-sm text-destructive">{errors.name_uz.message}</p>}
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="description_uz">Tavsifi (UZ)</Label>
+                        <Textarea id="description_uz" {...register("description_uz")} />
+                        {errors.description_uz && <p className="text-sm text-destructive">{errors.description_uz.message}</p>}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                    <CardTitle>General Details</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name">Product Name</Label>
-                        <Input id="name" {...register("name")} />
-                        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-                      </div>
-                       <div className="space-y-2">
                         <Label htmlFor="sku">SKU (Stock Keeping Unit)</Label>
                         <Input id="sku" {...register("sku")} />
                         {errors.sku && <p className="text-sm text-destructive">{errors.sku.message}</p>}
                       </div>
-                    </div>
-
-                    <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" {...register("description")} />
-                    {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                       <div className="space-y-2">
                         <Label htmlFor="price">Price (UZS)</Label>
                         <Input id="price" type="number" step="1" {...register("price")} />
                         {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
+                    </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="stock">Stock Quantity</Label>
                         <Input id="stock" type="number" {...register("stock")} />
                         {errors.stock && <p className="text-sm text-destructive">{errors.stock.message}</p>}
                     </div>
-                    </div>
-
                     <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
                     <Controller
@@ -211,7 +265,6 @@ export default function EditProductPage() {
                     />
                     {errors.category && <p className="text-sm text-destructive">{errors.category.message}</p>}
                     </div>
-
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="scent">Scent</Label>
@@ -298,17 +351,17 @@ export default function EditProductPage() {
                     </CardHeader>
                     <CardContent>
                          <Controller
-                            name="images" // This is the array of all image URLs (original or new DataURLs)
+                            name="images"
                             control={control}
-                            render={({ field }) => ( // field.value here is the array of image URLs
+                            render={({ field }) => (
                             <ImageUploadArea
                                 onImagesChange={(newImageDataUrls, newMainImageUrl) => {
                                     setValue("images", newImageDataUrls, { shouldValidate: true });
                                     setValue("mainImageId", newMainImageUrl); 
                                 }}
                                 maxFiles={5}
-                                initialImageUrls={watch("images")} // Pass current form state for images
-                                initialMainImageUrl={watch("mainImageId")} // Pass current form state for main image ID
+                                initialImageUrls={watch("images")} 
+                                initialMainImageUrl={watch("mainImageId")} 
                             />
                             )}
                         />
@@ -319,12 +372,12 @@ export default function EditProductPage() {
             </div>
         </div>
 
-        <div className="mt-6 flex justify-end">
+        <CardFooter className="mt-6 flex justify-end">
           <Button type="submit" disabled={isSubmitting}>
             <Save className="mr-2 h-4 w-4" />
              {isSubmitting ? "Saving..." : "Save Changes (Simulated)"}
           </Button>
-        </div>
+        </CardFooter>
       </form>
       <p className="text-sm text-muted-foreground text-center pt-4">
           Note: Product updates are simulated. Image data (as Data URLs for new uploads, or existing URLs) will be logged to console but not persisted in mock data.

@@ -8,11 +8,11 @@ import type { Product } from '@/lib/types';
 import { useSearchParams, useParams } from 'next/navigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash, SlidersHorizontal, X } from 'lucide-react';
-import type { Locale } from '@/lib/i1n-config';
+import type { Locale } from '@/lib/i18n-config';
 import type { ProductCardDictionary } from '@/components/products/ProductCard';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area'; // Added ScrollArea
+import { ScrollArea } from '@/components/ui/scroll-area';
 import React, { useState, useMemo, useEffect } from 'react';
 
 import enMessages from '@/dictionaries/en.json';
@@ -69,6 +69,7 @@ const getCombinedDictionary = (locale: Locale) => {
       addedToCartDesc: "{productName} has been added (ProductsPage Fallback).",
       outOfStock: "Out of Stock (ProductsPage Fallback)"
     },
+     categories: dict.categories || {}
   };
 };
 
@@ -87,18 +88,18 @@ export default function ProductsPage() {
   
   const allActiveProducts = useMemo(() => mockProducts.filter(p => p.isActive), []);
 
-
   const { minProductPrice, maxProductPrice } = useMemo(() => {
     if (!allActiveProducts || allActiveProducts.length === 0) {
       return { minProductPrice: 0, maxProductPrice: 500000 };
     }
     const prices = allActiveProducts.map(p => p.price / PRICE_DIVISOR);
+    const min = Math.floor(Math.min(...prices));
+    const max = Math.ceil(Math.max(...prices));
     return {
-      minProductPrice: Math.floor(Math.min(...prices)),
-      maxProductPrice: Math.ceil(Math.max(...prices)),
+      minProductPrice: isNaN(min) ? 0 : min,
+      maxProductPrice: isNaN(max) ? 500000 : max,
     };
   }, [allActiveProducts]);
-
 
   const [filteredAndSortedProducts, setFilteredAndSortedProducts] = useState<Product[]>([]);
 
@@ -111,12 +112,15 @@ export default function ProductsPage() {
     const maxPriceParam = searchParams.get('maxPrice');
     const sortOption = searchParams.get('sort') || 'relevance';
 
-    const minPrice = minPriceParam !== null ? Number(minPriceParam) : minProductPrice;
-    const maxPrice = maxPriceParam !== null ? Number(maxPriceParam) : maxProductPrice;
+    const minPrice = minPriceParam !== null && !isNaN(Number(minPriceParam)) ? Number(minPriceParam) : minProductPrice;
+    const maxPrice = maxPriceParam !== null && !isNaN(Number(maxPriceParam)) ? Number(maxPriceParam) : maxProductPrice;
 
-    let tempProducts = allActiveProducts.filter(product => { // Filter from active products
-      const matchesSearch = searchTerm ? product.name.toLowerCase().includes(searchTerm) || product.description.toLowerCase().includes(searchTerm) : true;
-      const productCategorySlug = product.category.toLowerCase().replace(/\s+/g, '-');
+    let tempProducts = allActiveProducts.filter(product => {
+      const name = product.name[locale] || product.name.en || '';
+      const description = product.description[locale] || product.description.en || '';
+      
+      const matchesSearch = searchTerm ? name.toLowerCase().includes(searchTerm) || description.toLowerCase().includes(searchTerm) : true;
+      const productCategorySlug = product.category.toLowerCase().replace(/\s+/g, '-'); // Assuming category stored as name, need slugification
       const matchesCategory = categories.length > 0 ? categories.includes(productCategorySlug) : true;
       const matchesScent = scents.length > 0 && product.scent ? scents.includes(product.scent) : scents.length === 0;
       const matchesMaterial = materials.length > 0 && product.material ? materials.includes(product.material) : materials.length === 0;
@@ -126,15 +130,17 @@ export default function ProductsPage() {
     });
 
     tempProducts.sort((a, b) => {
+      const nameA = a.name[locale] || a.name.en || '';
+      const nameB = b.name[locale] || b.name.en || '';
       switch (sortOption) {
         case 'price-asc':
           return (a.price / PRICE_DIVISOR) - (b.price / PRICE_DIVISOR);
         case 'price-desc':
           return (b.price / PRICE_DIVISOR) - (a.price / PRICE_DIVISOR);
         case 'name-asc':
-          return a.name.localeCompare(b.name);
+          return nameA.localeCompare(nameB);
         case 'name-desc':
-          return b.name.localeCompare(a.name);
+          return nameB.localeCompare(nameA);
         case 'newest':
            const idA = parseInt(a.id.replace (/[^0-9]/g, ""), 10);
            const idB = parseInt(b.id.replace (/[^0-9]/g, ""), 10);
@@ -147,7 +153,7 @@ export default function ProductsPage() {
       }
     });
     setFilteredAndSortedProducts(tempProducts);
-  }, [searchParams, minProductPrice, maxProductPrice, allActiveProducts]);
+  }, [searchParams, minProductPrice, maxProductPrice, allActiveProducts, locale]);
 
 
   const searchTerm = searchParams.get('search')?.toLowerCase();
@@ -206,8 +212,8 @@ export default function ProductsPage() {
                 <ScrollArea className="flex-1 overflow-y-auto p-1">
                   <ProductFilters
                     dictionary={filtersDictionary}
-                    categoriesData={mockCategories}
-                    allProducts={allActiveProducts} // Pass only active products to filters
+                    categoriesData={mockCategories.map(cat => ({...cat, name: combinedDict.categories[cat.slug as keyof typeof combinedDict.categories] || cat.name}))}
+                    allProducts={allActiveProducts} 
                     onApplyFilters={() => setIsMobileFiltersOpen(false)}
                   />
                 </ScrollArea>
@@ -222,8 +228,8 @@ export default function ProductsPage() {
         <div className="hidden lg:block lg:w-72 lg:sticky lg:top-24 self-start">
           <ProductFilters
             dictionary={filtersDictionary}
-            categoriesData={mockCategories}
-            allProducts={allActiveProducts} // Pass only active products to filters
+            categoriesData={mockCategories.map(cat => ({...cat, name: combinedDict.categories[cat.slug as keyof typeof combinedDict.categories] || cat.name}))}
+            allProducts={allActiveProducts} 
           />
         </div>
         <div className="flex-1">
