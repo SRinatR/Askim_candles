@@ -10,7 +10,7 @@ import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { Logo } from "@/components/icons/Logo";
 import { signIn, useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
-import { Chrome, Send, Globe, Mail, KeyRound } from "lucide-react";
+import { Chrome, Send, Globe, Mail, KeyRound, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext"; 
 import type { Locale } from '@/lib/i1n-config';
 
@@ -45,6 +45,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [isSubmittingSocial, setIsSubmittingSocial] = React.useState("");
   const [isSubmittingEmail, setIsSubmittingEmail] = useState(false);
 
@@ -54,7 +55,7 @@ export default function LoginPage() {
     if (nextAuthStatus === "authenticated" || simulatedUser) {
       router.push(callbackUrl); 
     }
-  }, [nextAuthStatus, simulatedUser, router, callbackUrl, locale]); // Added locale to dependency array
+  }, [nextAuthStatus, simulatedUser, router, callbackUrl, locale]);
 
   const handleSocialSignIn = async (provider: string) => {
     setIsSubmittingSocial(provider);
@@ -67,8 +68,6 @@ export default function LoginPage() {
         setIsSubmittingSocial("");
         return;
       }
-      // Ensure callbackUrl is correctly prefixed with locale if NextAuth doesn't handle it.
-      // For now, assuming NextAuth's default redirect logic is sufficient with middleware.
       const result = await signIn(provider, { callbackUrl });
       if (result?.error) {
         toast({
@@ -96,6 +95,7 @@ export default function LoginPage() {
     if(loginSuccess) {
         router.push(callbackUrl);
     }
+    // Toasts for login failure are handled within simulatedLogin
     setIsSubmittingEmail(false);
   };
   
@@ -136,13 +136,23 @@ export default function LoginPage() {
                 <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
                   id="password-login" 
-                  type="password" 
+                  type={showPassword ? "text" : "password"}
                   placeholder={dictionary.passwordPlaceholder} 
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
                   required 
-                  className="pl-10"
+                  className="pl-10 pr-10" 
                 />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={isSubmittingEmail || isLoadingSimulatedAuth}>

@@ -47,15 +47,13 @@ export default function EditProductPage() {
     resolver: zodResolver(productSchema),
   });
 
-  const { register, handleSubmit, control, formState: { errors }, reset, setValue, watch } = formMethods;
+  const { register, handleSubmit, control, formState: { errors, isSubmitting }, reset, setValue, watch } = formMethods;
 
   useEffect(() => {
     const foundProduct = mockProducts.find(p => p.id === productId);
     if (foundProduct) {
       setProductToEdit(foundProduct);
       const initialImageUrls = foundProduct.images || [];
-      // The mainImageId should be the ID of the UploadedImage, or the URL if it's an existing one.
-      // For mock data, let's assume foundProduct.mainImage or images[0] is the main image URL.
       const initialMainImageUrl = foundProduct.mainImage || (foundProduct.images && foundProduct.images.length > 0 ? foundProduct.images[0] : undefined);
 
       reset({
@@ -198,16 +196,12 @@ export default function EditProductPage() {
                          <Controller
                             name="images" 
                             control={control}
-                            render={({ field }) => ( // field here represents the 'images' field (array of strings)
+                            render={({ field }) => (
                             <ImageUploadArea
                                 onImagesChange={(imagesData, mainImgIdFromUploadArea) => {
-                                    // imagesData contains UploadedImage objects (file, preview, id)
-                                    // We need to store an array of preview URLs (Data URLs or existing HTTP URLs) in the form
                                     const newImagePreviews = imagesData.map(img => img.preview);
                                     setValue("images", newImagePreviews, { shouldValidate: true });
 
-                                    // mainImgIdFromUploadArea is the ID of the UploadedImage marked as main
-                                    // We need to find its corresponding preview URL to store in mainImageId form field
                                     const mainImgObject = imagesData.find(img => img.id === mainImgIdFromUploadArea);
                                     const finalMainImagePreview = mainImgObject ? mainImgObject.preview : (newImagePreviews.length > 0 ? newImagePreviews[0] : undefined);
                                     setValue("mainImageId", finalMainImagePreview);
@@ -219,16 +213,16 @@ export default function EditProductPage() {
                             )}
                         />
                         {errors.images && <p className="text-sm text-destructive mt-2">{errors.images.message}</p>}
-                         {errors.mainImageId && <p className="text-sm text-destructive mt-2">{errors.mainImageId.message}</p>}
+                         {errors.mainImageId && <p className="text-sm text-destructive mt-2">{/* errors.mainImageId.message */}</p>}
                     </CardContent>
                 </Card>
             </div>
         </div>
 
         <div className="mt-6 flex justify-end">
-          <Button type="submit" disabled={formMethods.formState.isSubmitting}>
+          <Button type="submit" disabled={isSubmitting}>
             <Save className="mr-2 h-4 w-4" />
-             {formMethods.formState.isSubmitting ? "Saving..." : "Save Changes (Simulated)"}
+             {isSubmitting ? "Saving..." : "Save Changes (Simulated)"}
           </Button>
         </div>
       </form>

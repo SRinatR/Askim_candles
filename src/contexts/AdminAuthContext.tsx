@@ -22,18 +22,18 @@ interface AdminAuthContextType {
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
-const ADMIN_STORAGE_KEY = 'askimAdminUser'; // Updated key
-const DYNAMIC_MANAGERS_STORAGE_KEY = 'askimDynamicManagers'; // Updated key
+const ADMIN_STORAGE_KEY = 'askimAdminUser';
+const DYNAMIC_MANAGERS_STORAGE_KEY = 'askimDynamicManagers';
 
 const initialPredefinedUsers: Record<string, AdminUser> = {
-  'admin@askim.com': { // Updated email domain
+  'admin@askim.com': { 
     id: 'admin001',
     email: 'admin@askim.com',
     name: 'Store Administrator',
     role: 'ADMIN',
     password: 'adminpass', 
   },
-  'manager@askim.com': { // Updated email domain
+  'manager@askim.com': { 
     id: 'manager001',
     email: 'manager@askim.com',
     name: 'Store Manager',
@@ -105,7 +105,12 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       return true;
     } else {
       logAdminAction(email, "Admin Login Failed", { reason: "Invalid credentials" });
-      toast({ title: "Admin Login Failed", description: "Invalid email or password.", variant: "destructive" });
+      toast({ 
+        title: "Admin Login Failed", 
+        description: "Invalid email or password. Please check your credentials and try again.", 
+        variant: "destructive",
+        duration: 5000
+      });
     }
     setIsLoading(false);
     return false;
@@ -124,7 +129,12 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const addManager = async (name: string, email: string, pass: string): Promise<boolean> => {
     const lowerEmail = email.toLowerCase();
     if (predefinedUsers[lowerEmail] || dynamicallyAddedManagers.some(m => m.email.toLowerCase() === lowerEmail)) {
-        toast({ title: "Failed to Add Manager", description: "Email already exists.", variant: "destructive" });
+        toast({ 
+          title: "Failed to Add Manager", 
+          description: "An account with this email address already exists. Please use a different email.", 
+          variant: "destructive",
+          duration: 5000 
+        });
         if (currentAdminUser?.email) {
           logAdminAction(currentAdminUser.email, "Add Manager Failed", { managerEmail: email, reason: "Email exists" });
         }
@@ -140,6 +150,10 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     const updatedManagers = [...dynamicallyAddedManagers, newManager];
     setDynamicallyAddedManagers(updatedManagers);
     localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
+    toast({
+        title: "Manager Added (Simulated)",
+        description: `${name} (${email}) has been 'added' as a manager. This change is client-side (localStorage).`,
+    });
     if (currentAdminUser?.email) {
       logAdminAction(currentAdminUser.email, "Manager Added (Simulated)", { managerEmail: email, managerName: name });
     }

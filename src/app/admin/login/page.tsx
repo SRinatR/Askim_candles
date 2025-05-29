@@ -4,13 +4,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Keep Label as it's used here
+import { Label } from "@/components/ui/label"; 
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logo } from "@/components/icons/Logo";
 import React, { useState, useEffect } from "react";
-import { Mail, KeyRound, ShieldAlert } from "lucide-react";
+import { Mail, KeyRound, ShieldAlert, Eye, EyeOff } from "lucide-react";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import type { AdminLocale } from "@/admin/lib/i18n-config-admin";
 import { i18nAdmin } from "@/admin/lib/i18n-config-admin";
@@ -22,17 +22,17 @@ type AdminLoginDictionary = typeof enAdminMessages.adminLoginPage;
 export default function AdminLoginPage() {
   const { login, isLoading, currentAdminUser } = useAdminAuth();
   const router = useRouter();
-  const { toast } = useToast();
+  const { toast } = useToast(); // Keep for other potential toasts, though login errors are now from context
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [dict, setDict] = useState<AdminLoginDictionary | null>(null);
   
   useEffect(() => {
     async function loadDictionary() {
-      // For login page, default to English or detect browser preference if desired
-      // For simplicity, using default admin locale
-      const localeToLoad = i18nAdmin.defaultLocale; 
+      const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
+      const localeToLoad = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
       const fullDict = await getAdminDictionary(localeToLoad);
       setDict(fullDict.adminLoginPage);
     }
@@ -45,16 +45,13 @@ export default function AdminLoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dict) return; // Dictionary not loaded yet
+    if (!dict) return; 
 
     if (!email || !password) {
         toast({ title: dict.loginErrorTitle, description: dict.loginErrorDescRequired, variant: "destructive" });
         return;
     }
-    const success = await login(email, password); // login function in AdminAuthContext handles its own toasts
-    if (success) {
-      // router.push will be handled by AdminAuthContext after successful login
-    }
+    await login(email, password); // login function in AdminAuthContext handles its own toasts & redirect
   };
   
   if (isLoading || currentAdminUser || !dict) {
@@ -98,14 +95,24 @@ export default function AdminLoginPage() {
                 <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                 <Input 
                   id="password" 
-                  type="password" 
+                  type={showPassword ? "text" : "password"}
                   placeholder={dict.passwordPlaceholder}
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
                   required 
-                  className="pl-10"
+                  className="pl-10 pr-10"
                   autoComplete="current-password"
                 />
+                 <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
               </div>
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>

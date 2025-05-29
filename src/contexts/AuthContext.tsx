@@ -7,7 +7,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation'; 
 import type { Locale } from '@/lib/i1n-config';
 
-// Import main dictionaries
 import enMessages from '@/dictionaries/en.json';
 import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
@@ -92,7 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     const users = getStoredUsers();
     const user = users[email.toLowerCase()];
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
 
     if (user && user.password === pass && user.isConfirmed) { 
       setCurrentUser(user);
@@ -101,9 +100,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
       return true;
     } else if (user && user.password === pass && !user.isConfirmed) {
-      toast({ title: dictionary.loginFailed, description: dictionary.accountNotConfirmed, variant: "destructive" });
+      toast({ 
+        title: dictionary.loginFailed, 
+        description: dictionary.accountNotConfirmed || "Your account is not confirmed. Please complete the registration process or check your confirmation email.", 
+        variant: "destructive",
+        duration: 5000 
+      });
     } else {
-      toast({ title: dictionary.loginFailed, description: dictionary.invalidEmailPassword, variant: "destructive" });
+      toast({ 
+        title: dictionary.loginFailed, 
+        description: dictionary.invalidEmailPassword || "The email or password you entered is incorrect. Please try again.", 
+        variant: "destructive",
+        duration: 5000 
+      });
     }
     setIsLoading(false);
     return false;
@@ -112,13 +121,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const registerStep1 = async (email: string, pass: string, confirmPass: string): Promise<boolean> => {
     setIsLoading(true);
      if (pass !== confirmPass) {
-      toast({ title: dictionary.registrationError, description: dictionary.errorPasswordsDontMatch, variant: "destructive" });
+      toast({ 
+        title: dictionary.registrationError, 
+        description: dictionary.errorPasswordsDontMatch || "Passwords do not match. Please ensure both password fields are identical.", 
+        variant: "destructive",
+        duration: 5000
+      });
       setIsLoading(false);
       return false;
     }
     const users = getStoredUsers();
     if (users[email.toLowerCase()]) {
-      toast({ title: dictionary.registrationFailed, description: dictionary.emailExists, variant: "destructive" });
+      toast({ 
+        title: dictionary.registrationFailed, 
+        description: dictionary.emailExists || "An account with this email address already exists. Please try a different email or log in.", 
+        variant: "destructive",
+        duration: 5000 
+      });
       setIsLoading(false);
       return false;
     }
@@ -130,7 +149,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const registerStep2 = async (firstName: string, lastName: string): Promise<boolean> => {
     setIsLoading(true);
     if (!registrationData || !registrationData.email || !registrationData.password) {
-      toast({ title: dictionary.registrationError, description: dictionary.prevStepDataMissing, variant: "destructive" });
+      toast({ 
+        title: dictionary.registrationError, 
+        description: dictionary.prevStepDataMissing || "Previous registration step data is missing. Please start over.", 
+        variant: "destructive",
+        duration: 5000
+      });
       setIsLoading(false);
       return false;
     }
@@ -146,8 +170,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const confirmAccount = async (): Promise<boolean> => {
     setIsLoading(true);
+    await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
     if (!registrationData || !registrationData.email || !registrationData.isRegistered) {
-       toast({ title: dictionary.confirmationError, description: dictionary.noPendingReg, variant: "destructive" });
+       toast({ 
+        title: dictionary.confirmationError, 
+        description: dictionary.noPendingReg || "No pending registration found to confirm, or registration was incomplete. Please start the registration process again.", 
+        variant: "destructive",
+        duration: 5000
+      });
        setIsLoading(false);
        return false;
     }
@@ -165,7 +195,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
       return true;
     }
-    toast({ title: dictionary.confirmationError, description: dictionary.confirmFailedUserNotFound, variant: "destructive" });
+    toast({ 
+      title: dictionary.confirmationError, 
+      description: dictionary.confirmFailedUserNotFound || "Could not find user to confirm. Please try registering again.", 
+      variant: "destructive",
+      duration: 5000
+    });
     setIsLoading(false);
     return false;
   };

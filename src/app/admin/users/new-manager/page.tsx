@@ -11,12 +11,10 @@ import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, UserPlus } from "lucide-react";
+import { ArrowLeft, UserPlus, Eye, EyeOff } from "lucide-react"; // Added Eye, EyeOff
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import React, { useEffect } from 'react';
-// Removed: import { logAdminAction } from '@/admin/lib/admin-logger'; // Logging is handled within AdminAuthContext
+import React, { useEffect, useState } from 'react'; // Added useState
 
-// TODO: Localize texts when admin i18n is fully implemented
 
 const managerSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -29,7 +27,8 @@ type ManagerFormValues = z.infer<typeof managerSchema>;
 export default function NewManagerPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { isAdmin, addManager, currentAdminUser } = useAdminAuth();
+  const { isAdmin, addManager, isLoading: isAdminAuthLoading } = useAdminAuth(); // Renamed isLoading to avoid conflict
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<ManagerFormValues>({
     resolver: zodResolver(managerSchema),
@@ -39,28 +38,27 @@ export default function NewManagerPage() {
       password: "",
     },
   });
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = form; // Get isSubmitting
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = form;
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isAdminAuthLoading && !isAdmin) { // Check isAdminAuthLoading
       router.replace('/admin/dashboard');
     }
-  }, [isAdmin, router]);
+  }, [isAdmin, router, isAdminAuthLoading]);
 
 
   const onSubmit = async (data: ManagerFormValues) => {
-    const success = await addManager(data.name, data.email, data.password); // Logging is now inside addManager
+    const success = await addManager(data.name, data.email, data.password); 
     if (success) {
-        toast({
-            title: "Manager Added (Simulated)",
-            description: `${data.name} has been 'added' as a manager. This change is client-side (localStorage).`,
-        });
+        // Toast message for success is handled in addManager
         router.push("/admin/users");
-    } else {
-        // Toast for failure (e.g. email exists) will be handled by addManager in context
-    }
+    } 
+    // Toast for failure (e.g. email exists) will be handled by addManager in context
   };
   
+  if (isAdminAuthLoading) { // Check isAdminAuthLoading
+      return <div className="flex justify-center items-center min-h-[300px]"><p>Loading...</p></div>;
+  }
   if (!isAdmin) {
       return <div className="flex justify-center items-center min-h-[300px]"><p>Access Denied. Redirecting...</p></div>;
   }
@@ -100,13 +98,31 @@ export default function NewManagerPage() {
 
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" {...register("password")} placeholder="••••••••" />
+              <div className="relative">
+                <Input 
+                    id="password" 
+                    type={showPassword ? "text" : "password"} 
+                    {...register("password")} 
+                    placeholder="••••••••" 
+                    className="pr-10"
+                />
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
+                    onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+              </div>
               {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
             </div>
           </CardContent>
         </Card>
         <div className="mt-6 flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || isAdminAuthLoading}>
             <UserPlus className="mr-2 h-4 w-4" /> 
             {isSubmitting ? "Adding..." : "Add Manager (Simulated)"}
           </Button>

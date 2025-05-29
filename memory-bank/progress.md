@@ -8,40 +8,46 @@
 *   **Brand Name:** "Askim candles" (updated in Logo, dictionaries).
 *   **Main Site Internationalization (i18n - UZ default, RU, EN):**
     *   Path-based routing (`/[locale]/...`). Dictionary files and getters in place.
-    *   All key e-commerce pages (`HomePage`, `About`, `Cart`, `Checkout`, `Login`, `Register`, `Account` section, `ProductDetail`, `ProductList`) moved to `/[locale]` and localized.
-    *   Functional language switcher in Header (desktop dropdown, compact mobile list).
-    *   Middleware (`middleware.ts`) for locale handling.
+    *   All key e-commerce pages (`HomePage`, `About`, `Cart`, `Checkout`, `Login`, `Register`, `Account` section, `ProductDetail`, `ProductList`) moved to `/[locale]` and localized for static text.
+    *   Functional language switcher in Header (desktop dropdown, compact mobile horizontal list).
+    *   Middleware (`middleware.ts`) for locale handling and redirection.
 *   **Styling:** Tailwind CSS, ShadCN UI. Custom theme. Main site header/footer hidden on admin pages. Global CSS applied to admin panel.
 *   **Main Site User Authentication (Hybrid & Localized):**
     *   NextAuth.js with Google Provider: Functional.
-    *   Client-Simulated Email/Password (`AuthContext`): Multi-step registration, login, logout. All locale-aware.
+    *   Client-Simulated Email/Password (`AuthContext`): Multi-step registration with simulated confirmation, login, logout. All locale-aware.
+    *   **Password visibility toggles** added to login and registration forms.
+    *   **Enhanced toast feedback** for login/registration errors from `AuthContext`.
 *   **Checkout Flow:** Users must be logged in (either NextAuth or simulated) to proceed to checkout.
 *   **Prices in UZS:** Product prices in `mock-data.ts` adjusted; display components show UZS using `toLocaleString`.
 *   **Product Filters (Main Site):**
     *   Category, Scent, Material filters.
     *   Scent and Material options are dynamically generated from `mockProducts`.
-    *   Price range filter with slider and input fields. **(Currently being enhanced for dynamic min/max)**.
+    *   Price range filter with slider and input fields, with **dynamic min/max price calculation** based on `allProducts`.
     *   Filters available in a mobile-friendly sheet.
-*   **Product Sorting (Main Site):** UI for sorting by relevance, price, name, newest available. **(Functionality being verified)**.
+    *   Filter application logic refined.
+*   **Product Sorting (Main Site):** UI for sorting by relevance, price, name, newest available. **Functionality verified** for mock data.
 *   **Admin Panel Foundation (`/admin`):**
     *   **Simulated Authentication (`AdminAuthContext`):** Login page (`/admin/login`) for 'ADMIN' and 'MANAGER' roles. Logout functionality. Dynamically added managers (via UI by Admin) are stored in `localStorage` and checked by `AdminAuthContext`.
+    *   **Password visibility toggle** added to admin login form.
+    *   **Enhanced toast feedback** for admin login errors from `AdminAuthContext`.
     *   **Role-Based Access:**
         *   Navigation items in `AdminLayout.tsx` are strictly visible based on 'ADMIN' or 'MANAGER' roles.
         *   Page-level access control for admin-only pages (`/admin/users`, `/admin/settings`, `/admin/logs`) with redirection.
     *   **Admin Layout (`src/app/admin/layout.tsx`):**
         *   Collapsible sidebar, header with toggles.
         *   **Dark/Light Theme Toggle:** Functional, preference saved in `localStorage`.
-        *   **i18n (EN/RU):** Functional language switcher (dropdown), preference saved in `localStorage`. Admin layout text and some page titles are localized.
+        *   **i18n (EN/RU):** Functional language switcher (dropdown), preference saved in `localStorage`. Admin layout text and some page titles (Dashboard, Login) are localized.
     *   **Mobile Access Restriction:** Admin panel shows a message to use desktop if accessed on mobile (except login).
     *   **Version Display:** Admin panel footer shows simulated version and update date.
     *   **Product Management Section (`/admin/products`, `/new`, `/edit/[id]`):**
-        *   UI for listing products (mock data), including **product image display**.
+        *   UI for listing products (mock data), including **product main image display**.
         *   Forms for product CRUD (client-side simulated actions) with `react-hook-form` and Zod.
         *   **Image Upload:** `ImageUploadArea.tsx` component with drag-and-drop, previews, and main image selection integrated into product forms (simulated using Data URLs).
         *   **Expanded attributes in forms:** Scent, Material, Dimensions, Burning Time.
     *   **User Management Section (`/admin/users`, `/new-manager` - Admin Only):**
         *   UI for listing managers (predefined + localStorage).
         *   Form for adding new managers (client-side simulated via `localStorage`).
+        *   **Password visibility toggle** added to new manager form.
     *   **Client Management Section (`/admin/clients`):**
         *   **UI for listing mock clients** with search and simulated block/unblock functionality.
     *   **Logs Section (`/admin/logs` - Admin Only):**
@@ -60,7 +66,7 @@
     *   Real data visualization on Dashboard.
     *   Advanced table features (pagination, server-side sort/filter) for Products, Orders, Users, Clients.
     *   Complete translation of all admin panel pages/components into EN/RU.
-    *   UI for managing flexible key-value product attributes in admin forms.
+    *   UI for managing flexible key-value product attributes in admin forms (currently basic text inputs).
 *   **Backend Integration (Prisma/PostgreSQL - Next Major Phase):**
     *   Define full Prisma schema (initial schema outlined in `deployment_guide.md`).
     *   Implement all API routes or Server Actions for data CUD for all admin sections.
@@ -81,13 +87,15 @@
 
 ## 3. Current Status
 
-*   **Main Site:** MVP with core e-commerce UI flows implemented and largely localized (UZ/RU/EN). Authentication is hybrid. Product data is mocked, prices in UZS. Product filters are dynamic for categories/scent/material.
-*   **Admin Panel:** UI shell created with simulated authentication, collapsible sidebar, role-based navigation, dark/light theme, and EN/RU i18n.
+*   **Main Site:** MVP with core e-commerce UI flows implemented and largely localized (UZ/RU/EN). Authentication is hybrid (NextAuth Google + Simulated Email/Pass). Product data is mocked, prices in UZS. Product filters are dynamic for categories/scent/material, with dynamic price range. Sorting verified.
+*   **Admin Panel:** UI shell created with simulated authentication (ADMIN/MANAGER roles), collapsible sidebar, role-based navigation, dark/light theme, and EN/RU i18n.
     *   Product management includes image display in list, forms with drag-and-drop image upload (simulated), and expanded attribute fields.
     *   User (Manager) management includes adding new managers (simulated via `localStorage`).
     *   Clients section shows mock client data with search/simulated block.
     *   Logs section shows simulated admin actions from `localStorage` with a clear function.
     *   Dashboard shows mock stats and recent simulated activity.
+    *   Mobile access is restricted. Version info displayed.
+    *   Password visibility toggles added to admin login and new manager forms.
 *   **Memory Bank system active.** `deployment_guide.md` created and updated.
 
 ## 4. Known Issues/Previous Errors Addressed (Recent)
@@ -102,9 +110,11 @@
 *   Admin panel shows version/update info.
 *   Admin panel product image upload/selection UI implemented (simulated).
 *   Granular admin access control refined for menu and pages.
-*   Product filters for scent/material are now dynamic.
+*   Product filters for scent/material are now dynamic; price range is dynamic.
 *   Forced login before checkout implemented.
 *   Prices converted to UZS.
 *   Admin panel "Clients" and "Logs" sections have initial simulated UI and functionality.
 *   Product images displayed in admin product list.
 *   Parsing/module not found errors for `FormProvider`, `react-dropzone`, icons, and `cn` utility have been addressed.
+*   Password visibility toggles added to login/registration and admin forms.
+*   Login/registration error feedback improved with clearer toast messages.

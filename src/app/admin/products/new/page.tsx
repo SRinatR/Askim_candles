@@ -18,7 +18,6 @@ import { mockCategories } from "@/lib/mock-data";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
 import React from "react";
 
-// Updated Zod schema for products
 const productSchema = z.object({
   name: z.string().min(3, { message: "Product name must be at least 3 characters." }),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
@@ -26,7 +25,7 @@ const productSchema = z.object({
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL (Data URL in this case)."})).min(1, { message: "At least one image is required." }),
-  mainImageId: z.string().optional(), // ID/URL of the image marked as main
+  mainImageId: z.string().optional(), 
   scent: z.string().optional(),
   material: z.string().optional(),
   dimensions: z.string().optional(),
@@ -61,8 +60,6 @@ export default function NewProductPage() {
   
   const onSubmit = (data: ProductFormValues) => {
     console.log("New Product Data (Simulated):", data);
-    // Here you would typically send data to your backend API
-    // For now, we just show a toast and redirect
     toast({
       title: "Product Added (Simulated)",
       description: `${data.name} has been 'added'. This change is client-side only. Image data URLs are in console.`,
@@ -193,7 +190,7 @@ export default function NewProductPage() {
                     )}
                   />
                   {errors.images && <p className="text-sm text-destructive mt-2">{errors.images.message}</p>}
-                  {errors.mainImageId && <p className="text-sm text-destructive mt-2">{errors.mainImageId.message}</p>}
+                  {errors.mainImageId && <p className="text-sm text-destructive mt-2">{/* errors.mainImageId.message */}</p>}
                 </CardContent>
               </Card>
             </div>

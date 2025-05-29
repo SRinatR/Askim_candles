@@ -7,21 +7,20 @@ import { mockProducts, mockCategories } from '@/lib/mock-data';
 import type { Product } from '@/lib/types';
 import { useSearchParams, useParams } from 'next/navigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Slash, SlidersHorizontal } from 'lucide-react';
+import { Slash, SlidersHorizontal, X } from 'lucide-react'; // Added X
 import type { Locale } from '@/lib/i1n-config';
 import type { ProductCardDictionary } from '@/components/products/ProductCard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 // Importing main dictionaries
 import enMessages from '@/dictionaries/en.json';
 import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
-type FullDictionary = typeof enMessages; // Assuming en.json has all keys
-// Consistent price divisor for filter logic
-const PRICE_DIVISOR = 1; // Assuming prices in mockProducts are direct UZS values
+type FullDictionary = typeof enMessages; 
+const PRICE_DIVISOR = 1; 
 
 const dictionaries: Record<Locale, FullDictionary> = {
   en: enMessages,
@@ -88,7 +87,7 @@ export default function ProductsPage() {
 
   const { minProductPrice, maxProductPrice } = useMemo(() => {
     if (!mockProducts || mockProducts.length === 0) {
-      return { minProductPrice: 0, maxProductPrice: 500000 }; // Default if no products
+      return { minProductPrice: 0, maxProductPrice: 500000 }; 
     }
     const prices = mockProducts.map(p => p.price / PRICE_DIVISOR);
     return {
@@ -98,57 +97,59 @@ export default function ProductsPage() {
   }, []);
 
 
+  const [filteredAndSortedProducts, setFilteredAndSortedProducts] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const searchTerm = searchParams.get('search')?.toLowerCase();
+    const categories = searchParams.getAll('category');
+    const scents = searchParams.getAll('scent');
+    const materials = searchParams.getAll('material');
+    const minPriceParam = searchParams.get('minPrice');
+    const maxPriceParam = searchParams.get('maxPrice');
+    const sortOption = searchParams.get('sort') || 'relevance';
+
+    const minPrice = minPriceParam !== null ? Number(minPriceParam) : minProductPrice;
+    const maxPrice = maxPriceParam !== null ? Number(maxPriceParam) : maxProductPrice;
+
+    let tempProducts = mockProducts.filter(product => {
+      const matchesSearch = searchTerm ? product.name.toLowerCase().includes(searchTerm) || product.description.toLowerCase().includes(searchTerm) : true;
+      const productCategorySlug = product.category.toLowerCase().replace(/\s+/g, '-');
+      const matchesCategory = categories.length > 0 ? categories.includes(productCategorySlug) : true;
+      const matchesScent = scents.length > 0 && product.scent ? scents.includes(product.scent) : scents.length === 0;
+      const matchesMaterial = materials.length > 0 && product.material ? materials.includes(product.material) : materials.length === 0;
+      const productPrice = product.price / PRICE_DIVISOR;
+      const matchesPrice = productPrice >= minPrice && productPrice <= maxPrice;
+      return matchesSearch && matchesCategory && matchesScent && matchesMaterial && matchesPrice;
+    });
+
+    tempProducts.sort((a, b) => {
+      switch (sortOption) {
+        case 'price-asc':
+          return (a.price / PRICE_DIVISOR) - (b.price / PRICE_DIVISOR);
+        case 'price-desc':
+          return (b.price / PRICE_DIVISOR) - (a.price / PRICE_DIVISOR);
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'newest':
+           const idA = parseInt(a.id.replace (/[^0-9]/g, ""), 10);
+           const idB = parseInt(b.id.replace (/[^0-9]/g, ""), 10);
+           if (!isNaN(idA) && !isNaN(idB)) {
+             return idB - idA; 
+           }
+           return b.id.localeCompare(a.id); 
+        default:
+          return 0;
+      }
+    });
+    setFilteredAndSortedProducts(tempProducts);
+  }, [searchParams, minProductPrice, maxProductPrice]);
+
+
   const searchTerm = searchParams.get('search')?.toLowerCase();
-  const categories = searchParams.getAll('category');
-  const scents = searchParams.getAll('scent');
-  const materials = searchParams.getAll('material');
-
-  const minPriceParam = searchParams.get('minPrice');
-  const maxPriceParam = searchParams.get('maxPrice');
-
-  const minPrice = minPriceParam !== null ? Number(minPriceParam) : minProductPrice;
-  const maxPrice = maxPriceParam !== null ? Number(maxPriceParam) : maxProductPrice;
-  
-  const sortOption = searchParams.get('sort') || 'relevance';
-
-  const filteredProducts = mockProducts.filter(product => {
-    const matchesSearch = searchTerm ? product.name.toLowerCase().includes(searchTerm) || product.description.toLowerCase().includes(searchTerm) : true;
-    const productCategorySlug = product.category.toLowerCase().replace(/\s+/g, '-');
-    const matchesCategory = categories.length > 0 ? categories.includes(productCategorySlug) : true;
-    const matchesScent = scents.length > 0 && product.scent ? scents.includes(product.scent) : scents.length === 0;
-    const matchesMaterial = materials.length > 0 && product.material ? materials.includes(product.material) : materials.length === 0;
-    const productPrice = product.price / PRICE_DIVISOR;
-    const matchesPrice = productPrice >= minPrice && productPrice <= maxPrice;
-
-
-    return matchesSearch && matchesCategory && matchesScent && matchesMaterial && matchesPrice;
-  });
-
-  const sortedProducts = [...filteredProducts].sort((a, b) => {
-    switch (sortOption) {
-      case 'price-asc':
-        return (a.price / PRICE_DIVISOR) - (b.price / PRICE_DIVISOR);
-      case 'price-desc':
-        return (b.price / PRICE_DIVISOR) - (a.price / PRICE_DIVISOR);
-      case 'name-asc':
-        return a.name.localeCompare(b.name);
-      case 'name-desc':
-        return b.name.localeCompare(a.name);
-      case 'newest':
-         // Assuming newer products have higher IDs (or timestamp in real data)
-         const idA = parseInt(a.id.replace (/[^0-9]/g, ""), 10); // Extract numbers from ID
-         const idB = parseInt(b.id.replace (/[^0-9]/g, ""), 10);
-         if (!isNaN(idA) && !isNaN(idB)) {
-           return idB - idA; 
-         }
-         return b.id.localeCompare(a.id); // Fallback to string comparison
-      default: // relevance or unknown
-        return 0;
-    }
-  });
-
   const pageTitle = searchTerm ? dictionary.searchResultsTitle.replace('{searchTerm}', searchTerm) : dictionary.allProductsTitle;
-  const productsCount = sortedProducts.length;
+  const productsCount = filteredAndSortedProducts.length;
 
   let productsCountText = "";
   if (productsCount === 1 && dictionary.productsFound) {
@@ -192,21 +193,21 @@ export default function ProductsPage() {
                   {filtersDictionary.filtersTitle}
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="p-0 w-full max-w-xs sm:max-w-sm">
-                <SheetHeader className="p-4 border-b flex flex-row justify-between items-center">
+              <SheetContent side="left" className="p-0 w-full max-w-xs sm:max-w-sm flex flex-col">
+                <SheetHeader className="p-4 border-b flex flex-row justify-between items-center shrink-0">
                   <SheetTitle>{filtersDictionary.filtersTitle}</SheetTitle>
                   <SheetClose asChild>
                      <Button variant="ghost" size="icon"><X className="h-5 w-5"/></Button>
                   </SheetClose>
                 </SheetHeader>
-                <div className="overflow-y-auto p-1">
+                <ScrollArea className="flex-1 overflow-y-auto p-1">
                   <ProductFilters 
                     dictionary={filtersDictionary} 
                     categoriesData={mockCategories}
                     allProducts={mockProducts}
                     onApplyFilters={() => setIsMobileFiltersOpen(false)}
                   />
-                </div>
+                </ScrollArea>
               </SheetContent>
             </Sheet>
           </div>
@@ -223,8 +224,8 @@ export default function ProductsPage() {
           />
         </div>
         <div className="flex-1">
-          {sortedProducts.length > 0 ? (
-            <ProductList products={sortedProducts} locale={locale} dictionary={productCardDictionaryForList} />
+          {filteredAndSortedProducts.length > 0 ? (
+            <ProductList products={filteredAndSortedProducts} locale={locale} dictionary={productCardDictionaryForList} />
           ) : (
             <div className="text-center py-10">
               <h2 className="text-2xl font-semibold mb-2">{dictionary.noProductsFound}</h2>
