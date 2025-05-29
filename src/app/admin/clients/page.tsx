@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, MoreVertical, ArrowUpDown, FilterX, Eye, UserX, UserCheck, Edit3, Trash2, Info } from "lucide-react";
+import { Search, MoreVertical, ArrowUpDown, FilterX, Eye, UserX, UserCheck, Edit3, Trash2 } from "lucide-react";
 import React, { useState, useMemo, useEffect } from "react";
 import { mockAdminClients, type MockAdminClient } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
@@ -53,8 +53,8 @@ type SortableClientKeys = keyof Pick<MockAdminClient, 'name' | 'email' | 'regist
 const ITEMS_PER_PAGE = 5;
 
 const clientEditSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }), // Default message, should be localized if possible
-  email: z.string().email({ message: "Invalid email address." }), // Default message
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Invalid email address." }),
 });
 type ClientEditFormValues = z.infer<typeof clientEditSchema>;
 
@@ -107,7 +107,7 @@ export default function AdminClientsPage() {
 
   const sortedClients = useMemo(() => {
     let sortableItems = [...processedClients];
-    if (sortConfig.key !== null) {
+    if (sortConfig.key) {
       sortableItems.sort((a, b) => {
         const valA = a[sortConfig.key!];
         const valB = b[sortConfig.key!];
@@ -230,7 +230,7 @@ export default function AdminClientsPage() {
         <CardHeader>
           <CardTitle>{dict.listTitle}</CardTitle>
           <CardDescription>
-            {dict.listDescription.replace('{count}', String(paginatedClients.length)).replace('{total}', String(clients.length))}
+            {dict.listDescription.replace('{count}', String(paginatedClients.length)).replace('{total}', String(sortedClients.length))}
           </CardDescription>
           <div className="flex flex-col sm:flex-row gap-4 mt-4 items-center">
             <div className="relative w-full sm:w-auto flex-grow sm:flex-grow-0">
@@ -375,7 +375,12 @@ export default function AdminClientsPage() {
               <p><strong>{dict.regDateHeader}:</strong> {new Date(selectedClient.registrationDate).toLocaleString()}</p>
               <p><strong>{dict.totalOrdersHeader}:</strong> {selectedClient.totalOrders}</p>
               <p><strong>{dict.totalSpentHeader}:</strong> {selectedClient.totalSpent.toLocaleString('en-US')} UZS</p>
-              <p><strong>{dict.statusHeader}:</strong> <Badge variant={selectedClient.isBlocked ? "destructive" : "secondary"}>{selectedClient.isBlocked ? dict.statusBlockedBadge : dict.statusActiveBadge}</Badge></p>
+              <div className="flex items-center space-x-2">
+                <strong>{dict.statusHeader}:</strong>
+                <Badge variant={selectedClient.isBlocked ? "destructive" : "secondary"}>
+                  {selectedClient.isBlocked ? dict.statusBlockedBadge : dict.statusActiveBadge}
+                </Badge>
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild><Button variant="outline">{dict.modalCloseButton}</Button></DialogClose>
@@ -388,7 +393,7 @@ export default function AdminClientsPage() {
       {selectedClient && (
         <Dialog open={isEditModalOpen} onOpenChange={(open) => {
           setIsEditModalOpen(open);
-          if (!open) setSelectedClient(null); // Clear selected client when modal closes
+          if (!open) setSelectedClient(null);
         }}>
           <DialogContent>
             <FormProvider {...editForm}>
@@ -435,7 +440,7 @@ export default function AdminClientsPage() {
       {selectedClient && (
         <AlertDialog open={isDeleteAlertOpen} onOpenChange={(open) => {
           setIsDeleteAlertOpen(open);
-          if (!open) setSelectedClient(null); // Clear selected client when modal closes
+          if (!open) setSelectedClient(null);
         }}>
           <AlertDialogContent>
             <AlertDialogHeader>
