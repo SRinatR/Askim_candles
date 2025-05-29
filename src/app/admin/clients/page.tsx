@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Eye, UserX, UserCheck, MoreVertical, ArrowUpDown, FilterX, Edit3, Trash2, Info } from "lucide-react"; // Added Edit3, Trash2, Info
+import { Search, MoreVertical, ArrowUpDown, FilterX, Eye, UserX, UserCheck, Edit3, Trash2, Info } from "lucide-react";
 import React, { useState, useMemo, useEffect } from "react";
 import { mockAdminClients, type MockAdminClient } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
@@ -53,8 +53,8 @@ type SortableClientKeys = keyof Pick<MockAdminClient, 'name' | 'email'> | 'regis
 const ITEMS_PER_PAGE = 5;
 
 const clientEditSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  email: z.string().email({ message: "Invalid email address." }),
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }), // Default message, should be localized if possible
+  email: z.string().email({ message: "Invalid email address." }), // Default message
 });
 type ClientEditFormValues = z.infer<typeof clientEditSchema>;
 
@@ -66,7 +66,7 @@ export default function AdminClientsPage() {
   const [isClient, setIsClient] = useState(false);
 
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'blocked'>('all');
-  const [sortConfig, setSortConfig] = useState<{ key: SortableClientKeys; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
+  const [sortConfig, setSortConfig = useState<{ key: SortableClientKeys; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
 
   const [selectedClient, setSelectedClient] = useState<MockAdminClient | null>(null);
@@ -158,8 +158,8 @@ export default function AdminClientsPage() {
     );
     const client = clients.find(c => c.id === clientId);
     toast({
-      title: client?.isBlocked ? (dict.clientUnblockedToastTitle) : (dict.clientBlockedToastTitle),
-      description: `${client?.name} ${dict.clientStatusUpdatedToastDesc}`,
+      title: client?.isBlocked ? (dict.clientUnblockedToastTitle || "Client Unblocked (Simulated)") : (dict.clientBlockedToastTitle || "Client Blocked (Simulated)"),
+      description: `${client?.name} ${dict.clientStatusUpdatedToastDesc || "status has been updated locally."}`,
     });
   };
 
@@ -194,11 +194,11 @@ export default function AdminClientsPage() {
   const handleEditSubmit = (data: ClientEditFormValues) => {
     if (!selectedClient || !dict) return;
     setClients(prevClients => 
-      prevClients.map(c => c.id === selectedClient.id ? { ...c, ...data } : c)
+      prevClients.map(c => c.id === selectedClient.id ? { ...c, name: data.name, email: data.email } : c)
     );
     toast({
-      title: dict.editClientSuccessTitle,
-      description: dict.editClientSuccessDesc.replace('{name}', data.name),
+      title: dict.editClientSuccessTitle || "Client Updated (Simulated)",
+      description: (dict.editClientSuccessDesc || "Client '{name}' details have been updated locally.").replace('{name}', data.name),
     });
     setIsEditModalOpen(false);
     setSelectedClient(null);
@@ -208,8 +208,8 @@ export default function AdminClientsPage() {
     if (!selectedClient || !dict) return;
     setClients(prevClients => prevClients.filter(c => c.id !== selectedClient.id));
     toast({
-      title: dict.deleteClientSuccessTitle,
-      description: dict.deleteClientSuccessDesc.replace('{name}', selectedClient.name),
+      title: dict.deleteClientSuccessTitle || "Client Deleted (Simulated)",
+      description: (dict.deleteClientSuccessDesc || "Client '{name}' has been deleted locally.").replace('{name}', selectedClient.name),
     });
     setIsDeleteAlertOpen(false);
     setSelectedClient(null);
@@ -301,7 +301,7 @@ export default function AdminClientsPage() {
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>{dict.actionsHeader}</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => openViewModal(client)}>
-                                <Info className="mr-2 h-4 w-4" />
+                                <Eye className="mr-2 h-4 w-4" />
                                 {dict.viewDetailsAction}
                               </DropdownMenuItem>
                                <DropdownMenuItem onClick={() => openEditModal(client)}>
@@ -386,7 +386,10 @@ export default function AdminClientsPage() {
 
       {/* Edit Client Modal */}
       {selectedClient && (
-        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <Dialog open={isEditModalOpen} onOpenChange={(open) => {
+          setIsEditModalOpen(open);
+          if (!open) setSelectedClient(null); // Clear selected client when modal closes
+        }}>
           <DialogContent>
             <FormProvider {...editForm}>
               <form onSubmit={editForm.handleSubmit(handleEditSubmit)}>
@@ -430,12 +433,15 @@ export default function AdminClientsPage() {
 
       {/* Delete Client Alert */}
       {selectedClient && (
-        <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialog open={isDeleteAlertOpen} onOpenChange={(open) => {
+          setIsDeleteAlertOpen(open);
+          if (!open) setSelectedClient(null); // Clear selected client when modal closes
+        }}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{dict.deleteClientAlertTitle}</AlertDialogTitle>
               <AlertDialogDescription>
-                {dict.deleteClientAlertDesc.replace('{name}', selectedClient.name)}
+                {(dict.deleteClientAlertDesc || "Are you sure you want to delete client '{name}'? This action cannot be undone and is simulated.").replace('{name}', selectedClient.name)}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
