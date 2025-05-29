@@ -7,9 +7,12 @@ import { mockProducts, mockCategories } from '@/lib/mock-data';
 import type { Product } from '@/lib/types';
 import { useSearchParams, useParams } from 'next/navigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Slash } from 'lucide-react';
+import { Slash, SlidersHorizontal } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
 import type { ProductCardDictionary } from '@/components/products/ProductCard';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import React, { useState } from 'react';
 
 // Importing main dictionaries
 import enMessages from '@/dictionaries/en.json';
@@ -49,13 +52,14 @@ export default function ProductsPage() {
   const sortDictionary = combinedDict.productSort;
   const productCardDictionaryForList = combinedDict.productCard as ProductCardDictionary;
 
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
   const searchTerm = searchParams.get('search')?.toLowerCase();
   const categories = searchParams.getAll('category');
   const scents = searchParams.getAll('scent');
   const materials = searchParams.getAll('material');
   const minPrice = Number(searchParams.get('minPrice')) || 0;
-  const maxPrice = Number(searchParams.get('maxPrice')) || Infinity;
+  const maxPrice = Number(searchParams.get('maxPrice')) || Infinity; // Adjusted default max price for filtering logic
   const sortOption = searchParams.get('sort') || 'relevance';
 
   const filteredProducts = mockProducts.filter(product => {
@@ -64,7 +68,9 @@ export default function ProductsPage() {
     const matchesCategory = categories.length > 0 ? categories.includes(productCategorySlug) : true;
     const matchesScent = scents.length > 0 && product.scent ? scents.includes(product.scent) : scents.length === 0;
     const matchesMaterial = materials.length > 0 && product.material ? materials.includes(product.material) : materials.length === 0;
-    const matchesPrice = product.price >= minPrice && product.price <= maxPrice;
+    const productPrice = product.price / 10000; // Assuming prices in mock-data are in UZS smallest unit
+    const matchesPrice = productPrice >= minPrice && productPrice <= maxPrice;
+
 
     return matchesSearch && matchesCategory && matchesScent && matchesMaterial && matchesPrice;
   });
@@ -80,13 +86,11 @@ export default function ProductsPage() {
       case 'name-desc':
         return b.name.localeCompare(a.name);
       case 'newest':
-         // Ensure IDs are treated as numbers for proper sorting if they are numeric strings
          const idA = parseInt(a.id, 10);
          const idB = parseInt(b.id, 10);
          if (!isNaN(idA) && !isNaN(idB)) {
            return idB - idA;
          }
-         // Fallback for non-numeric IDs or if one is NaN
          return b.id.localeCompare(a.id);
       default:
         return 0;
@@ -103,7 +107,7 @@ export default function ProductsPage() {
     productsCountText = (dictionary.productsFound_few).replace('{count}', String(productsCount));
   } else if (dictionary.productsFound_plural) {
      productsCountText = (dictionary.productsFound_plural).replace('{count}', String(productsCount));
-  } else if (dictionary.productsFound) { // Fallback for locales without plural_few
+  } else if (dictionary.productsFound) { 
     productsCountText = dictionary.productsFound.replace('{count}', String(productsCount));
   }
 
@@ -129,15 +133,42 @@ export default function ProductsPage() {
           <h1 className="text-3xl font-bold tracking-tight">{pageTitle}</h1>
           <p className="text-sm text-muted-foreground" dangerouslySetInnerHTML={{ __html: productsCountText.replace(String(productsCount), `<strong>${productsCount}</strong>`) }} />
         </div>
-        <ProductSort dictionary={sortDictionary} />
+        <div className="flex items-center gap-4">
+          <div className="lg:hidden">
+            <Sheet open={isMobileFiltersOpen} onOpenChange={setIsMobileFiltersOpen}>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <SlidersHorizontal className="mr-2 h-4 w-4" />
+                  {filtersDictionary.filtersTitle}
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="p-0 w-full max-w-xs sm:max-w-sm">
+                <SheetHeader className="p-4 border-b">
+                  <SheetTitle>{filtersDictionary.filtersTitle}</SheetTitle>
+                </SheetHeader>
+                <div className="overflow-y-auto p-1"> {/* Reduced padding for content area */}
+                  <ProductFilters 
+                    dictionary={filtersDictionary} 
+                    categoriesData={mockCategories}
+                    allProducts={mockProducts}
+                    onApplyFilters={() => setIsMobileFiltersOpen(false)} // Close sheet on apply
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
+          <ProductSort dictionary={sortDictionary} />
+        </div>
       </div>
 
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
-        <ProductFilters 
-          dictionary={filtersDictionary} 
-          categoriesData={mockCategories}
-          allProducts={mockProducts} // Pass all products for dynamic filter options
-        />
+        <div className="hidden lg:block lg:w-72 lg:sticky lg:top-24 self-start">
+          <ProductFilters 
+            dictionary={filtersDictionary} 
+            categoriesData={mockCategories}
+            allProducts={mockProducts}
+          />
+        </div>
         <div className="flex-1">
           {sortedProducts.length > 0 ? (
             <ProductList products={sortedProducts} locale={locale} dictionary={productCardDictionaryForList} />

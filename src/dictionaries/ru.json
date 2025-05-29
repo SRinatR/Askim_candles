@@ -255,7 +255,7 @@
     "expiryPlaceholder": "ММ/ГГ",
     "cvcLabel": "CVC",
     "cvcPlaceholder": "•••",
-    "payButton": "Оплатить ${total}",
+    "payButton": "Оплатить {total}",
     "orderPlacedTitle": "Заказ размещен!",
     "orderPlacedDesc": "Спасибо за покупку. Ваш заказ обрабатывается.",
     "emptyCartTitle": "Ваша корзина пуста.",
@@ -268,10 +268,10 @@
     "addedToCartDesc": "{name} добавлен в вашу корзину.",
     "onlyLeftInStock": "Осталось всего {stock} шт.!",
     "outOfStock": "Нет в наличии",
-    "categoryLabel": "Категория",
-    "scentLabel": "Аромат",
-    "materialLabel": "Материал",
-    "dimensionsLabel": "Размеры",
+    "categoryLabel": "Категория:",
+    "scentLabel": "Аромат:",
+    "materialLabel": "Материал:",
+    "dimensionsLabel": "Размеры:",
     "addToCartButton": "В корзину",
     "outOfStockButton": "Нет в Наличии",
     "fastDispatch": "Быстрая отправка",
@@ -285,7 +285,8 @@
     "categoryTitle": "Категория",
     "priceRangeTitle": "Диапазон цен",
     "scentTitle": "Аромат",
-    "materialTitle": "Материал"
+    "materialTitle": "Материал",
+    "applyFiltersButton": "Показать результаты"
   },
   "productSort": {
     "sortByLabel": "Сортировать по:",

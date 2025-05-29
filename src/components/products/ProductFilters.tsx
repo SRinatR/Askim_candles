@@ -21,27 +21,46 @@ interface ProductFiltersProps {
     priceRangeTitle: string;
     scentTitle: string;
     materialTitle: string;
+    applyFiltersButton?: string; // Optional, for mobile sheet
   };
   categoriesData: Category[];
-  allProducts: Product[]; // Added to dynamically generate scent/material filters
+  allProducts: Product[];
+  onApplyFilters?: () => void; // Optional callback for mobile sheet
 }
 
-export function ProductFilters({ dictionary, categoriesData, allProducts }: ProductFiltersProps) {
+export function ProductFilters({ dictionary, categoriesData, allProducts, onApplyFilters }: ProductFiltersProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const routeParams = useParams();
   const locale = routeParams.locale as Locale || 'uz';
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(searchParams.getAll('category') || []);
-  const [selectedScents, setSelectedScents] = useState<string[]>(searchParams.getAll('scent') || []);
-  const [selectedMaterials, setSelectedMaterials] = useState<string[]>(searchParams.getAll('material') || []);
-  const [priceRange, setPriceRange] = useState<[number, number]>([
-    Number(searchParams.get('minPrice')) || 0,
-    Number(searchParams.get('maxPrice')) || 200, // Assuming 200 is a reasonable max for mock data
-  ]);
+  const initialCategories = useMemo(() => searchParams.getAll('category') || [], [searchParams]);
+  const initialScents = useMemo(() => searchParams.getAll('scent') || [], [searchParams]);
+  const initialMaterials = useMemo(() => searchParams.getAll('material') || [], [searchParams]);
+  const initialMinPrice = useMemo(() => Number(searchParams.get('minPrice')) || 0, [searchParams]);
+  const initialMaxPrice = useMemo(() => Number(searchParams.get('maxPrice')) || 200, [searchParams]);
 
-  const [minPriceInput, setMinPriceInput] = useState(String(priceRange[0]));
-  const [maxPriceInput, setMaxPriceInput] = useState(String(priceRange[1]));
+
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories);
+  const [selectedScents, setSelectedScents] = useState<string[]>(initialScents);
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>(initialMaterials);
+  const [priceRange, setPriceRange] = useState<[number, number]>([initialMinPrice, initialMaxPrice]);
+  
+  const [minPriceInput, setMinPriceInput] = useState(String(initialMinPrice));
+  const [maxPriceInput, setMaxPriceInput] = useState(String(initialMaxPrice));
+
+  // Update local state if searchParams change externally (e.g. browser back/forward)
+  useEffect(() => {
+    setSelectedCategories(searchParams.getAll('category') || []);
+    setSelectedScents(searchParams.getAll('scent') || []);
+    setSelectedMaterials(searchParams.getAll('material') || []);
+    const min = Number(searchParams.get('minPrice')) || 0;
+    const max = Number(searchParams.get('maxPrice')) || 200;
+    setPriceRange([min, max]);
+    setMinPriceInput(String(min));
+    setMaxPriceInput(String(max));
+  }, [searchParams]);
+
 
   const uniqueScents = useMemo(() => {
     const scents = allProducts
@@ -57,7 +76,7 @@ export function ProductFilters({ dictionary, categoriesData, allProducts }: Prod
     return Array.from(new Set(materials)).sort();
   }, [allProducts]);
 
-  const createQueryString = useCallback(() => {
+  const applyFiltersToURL = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString());
     
     params.delete('category');
@@ -74,21 +93,25 @@ export function ProductFilters({ dictionary, categoriesData, allProducts }: Prod
     } else {
       params.delete('minPrice');
     }
-    if (priceRange[1] < 200) { 
+    // Adjusted max price condition based on common usage
+    if (priceRange[1] < 200 || (priceRange[1] === 200 && searchParams.has('maxPrice'))) { 
       params.set('maxPrice', String(priceRange[1]));
     } else {
       params.delete('maxPrice');
     }
     
-    return params.toString();
-  }, [selectedCategories, selectedScents, selectedMaterials, priceRange, searchParams]);
+    router.push(`/${locale}/products?${params.toString()}`, { scroll: false });
+    if(onApplyFilters) {
+        onApplyFilters(); // Close sheet if callback provided
+    }
+  }, [selectedCategories, selectedScents, selectedMaterials, priceRange, searchParams, router, locale, onApplyFilters]);
 
-
+  // Auto-apply filters on desktop (if onApplyFilters is not provided)
   useEffect(() => {
-    const newQueryString = createQueryString();
-    // Debounce or delay this push if performance becomes an issue
-    router.push(`/${locale}/products?${newQueryString}`, { scroll: false });
-  }, [createQueryString, router, locale]);
+    if (!onApplyFilters) { // Only auto-apply if it's not in a sheet controlled by a button
+      applyFiltersToURL();
+    }
+  }, [selectedCategories, selectedScents, selectedMaterials, priceRange, onApplyFilters, applyFiltersToURL]);
 
 
   const handleCheckboxChange = (
@@ -107,12 +130,12 @@ export function ProductFilters({ dictionary, categoriesData, allProducts }: Prod
     if (type === 'min') {
       setMinPriceInput(value);
       if (!isNaN(numValue) && numValue >=0 && numValue <= priceRange[1]) {
-        setPriceRange([numValue, priceRange[1]]);
+        setPriceRange(current => [numValue, current[1]]);
       }
     } else {
       setMaxPriceInput(value);
       if (!isNaN(numValue) && numValue <= 200 && numValue >= priceRange[0]) {
-        setPriceRange([priceRange[0], numValue]);
+         setPriceRange(current => [current[0], numValue]);
       }
     }
   };
@@ -130,22 +153,24 @@ export function ProductFilters({ dictionary, categoriesData, allProducts }: Prod
     setPriceRange([0, 200]);
     setMinPriceInput('0');
     setMaxPriceInput('200');
-    const currentSearch = searchParams.get('search');
-    const currentSort = searchParams.get('sort');
-    let newPath = `/${locale}/products`;
-    const queryParams = new URLSearchParams();
-    if (currentSearch) queryParams.set('search', currentSearch);
-    if (currentSort) queryParams.set('sort', currentSort);
-    if (queryParams.toString()) newPath += `?${queryParams.toString()}`;
-    
-    router.push(newPath, { scroll: false });
+    // After clearing, apply to URL
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('category');
+    params.delete('scent');
+    params.delete('material');
+    params.delete('minPrice');
+    params.delete('maxPrice');
+    router.push(`/${locale}/products?${params.toString()}`, { scroll: false });
+     if(onApplyFilters) { // Also close sheet if it's open
+        onApplyFilters();
+    }
   };
 
   const hasActiveFilters = selectedCategories.length > 0 || selectedScents.length > 0 || selectedMaterials.length > 0 || priceRange[0] > 0 || priceRange[1] < 200;
 
-
   return (
-    <aside className="w-full lg:w-72 lg:sticky lg:top-24 self-start space-y-6 p-4 border border-border/60 rounded-lg shadow-sm bg-card">
+    // Removed bg-card as SheetContent has its own background
+    <aside className="w-full space-y-4 p-4 lg:border lg:border-border/60 lg:rounded-lg lg:shadow-sm lg:bg-card">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold">{dictionary.filtersTitle}</h3>
         {hasActiveFilters && (
@@ -156,53 +181,51 @@ export function ProductFilters({ dictionary, categoriesData, allProducts }: Prod
       </div>
       <Accordion type="multiple" defaultValue={['category', 'price']} className="w-full">
         <AccordionItem value="category">
-          <AccordionTrigger className="text-base">{dictionary.categoryTitle}</AccordionTrigger>
+          <AccordionTrigger className="text-base py-3">{dictionary.categoryTitle}</AccordionTrigger>
           <AccordionContent className="space-y-2 pt-2">
             {categoriesData.map(category => (
               <div key={category.id} className="flex items-center space-x-2">
                 <Checkbox
-                  id={`cat-${category.slug}`}
+                  id={`cat-${category.slug}-${onApplyFilters ? 'mobile' : 'desktop'}`} // Unique ID for mobile/desktop
                   checked={selectedCategories.includes(category.slug)}
                   onCheckedChange={() => handleCheckboxChange(category.slug, selectedCategories, setSelectedCategories)}
                 />
-                <Label htmlFor={`cat-${category.slug}`} className="font-normal text-sm">{category.name}</Label>
+                <Label htmlFor={`cat-${category.slug}-${onApplyFilters ? 'mobile' : 'desktop'}`} className="font-normal text-sm">{category.name}</Label>
               </div>
             ))}
           </AccordionContent>
         </AccordionItem>
 
         <AccordionItem value="price">
-          <AccordionTrigger className="text-base">{dictionary.priceRangeTitle}</AccordionTrigger>
+          <AccordionTrigger className="text-base py-3">{dictionary.priceRangeTitle}</AccordionTrigger>
           <AccordionContent className="space-y-4 pt-3">
             <Slider
               value={priceRange}
               min={0}
-              max={200}
+              max={200} // Assuming 200 is a reasonable max for mock data
               step={5}
-              onValueCommit={handleSliderCommit} // Use onValueCommit for final value
-              onValueChange={setPriceRange} // Use onValueChange for immediate feedback to slider thumbs
+              onValueCommit={handleSliderCommit}
+              onValueChange={setPriceRange}
               className="my-2"
             />
             <div className="flex justify-between items-center space-x-2">
               <div className="relative">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">UZS</span>
                 <Input 
                   type="number" 
                   value={minPriceInput}
-                  onBlur={() => handleSliderCommit([Number(minPriceInput), priceRange[1]])}
-                  onChange={(e) => setMinPriceInput(e.target.value)}
-                  className="w-full pl-5 h-9 text-sm"
+                  onChange={(e) => handlePriceInputChange('min', e.target.value)}
+                  className="w-full pl-10 h-9 text-sm" // Increased padding for UZS
                 />
               </div>
               <span className="text-muted-foreground">-</span>
               <div className="relative">
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">UZS</span>
                 <Input 
                   type="number" 
                   value={maxPriceInput}
-                  onBlur={() => handleSliderCommit([priceRange[0], Number(maxPriceInput)])}
-                  onChange={(e) => setMaxPriceInput(e.target.value)}
-                  className="w-full pl-5 h-9 text-sm"
+                  onChange={(e) => handlePriceInputChange('max', e.target.value)}
+                  className="w-full pl-10 h-9 text-sm" // Increased padding for UZS
                 />
               </div>
             </div>
@@ -211,16 +234,16 @@ export function ProductFilters({ dictionary, categoriesData, allProducts }: Prod
 
         {uniqueScents.length > 0 && (
           <AccordionItem value="scent">
-            <AccordionTrigger className="text-base">{dictionary.scentTitle}</AccordionTrigger>
+            <AccordionTrigger className="text-base py-3">{dictionary.scentTitle}</AccordionTrigger>
             <AccordionContent className="space-y-2 pt-2">
               {uniqueScents.map(scent => (
                 <div key={scent} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`scent-${scent.toLowerCase().replace(/\s+/g, '-')}`}
+                    id={`scent-${scent.toLowerCase().replace(/\s+/g, '-')}-${onApplyFilters ? 'mobile' : 'desktop'}`}
                     checked={selectedScents.includes(scent)}
                     onCheckedChange={() => handleCheckboxChange(scent, selectedScents, setSelectedScents)}
                   />
-                  <Label htmlFor={`scent-${scent.toLowerCase().replace(/\s+/g, '-')}`} className="font-normal text-sm">{scent}</Label>
+                  <Label htmlFor={`scent-${scent.toLowerCase().replace(/\s+/g, '-')}-${onApplyFilters ? 'mobile' : 'desktop'}`} className="font-normal text-sm">{scent}</Label>
                 </div>
               ))}
             </AccordionContent>
@@ -229,22 +252,27 @@ export function ProductFilters({ dictionary, categoriesData, allProducts }: Prod
         
         {uniqueMaterials.length > 0 && (
           <AccordionItem value="material">
-            <AccordionTrigger className="text-base">{dictionary.materialTitle}</AccordionTrigger>
+            <AccordionTrigger className="text-base py-3">{dictionary.materialTitle}</AccordionTrigger>
             <AccordionContent className="space-y-2 pt-2">
               {uniqueMaterials.map(material => (
                 <div key={material} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`material-${material.toLowerCase().replace(/\s+/g, '-')}`}
+                    id={`material-${material.toLowerCase().replace(/\s+/g, '-')}-${onApplyFilters ? 'mobile' : 'desktop'}`}
                     checked={selectedMaterials.includes(material)}
                     onCheckedChange={() => handleCheckboxChange(material, selectedMaterials, setSelectedMaterials)}
                   />
-                  <Label htmlFor={`material-${material.toLowerCase().replace(/\s+/g, '-')}`} className="font-normal text-sm">{material}</Label>
+                  <Label htmlFor={`material-${material.toLowerCase().replace(/\s+/g, '-')}-${onApplyFilters ? 'mobile' : 'desktop'}`} className="font-normal text-sm">{material}</Label>
                 </div>
               ))}
             </AccordionContent>
           </AccordionItem>
         )}
       </Accordion>
+      {onApplyFilters && (
+        <Button onClick={applyFiltersToURL} className="w-full mt-4">
+          {dictionary.applyFiltersButton || "Show Results"}
+        </Button>
+      )}
     </aside>
   );
 }

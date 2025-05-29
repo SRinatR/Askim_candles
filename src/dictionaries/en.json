@@ -255,7 +255,7 @@
     "expiryPlaceholder": "MM/YY",
     "cvcLabel": "CVC",
     "cvcPlaceholder": "•••",
-    "payButton": "Pay ${total}",
+    "payButton": "Pay {total}",
     "orderPlacedTitle": "Order Placed!",
     "orderPlacedDesc": "Thank you for your purchase. Your order is being processed.",
     "emptyCartTitle": "Your cart is empty.",
@@ -268,10 +268,10 @@
     "addedToCartDesc": "{name} has been added to your cart.",
     "onlyLeftInStock": "Only {stock} left in stock!",
     "outOfStock": "Out of Stock",
-    "categoryLabel": "Category",
-    "scentLabel": "Scent",
-    "materialLabel": "Material",
-    "dimensionsLabel": "Dimensions",
+    "categoryLabel": "Category:",
+    "scentLabel": "Scent:",
+    "materialLabel": "Material:",
+    "dimensionsLabel": "Dimensions:",
     "addToCartButton": "Add to Cart",
     "outOfStockButton": "Out of Stock",
     "fastDispatch": "Fast Dispatch",
@@ -285,7 +285,8 @@
     "categoryTitle": "Category",
     "priceRangeTitle": "Price Range",
     "scentTitle": "Scent",
-    "materialTitle": "Material"
+    "materialTitle": "Material",
+    "applyFiltersButton": "Show Results"
   },
   "productSort": {
     "sortByLabel": "Sort by:",

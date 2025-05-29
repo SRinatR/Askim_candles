@@ -255,7 +255,7 @@
     "expiryPlaceholder": "OO/YY",
     "cvcLabel": "CVC",
     "cvcPlaceholder": "•••",
-    "payButton": "To'lash ${total}",
+    "payButton": "To'lash {total}",
     "orderPlacedTitle": "Buyurtma qabul qilindi!",
     "orderPlacedDesc": "Xaridingiz uchun rahmat. Buyurtmangiz qayta ishlanmoqda.",
     "emptyCartTitle": "Savatingiz bo'sh.",
@@ -268,10 +268,10 @@
     "addedToCartDesc": "{name} savatchangizga qo'shildi.",
     "onlyLeftInStock": "Faqat {stock} dona qoldi!",
     "outOfStock": "Sotuvda yo'q",
-    "categoryLabel": "Turkum",
-    "scentLabel": "Xushbo'ylik",
-    "materialLabel": "Material",
-    "dimensionsLabel": "O'lchamlari",
+    "categoryLabel": "Turkum:",
+    "scentLabel": "Xushbo'ylik:",
+    "materialLabel": "Material:",
+    "dimensionsLabel": "O'lchamlari:",
     "addToCartButton": "Savatchaga qo'shish",
     "outOfStockButton": "Sotuvda Yo'q",
     "fastDispatch": "Tez jo'natish",
@@ -285,7 +285,8 @@
     "categoryTitle": "Turkum",
     "priceRangeTitle": "Narx Oralig'i",
     "scentTitle": "Xushbo'ylik",
-    "materialTitle": "Material"
+    "materialTitle": "Material",
+    "applyFiltersButton": "Natijalarni Ko'rsatish"
   },
   "productSort": {
     "sortByLabel": "Saralash:",
