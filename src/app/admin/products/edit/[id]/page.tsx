@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -9,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { useForm, Controller, FormProvider } from "react-hook-form"; // Added FormProvider
+import { useForm, Controller, FormProvider } from "react-hook-form"; 
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -63,7 +62,7 @@ export default function EditProductPage() {
   });
 
   const { register, handleSubmit, control, formState, reset, setValue, watch } = formMethods;
-  const { errors, isSubmitting } = formState;
+  const { errors } = formState; // Removed isSubmitting as it's not directly used
 
   useEffect(() => {
     const foundProduct = mockProducts.find(p => p.id === productId);
@@ -93,17 +92,19 @@ export default function EditProductPage() {
       router.push("/admin/products");
     }
 
-    const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
-    const baseCategories = Array.from(new Set(mockProducts.map(p => p.category).filter(Boolean)));
-    setAvailableCategories(storedCustomCategories ? JSON.parse(storedCustomCategories) : baseCategories);
-    
-    const storedCustomMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
-    const baseMaterials = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m))).sort();
-    setAvailableMaterials(storedCustomMaterials ? JSON.parse(storedCustomMaterials) : baseMaterials);
+    if (typeof window !== 'undefined') {
+      const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
+      const baseCategories = Array.from(new Set(mockProducts.map(p => p.category).filter(Boolean)));
+      setAvailableCategories(storedCustomCategories ? JSON.parse(storedCustomCategories) : baseCategories);
+      
+      const storedCustomMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
+      const baseMaterials = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m))).sort();
+      setAvailableMaterials(storedCustomMaterials ? JSON.parse(storedCustomMaterials) : baseMaterials);
 
-    const storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
-    const baseScents = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s))).sort();
-    setAvailableScents(storedCustomScents ? JSON.parse(storedCustomScents) : baseScents);
+      const storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
+      const baseScents = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s))).sort();
+      setAvailableScents(storedCustomScents ? JSON.parse(storedCustomScents) : baseScents);
+    }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [productId, reset, router, toast]); 
@@ -255,12 +256,11 @@ export default function EditProductPage() {
                                 name="scent"
                                 control={control}
                                 render={({ field }) => (
-                                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                                     <SelectTrigger id="scent">
                                         <SelectValue placeholder="Select a scent" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">None</SelectItem>
                                         {availableScents.map(scent => (
                                         <SelectItem key={scent} value={scent}>{scent}</SelectItem>
                                         ))}
@@ -276,12 +276,11 @@ export default function EditProductPage() {
                                 name="material"
                                 control={control}
                                 render={({ field }) => (
-                                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                                    <Select onValueChange={field.onChange} value={field.value || undefined}>
                                     <SelectTrigger id="material">
                                         <SelectValue placeholder="Select a material" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">None</SelectItem>
                                         {availableMaterials.map(material => (
                                         <SelectItem key={material} value={material}>{material}</SelectItem>
                                         ))}
@@ -356,9 +355,9 @@ export default function EditProductPage() {
         </div>
 
         <CardFooter className="mt-6 flex justify-end">
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={formState.isSubmitting}>
             <Save className="mr-2 h-4 w-4" />
-             {isSubmitting ? "Saving..." : "Save Changes (Simulated)"}
+             {formState.isSubmitting ? "Saving..." : "Save Changes (Simulated)"}
           </Button>
         </CardFooter>
       </form>

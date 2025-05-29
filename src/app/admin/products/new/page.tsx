@@ -17,6 +17,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
 import React, { useEffect, useState } from "react"; 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { Locale } from "@/lib/types";
 
 const productSchema = z.object({
   name_en: z.string().min(1, { message: "English product name is required." }),
@@ -30,7 +31,7 @@ const productSchema = z.object({
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL (Data URL in this case)."})).min(1, { message: "At least one image is required." }),
-  mainImageId: z.string().optional(), // Will store the ID/URL of the main image
+  mainImageId: z.string().optional(), 
   scent: z.string().optional(),
   material: z.string().optional(),
   dimensions: z.string().optional(),
@@ -55,15 +56,16 @@ export default function NewProductPage() {
 
 
   useEffect(() => {
-    const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
-    setAvailableCategories(storedCustomCategories ? JSON.parse(storedCustomCategories) : []);
-    
-    const storedCustomMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
-    setAvailableMaterials(storedCustomMaterials ? JSON.parse(storedCustomMaterials) : []);
+    if (typeof window !== 'undefined') {
+      const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
+      setAvailableCategories(storedCustomCategories ? JSON.parse(storedCustomCategories) : []);
+      
+      const storedCustomMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
+      setAvailableMaterials(storedCustomMaterials ? JSON.parse(storedCustomMaterials) : []);
 
-    const storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
-    setAvailableScents(storedCustomScents ? JSON.parse(storedCustomScents) : []);
-
+      const storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
+      setAvailableScents(storedCustomScents ? JSON.parse(storedCustomScents) : []);
+    }
   }, []);
 
 
@@ -87,7 +89,7 @@ export default function NewProductPage() {
   });
 
   const { register, handleSubmit, control, formState, setValue, watch } = formMethods;
-  const { errors, isSubmitting } = formState;
+  const { errors } = formState; // Removed isSubmitting as it's not directly used
 
   const onSubmit = (data: ProductFormValues) => {
     const newProductData = {
@@ -105,11 +107,8 @@ export default function NewProductPage() {
       dimensions: data.dimensions,
       burningTime: data.burningTime,
       isActive: data.isActive,
-      // attributes: data.attributes - if we add custom attributes later
     };
     console.log("New Product Data (Simulated):", newProductData);
-    // Here you would typically call an API to save the product
-    // For now, we'll just show a toast and redirect
     toast({
       title: "Product Added (Simulated)",
       description: `${data.name_en} has been 'added'. This change is client-side only. Image data URLs are in console.`,
@@ -237,12 +236,11 @@ export default function NewProductPage() {
                             name="scent"
                             control={control}
                             render={({ field }) => (
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value || undefined} >
                                 <SelectTrigger id="scent">
                                     <SelectValue placeholder="Select a scent" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">None</SelectItem>
                                     {availableScents.map(scent => (
                                     <SelectItem key={scent} value={scent}>{scent}</SelectItem>
                                     ))}
@@ -258,12 +256,11 @@ export default function NewProductPage() {
                             name="material"
                             control={control}
                             render={({ field }) => (
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <Select onValueChange={field.onChange} value={field.value || undefined}>
                                 <SelectTrigger id="material">
                                     <SelectValue placeholder="Select a material" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="">None</SelectItem>
                                     {availableMaterials.map(material => (
                                     <SelectItem key={material} value={material}>{material}</SelectItem>
                                     ))}
@@ -316,14 +313,12 @@ export default function NewProductPage() {
                 </CardHeader>
                 <CardContent>
                    <Controller
-                    name="images" // This name should match the field in your Zod schema
+                    name="images" 
                     control={control}
-                    render={({ field }) => ( // field contains { value, onChange, onBlur, name, ref }
+                    render={({ field }) => ( 
                       <ImageUploadArea
-                        // Pass the current array of image URLs (Data URLs for new, existing URLs for edit)
                         initialImageUrls={field.value} 
-                        // Pass the current main image URL
-                        initialMainImageUrl={watch("mainImageId")} // Assuming mainImageId stores the ID/URL of the main image
+                        initialMainImageUrl={watch("mainImageId")} 
                         onImagesChange={(newImageUrls, newMainImageUrl) => {
                            setValue("images", newImageUrls, { shouldValidate: true });
                            setValue("mainImageId", newMainImageUrl, { shouldValidate: true });
@@ -339,9 +334,9 @@ export default function NewProductPage() {
             </div>
           </div>
           <CardFooter className="mt-6 flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
-              <Save className="mr-2 h-4 w-4" />
-              {isSubmitting ? "Saving..." : "Save Product (Simulated)"}
+            <Button type="submit" disabled={formState.isSubmitting}>
+              <Save className="mr-2 h-4 w-4" /> 
+              {formState.isSubmitting ? "Saving..." : "Save Product (Simulated)"}
             </Button>
           </CardFooter>
         </form>
