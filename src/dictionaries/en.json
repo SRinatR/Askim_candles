@@ -8,6 +8,9 @@
     "home": "Home",
     "products": "Products",
     "about": "About Us",
+    "usefulInfo": "Useful Info",
+    "soyWaxInfoTitle": "What is soy wax...",
+    "aromaSachetInfoTitle": "What is an aroma sachet and how to use it",
     "cart": "Cart",
     "account": "My Account",
     "login": "Login",
@@ -36,14 +39,17 @@
     "rightsReserved": "All rights reserved.",
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
-    "contactPagePath": "/contact",
-    "termsPagePath": "/terms",
-    "privacyPagePath": "/privacy"
+    "contactPagePath": "/info/contact",
+    "termsPagePath": "/info/terms",
+    "privacyPagePath": "/info/privacy"
   },
   "categories": {
-    "artisanal-candles": "Artisanal Candles",
-    "wax-figures": "Wax Figures",
-    "gypsum-products": "Gypsum Products"
+    "corporate-sets": "Corporate Sets",
+    "wedding-favors": "Wedding Favors",
+    "scented-candles": "Scented Candles",
+    "home-fragrances": "Home Fragrances",
+    "gypsum-paradise": "Gypsum Paradise",
+    "tasty-home": "Home Fragrances"
   },
   "productCard": {
     "addToCart": "Add to Cart",
@@ -161,7 +167,7 @@
     "statusProcessing": "Processing",
     "statusPending": "Pending",
     "statusCancelled": "Cancelled",
-    "contactPagePath": "/contact"
+    "contactPagePath": "/info/contact"
   },
   "accountLinkingPage": {
     "title": "Account Linking",
@@ -265,6 +271,7 @@
   "productDetailPage": {
     "home": "Home",
     "products": "Products",
+    "skuLabel": "SKU:",
     "onlyLeftInStock": "Only {stock} left in stock!",
     "outOfStock": "Out of Stock",
     "categoryLabel": "Category:",
@@ -305,7 +312,7 @@
     "searchResultsTitle": "Search results for \"{searchTerm}\"",
     "productsFound": "{count} product found",
     "productsFound_plural": "{count} products found",
-    "productsFound_few": "{count} products found", 
+    "productsFound_few": "{count} products found",
     "noProductsFound": "No Products Found",
     "searchNoMatch": "Your search for \"{searchTerm}\" did not match any products.",
     "filterNoMatch": "We couldn't find products matching your current filters.",
@@ -378,5 +385,19 @@
     "loggedOut": "Logged Out",
     "loggedOutSuccess": "You have been successfully logged out.",
     "errorPasswordsDontMatch": "Passwords do not match."
+  },
+  "soyWaxPage": {
+    "breadcrumbHome": "Home",
+    "breadcrumbUsefulInfo": "Useful Info",
+    "title": "What is Soy Wax and Why We Use It",
+    "placeholderContent": "Detailed information about soy wax, its benefits, and why Askim candles chooses it for many products will be available here soon."
+  },
+  "aromaSachetPage": {
+    "breadcrumbHome": "Home",
+    "breadcrumbUsefulInfo": "Useful Info",
+    "title": "What is an Aroma Sachet and How to Use It",
+    "placeholderContent": "Learn all about aroma sachets, their uses, and how to best enjoy their fragrance in your home or car. Content coming soon!"
   }
 }
+
+    

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut, Globe } from 'lucide-react';
+import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut, Globe, ChevronDown, Info } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -20,6 +20,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuGroup,
+  DropdownMenuLabel
 } from "@/components/ui/dropdown-menu";
 
 interface HeaderProps {
@@ -28,6 +31,9 @@ interface HeaderProps {
     home: string;
     products: string;
     about: string;
+    usefulInfo: string;
+    soyWaxInfoTitle: string;
+    aromaSachetInfoTitle: string;
     cart: string;
     account: string;
     login: string;
@@ -52,7 +58,12 @@ export function Header({ locale, dictionary }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
-  const currentPathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
+  const currentPathWithoutLocale = pathname.startsWith(`/${locale}`) ? pathname.substring(`/${locale}`.length) : pathname;
+  if (currentPathWithoutLocale === "") {
+    // Ensures that the root path remains / and not //
+    // currentPathWithoutLocale = '/';
+  }
+
 
   const isAdminPath = pathname.split('/').includes('admin');
   if (isAdminPath) {
@@ -63,6 +74,11 @@ export function Header({ locale, dictionary }: HeaderProps) {
     { href: '/', label: dictionary.home },
     { href: '/products', label: dictionary.products },
     { href: '/about', label: dictionary.about },
+  ];
+
+  const usefulInfoLinks = [
+    { href: '/info/soy-wax', label: dictionary.soyWaxInfoTitle },
+    { href: '/info/aroma-sachet', label: dictionary.aromaSachetInfoTitle },
   ];
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
@@ -117,7 +133,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
           {i18n.locales.map((loc) => (
             <DropdownMenuItem key={loc} asChild>
               <Link
-                href={`/${loc}${currentPathWithoutLocale}`}
+                href={`/${loc}${currentPathWithoutLocale || '/'}`}
                 className={cn(
                   "w-full flex items-center",
                   locale === loc ? "font-semibold text-primary" : ""
@@ -139,7 +155,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
           <Logo className="h-8 w-auto" />
         </Link>
 
-        <nav className="hidden items-center space-x-6 md:flex">
+        <nav className="hidden items-center space-x-4 md:flex">
           {navLinks.map(link => (
             <Link
               key={link.href}
@@ -149,6 +165,20 @@ export function Header({ locale, dictionary }: HeaderProps) {
               {link.label}
             </Link>
           ))}
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground p-0 h-auto">
+                {dictionary.usefulInfo} <ChevronDown className="ml-1 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {usefulInfoLinks.map(link => (
+                <DropdownMenuItem key={link.href} asChild>
+                  <Link href={`/${locale}${link.href}`}>{link.label}</Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </nav>
         
         <div className="flex items-center space-x-1 sm:space-x-3">
@@ -188,7 +218,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
             </Link>
           </Button>
           
-          <div className="hidden md:flex"> {/* Language switcher for desktop */}
+          <div className="hidden md:flex"> 
             <LanguageSwitcher />
           </div>
 
@@ -198,9 +228,9 @@ export function Header({ locale, dictionary }: HeaderProps) {
                 <Menu className="h-6 w-6" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-full max-w-xs bg-background p-0">
-              <div className="flex flex-col h-full"> {/* Ensure flex-col and h-full for proper layout */}
-                <SheetHeader className="flex flex-row justify-between items-center border-b p-6 shrink-0">
+            <SheetContent side="right" className="w-full max-w-xs bg-background p-0 text-foreground">
+              <div className="flex flex-col h-full"> 
+                <SheetHeader className="flex flex-row justify-between items-center border-b p-4 shrink-0">
                    <Link href={`/${locale}/`} onClick={() => setIsMobileMenuOpen(false)}>
                       <Logo className="h-7 w-auto" />
                    </Link>
@@ -208,11 +238,12 @@ export function Header({ locale, dictionary }: HeaderProps) {
                    <SheetClose asChild>
                       <Button variant="ghost" size="icon">
                          <X className="h-6 w-6" />
+                         <span className="sr-only">Close menu</span>
                       </Button>
                    </SheetClose>
                 </SheetHeader>
                 
-                <div className="flex-1 overflow-y-auto px-6 space-y-6 py-6"> {/* Added py-6 for padding */}
+                <div className="flex-1 overflow-y-auto px-4 space-y-4 py-4"> 
                   <form onSubmit={handleSearch} className="flex items-center relative">
                     <Input type="search" name="search" placeholder={dictionary.searchPlaceholder} className="h-10 pr-12 w-full" />
                     <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10">
@@ -221,29 +252,43 @@ export function Header({ locale, dictionary }: HeaderProps) {
                     </Button>
                   </form>
 
-                  <nav className="flex flex-col space-y-4">
+                  <nav className="flex flex-col space-y-3">
                     {navLinks.map(link => (
                       <Link
                         key={link.href}
                         href={`/${locale}${link.href}`}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className="text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
+                        className="text-base font-medium text-foreground/80 transition-colors hover:text-foreground"
                       >
                         {link.label}
                       </Link>
                     ))}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="text-base font-medium text-foreground/80 transition-colors hover:text-foreground p-0 h-auto justify-start">
+                          {dictionary.usefulInfo} <ChevronDown className="ml-1 h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-[calc(100%-2rem)] ml-4"> {/* Adjust width and margin as needed */}
+                        {usefulInfoLinks.map(link => (
+                          <DropdownMenuItem key={link.href} asChild>
+                            <Link href={`/${locale}${link.href}`} onClick={() => setIsMobileMenuOpen(false)}>{link.label}</Link>
+                          </DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </nav>
                   
-                  <div className="pt-4 border-t md:hidden">
-                     <p className="text-sm text-muted-foreground mb-2">Language:</p>
-                     <div className="flex items-center justify-around space-x-1"> {/* Changed to flex for horizontal layout */}
+                  <div className="pt-3 border-t md:hidden">
+                     <p className="text-sm text-muted-foreground mb-1">Language:</p>
+                     <div className="flex items-center space-x-1">
                         {i18n.locales.map((loc) => ( 
                           <Link
                             key={loc}
-                            href={`/${loc}${currentPathWithoutLocale}`}
+                            href={`/${loc}${currentPathWithoutLocale || '/'}`}
                             onClick={() => setIsMobileMenuOpen(false)}
                             className={cn(
-                              "rounded-md px-2.5 py-1.5 text-sm hover:bg-muted", // Adjusted padding for compactness
+                              "rounded-md px-2 py-1 text-xs hover:bg-muted flex-1 text-center",
                               locale === loc ? "font-semibold text-primary bg-muted" : "text-foreground/80"
                             )}
                           >
@@ -254,7 +299,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
                   </div>
                 </div>
                 
-                <div className="border-t border-border p-6 space-y-3 shrink-0"> {/* Added shrink-0 */}
+                <div className="border-t border-border p-4 space-y-3 shrink-0">
                   {!isLoadingAuth && (
                     <>
                       {isAuthenticated ? (
@@ -262,14 +307,14 @@ export function Header({ locale, dictionary }: HeaderProps) {
                           <Link
                             href={accountLink}
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
+                            className="flex items-center space-x-2 text-base font-medium text-foreground/80 transition-colors hover:text-foreground"
                           >
                             <User className="h-5 w-5" />
                             <span>{userName || dictionary.account}</span>
                           </Link>
                           <Button variant="outline" 
                             onClick={handleLogout}
-                            className="w-full text-lg"
+                            className="w-full text-base"
                           >
                             <LogOut className="mr-2 h-5 w-5" />
                             <span>{dictionary.logout}</span>
@@ -279,7 +324,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
                         <Button 
                           variant="ghost" 
                           onClick={() => { router.push(`/${locale}/login`); setIsMobileMenuOpen(false); }}
-                          className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground w-full justify-start p-0"
+                          className="flex items-center space-x-2 text-base font-medium text-foreground/80 transition-colors hover:text-foreground w-full justify-start p-0 h-auto"
                         >
                           <LogIn className="h-5 w-5" />
                           <span>{dictionary.login}</span>
@@ -296,3 +341,5 @@ export function Header({ locale, dictionary }: HeaderProps) {
     </header>
   );
 }
+
+    

@@ -8,6 +8,9 @@
     "home": "Bosh sahifa",
     "products": "Mahsulotlar",
     "about": "Biz haqimizda",
+    "usefulInfo": "Foydali",
+    "soyWaxInfoTitle": "Soya mumi nima...",
+    "aromaSachetInfoTitle": "Aromasashe nima va undan qanday foydalanish kerak",
     "cart": "Savatcha",
     "account": "Mening hisobim",
     "login": "Kirish",
@@ -36,14 +39,17 @@
     "rightsReserved": "Barcha huquqlar himoyalangan.",
     "privacyPolicy": "Maxfiylik siyosati",
     "termsOfService": "Foydalanish shartlari",
-    "contactPagePath": "/contact-uz",
-    "termsPagePath": "/terms-uz",
-    "privacyPagePath": "/privacy-uz"
+    "contactPagePath": "/info/contact-uz",
+    "termsPagePath": "/info/terms-uz",
+    "privacyPagePath": "/info/privacy-uz"
   },
   "categories": {
-    "artisanal-candles": "Qo'lda yasalgan shamlar",
-    "wax-figures": "Mumdan yasalgan figuralar",
-    "gypsum-products": "Gips mahsulotlari"
+    "corporate-sets": "Korporativ to'plamlar",
+    "wedding-favors": "To'y sovg'alari",
+    "scented-candles": "Aromashamlar",
+    "tasty-home": "Shirin Uy",
+    "home-fragrances": "Shirin Uy",
+    "gypsum-paradise": "Gips Jannati"
   },
   "productCard": {
     "addToCart": "Savatchaga qo'shish",
@@ -161,7 +167,7 @@
     "statusProcessing": "Qayta ishlanmoqda",
     "statusPending": "Kutilmoqda",
     "statusCancelled": "Bekor qilindi",
-    "contactPagePath": "/contact-uz"
+    "contactPagePath": "/info/contact-uz"
   },
   "accountLinkingPage": {
     "title": "Hisoblarni Bog'lash",
@@ -265,6 +271,7 @@
   "productDetailPage": {
     "home": "Bosh sahifa",
     "products": "Mahsulotlar",
+    "skuLabel": "SKU:",
     "onlyLeftInStock": "Faqat {stock} dona qoldi!",
     "outOfStock": "Sotuvda yo'q",
     "categoryLabel": "Turkum:",
@@ -304,7 +311,7 @@
     "allProductsTitle": "Barcha Mahsulotlar",
     "searchResultsTitle": "\"{searchTerm}\" uchun qidiruv natijalari",
     "productsFound": "{count} ta mahsulot topildi",
-    "productsFound_plural": "{count} ta mahsulot topildi", 
+    "productsFound_plural": "{count} ta mahsulot topildi",
     "productsFound_few": "{count} ta mahsulot topildi",
     "noProductsFound": "Mahsulotlar Topilmadi",
     "searchNoMatch": "Sizning \"{searchTerm}\" qidiruvingiz hech qanday mahsulotga mos kelmadi.",
@@ -378,5 +385,19 @@
     "loggedOut": "Chiqib ketildi",
     "loggedOutSuccess": "Siz tizimdan muvaffaqiyatli chiqdingiz.",
     "errorPasswordsDontMatch": "Parollar mos kelmadi."
+  },
+  "soyWaxPage": {
+    "breadcrumbHome": "Bosh sahifa",
+    "breadcrumbUsefulInfo": "Foydali",
+    "title": "Soya mumi nima va biz uni nima uchun ishlatamiz",
+    "placeholderContent": "Soya mumi, uning foydalari va Askim candles nima uchun uni ko'plab mahsulotlar uchun tanlagani haqida batafsil ma'lumot tez orada shu yerda joylashtiriladi."
+  },
+  "aromaSachetPage": {
+    "breadcrumbHome": "Bosh sahifa",
+    "breadcrumbUsefulInfo": "Foydali",
+    "title": "Aromasashe nima va undan qanday foydalanish kerak",
+    "placeholderContent": "Aromasashelar, ulardan foydalanish usullari va uyingizda yoki mashinangizda ularning hididan qanday qilib eng yaxshi bahramand bo'lish haqida hamma narsani bilib oling. Kontent tez orada!"
   }
 }
+
+    
