@@ -1,9 +1,9 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -12,10 +12,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { Logo } from "@/components/icons/Logo";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import React from "react";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  password: z.string().min(1, { message: "Password is required." }), // Min 1 for mock
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -23,6 +25,8 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const { login, currentUser, loading } = useAuth(); // Get login function from AuthContext
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -31,16 +35,39 @@ export default function LoginPage() {
       password: "",
     },
   });
+  
+  React.useEffect(() => {
+    if (!loading && currentUser) {
+      router.replace('/account');
+    }
+  }, [currentUser, loading, router]);
 
-  function onSubmit(data: LoginFormValues) {
-    console.log("Login data:", data);
-    // Mock login logic
-    toast({
-      title: "Login Successful",
-      description: "Welcome back!",
-    });
-    router.push("/account");
+
+  async function onSubmit(data: LoginFormValues) {
+    setIsSubmitting(true);
+    try {
+      // For MVP, password is not checked, any name can be used for mock user
+      await login(data.email, "Logged In User"); 
+      toast({
+        title: "Login Successful",
+        description: "Welcome back!",
+      });
+      router.push("/account");
+    } catch (error) {
+      console.error("Login failed:", error);
+      toast({
+        title: "Login Failed",
+        description: "Invalid credentials or server error.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+    }
   }
+  
+  if (loading || (!loading && currentUser)) {
+    return <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center"><p>Loading...</p></div>;
+  }
+
 
   return (
     <div className="flex min-h-[calc(100vh-10rem)] items-center justify-center py-12">
@@ -62,7 +89,7 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" {...field} />
+                      <Input type="email" placeholder="you@example.com" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -75,20 +102,20 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Password</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
+                      <Input type="password" placeholder="••••••••" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                Login
+              <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={isSubmitting}>
+                {isSubmitting ? "Logging in..." : "Login"}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col items-center space-y-2 text-sm">
-           <Link href="/forgot-password" passHref>
+           <Link href="#" passHref> {/* Assuming forgot password is not implemented for MVP */}
              <Button variant="link" className="text-muted-foreground hover:text-primary p-0 h-auto">Forgot password?</Button>
            </Link>
           <p className="text-muted-foreground">

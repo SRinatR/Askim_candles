@@ -6,6 +6,7 @@ import { ShoppingBag, User, Menu, Search, X } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext'; // Import useAuth
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import React, { useState } from 'react';
@@ -20,6 +21,7 @@ const navLinks = [
 
 export function Header() {
   const { cartCount } = useCart();
+  const { currentUser, loading: authLoading } = useAuth(); // Get currentUser and loading state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
@@ -29,8 +31,12 @@ export function Header() {
     const searchQuery = formData.get('search') as string;
     if (searchQuery.trim()) {
       router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      if (isMobileMenuOpen) setIsMobileMenuOpen(false); // Close mobile menu on search
     }
   };
+
+  const accountLink = currentUser ? "/account/profile" : "/login";
+  const accountLinkLabel = currentUser ? "My Account" : "Login / Sign Up";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -60,11 +66,13 @@ export function Header() {
             </Button>
           </form>
 
-          <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex">
-            <Link href="/account" aria-label="My Account">
-              <User className="h-5 w-5" />
-            </Link>
-          </Button>
+          {!authLoading && (
+            <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex">
+              <Link href={accountLink} aria-label={accountLinkLabel}>
+                <User className="h-5 w-5" />
+              </Link>
+            </Button>
+          )}
           <Button variant="ghost" size="icon" asChild>
             <Link href="/cart" className="relative" aria-label={`Shopping Cart, ${cartCount} items`}>
               <ShoppingBag className="h-5 w-5" />
@@ -95,7 +103,7 @@ export function Header() {
                    </SheetClose>
                 </div>
 
-                <form onSubmit={(e) => { handleSearch(e); setIsMobileMenuOpen(false); }} className="flex items-center relative">
+                <form onSubmit={handleSearch} className="flex items-center relative">
                   <Input type="search" name="search" placeholder="Search products..." className="h-10 pr-12 w-full" />
                   <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10">
                     <Search className="h-5 w-5" />
@@ -115,17 +123,19 @@ export function Header() {
                     </Link>
                   ))}
                 </nav>
-                <div className="border-t border-border pt-4">
-                  <Link
-                    href="/account"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
-                    aria-label="My Account"
-                  >
-                    <User className="h-5 w-5" />
-                    <span>My Account</span>
-                  </Link>
-                </div>
+                {!authLoading && (
+                  <div className="border-t border-border pt-4">
+                    <Link
+                      href={accountLink}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
+                      aria-label={accountLinkLabel}
+                    >
+                      <User className="h-5 w-5" />
+                      <span>{accountLinkLabel}</span>
+                    </Link>
+                  </div>
+                )}
               </div>
             </SheetContent>
           </Sheet>

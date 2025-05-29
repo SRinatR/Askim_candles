@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   name: string;
@@ -27,6 +28,7 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  phone?: string; // Added phone for profile page
   addresses?: Address[];
   // other user fields
 }

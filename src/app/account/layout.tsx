@@ -1,13 +1,16 @@
+
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation"; // Import useRouter
 import { Button } from "@/components/ui/button";
-import { Card, CardContent }
-from "@/components/ui/card";
-import { User, MapPin, ShoppingBag, LogOut, Edit3 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { User, MapPin, ShoppingBag, LogOut } from "lucide-react"; // Removed Edit3 as it's not used
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext"; // Import useAuth
+import React, { useEffect } from "react"; // Import React and useEffect
+import { useToast } from "@/hooks/use-toast";
 
 const sidebarNavItems = [
   {
@@ -29,12 +32,47 @@ const sidebarNavItems = [
 
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { currentUser, loading, logout } = useAuth();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (!loading && !currentUser) {
+      router.replace("/login?redirect=/account"); // Redirect to login if not authenticated
+    }
+  }, [currentUser, loading, router]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      // Router push to /login is handled by logout function in AuthContext
+    } catch (error) {
+      toast({
+        title: "Logout Failed",
+        description: "Could not log you out. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (loading || !currentUser) {
+    // Display a loading state or null while checking auth status or if not authenticated
+    // This prevents a flash of the account page content before redirect
+    return <div className="flex justify-center items-center min-h-[300px]"><p>Loading account...</p></div>;
+  }
 
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">My Account</h1>
-        <Button variant="outline">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Account</h1>
+          {currentUser && <p className="text-muted-foreground">Welcome back, {currentUser.name || currentUser.email}!</p>}
+        </div>
+        <Button variant="outline" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" /> Logout
         </Button>
       </div>
