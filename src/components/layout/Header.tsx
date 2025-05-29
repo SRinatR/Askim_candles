@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut, Globe, ChevronDown, Info, BookOpen } from 'lucide-react'; // Added BookOpen
+import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut, Globe, ChevronDown, BookOpen } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
@@ -10,11 +10,11 @@ import { useSession, signOut as nextAuthSignOut } from "next-auth/react";
 import { useAuth as useSimulatedAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { Locale } from '@/lib/i1n-config';
 import { i18n } from '@/lib/i1n-config';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'; // ENSURED IMPORT
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,9 +28,7 @@ interface HeaderProps {
     home: string;
     products: string;
     about: string;
-    usefulInfo: string; // This will now be the link text for the main info page
-    soyWaxInfoTitle?: string; // Kept for potential direct links elsewhere, but not used in header dropdown
-    aromaSachetInfoTitle?: string; // Kept for potential direct links elsewhere
+    usefulInfo: string;
     cart: string;
     account: string;
     login: string;
@@ -53,11 +51,17 @@ export function Header({ locale, dictionary }: HeaderProps) {
   const isLoadingAuth = nextAuthStatus === "loading" || isLoadingSimulatedAuth;
 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isClientMounted, setIsClientMounted] = useState(false);
   const router = useRouter();
 
+  useEffect(() => {
+    setIsClientMounted(true);
+  }, []);
+
+  // Define currentPathWithoutLocale at the top level of the Header component
   const currentPathWithoutLocale = pathname.startsWith(`/${locale}`) ? pathname.substring(`/${locale}`.length) || '/' : pathname;
 
-  const isAdminPath = pathname.split('/').includes('admin');
+  const isAdminPath = pathname.split('/').some(segment => segment === 'admin');
   if (isAdminPath) {
     return null;
   }
@@ -66,7 +70,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
     { href: '/', label: dictionary.home },
     { href: '/products', label: dictionary.products },
     { href: '/about', label: dictionary.about },
-    { href: '/info', label: dictionary.usefulInfo, icon: BookOpen }, // Changed "Полезное" to a direct link
+    { href: '/info', label: dictionary.usefulInfo, icon: BookOpen },
   ];
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
@@ -84,9 +88,9 @@ export function Header({ locale, dictionary }: HeaderProps) {
       await nextAuthSignOut({ callbackUrl: `/${locale}/` });
     }
     if (simulatedUser) {
-      simulatedLogout(); // This should handle its own redirect via AuthContext
-    } else { // If only NextAuth session existed, or if simulatedLogout doesn't redirect
-      router.push(`/${locale}/`);
+      simulatedLogout(); 
+    } else if (!nextAuthSession) { // Ensure redirect if only simulatedUser existed and logged out
+        router.push(`/${locale}/`);
     }
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   };
@@ -105,6 +109,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
   }
 
   const LanguageSwitcher = () => {
+    // currentPathWithoutLocale is now accessible from the outer scope
     const getLangName = (loc: Locale) => {
       if (loc === 'uz') return dictionary.langUz;
       if (loc === 'ru') return dictionary.langRu;
@@ -154,6 +159,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
                 (pathname === `/${locale}${link.href}` || (link.href === '/' && pathname === `/${locale}`)) && "bg-muted text-foreground"
               )}
             >
+              {link.icon && <link.icon className="mr-1.5 h-4 w-4 inline-block" />}
               {link.label}
             </Link>
           ))}
@@ -168,7 +174,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
             </Button>
           </form>
 
-          {!isLoadingAuth && (
+          {isClientMounted && !isLoadingAuth && (
             <>
               {isAuthenticated ? (
                 <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex" title={userName || dictionary.account}>
@@ -188,7 +194,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
           <Button variant="ghost" size="icon" asChild>
             <Link href={`/${locale}/cart`} className="relative" aria-label={`${dictionary.cart}, ${cartCount} items`}>
               <ShoppingBag className="h-5 w-5" />
-              {cartCount > 0 && (
+              {isClientMounted && cartCount > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                   {cartCount}
                 </span>
@@ -196,9 +202,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
             </Link>
           </Button>
           
-          <div className="hidden md:flex"> 
-            <LanguageSwitcher />
-          </div>
+          {isClientMounted && <div className="hidden md:flex"> <LanguageSwitcher /> </div>}
 
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -247,28 +251,30 @@ export function Header({ locale, dictionary }: HeaderProps) {
                     ))}
                   </nav>
                   
-                  <div className="pt-3 border-t md:hidden">
-                     <p className="text-sm text-muted-foreground mb-1">Language:</p>
-                     <div className="flex items-center space-x-1">
-                        {i18n.locales.map((loc) => ( 
-                          <Link
-                            key={loc}
-                            href={`/${loc}${currentPathWithoutLocale}`}
-                            onClick={() => setIsMobileMenuOpen(false)}
-                            className={cn(
-                              "rounded-md px-2 py-1 text-xs hover:bg-muted flex-1 text-center",
-                              locale === loc ? "font-semibold text-primary bg-primary/10 border border-primary/50" : "text-foreground/80 border border-transparent"
-                            )}
-                          >
-                            {loc === 'uz' ? dictionary.langUz : loc === 'ru' ? dictionary.langRu : dictionary.langEn}
-                          </Link>
-                        ))}
-                     </div>
-                  </div>
+                  {isClientMounted && (
+                    <div className="pt-3 border-t md:hidden">
+                        <p className="text-sm text-muted-foreground mb-1">Language:</p>
+                        <div className="flex items-center space-x-1">
+                          {i18n.locales.map((loc) => ( 
+                            <Link
+                              key={loc}
+                              href={`/${loc}${currentPathWithoutLocale}`}
+                              onClick={() => setIsMobileMenuOpen(false)}
+                              className={cn(
+                                "rounded-md px-2 py-1 text-xs hover:bg-muted flex-1 text-center",
+                                locale === loc ? "font-semibold text-primary bg-primary/10 border border-primary/50" : "text-foreground/80 border border-transparent"
+                              )}
+                            >
+                              {loc === 'uz' ? dictionary.langUz : loc === 'ru' ? dictionary.langRu : dictionary.langEn}
+                            </Link>
+                          ))}
+                        </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="border-t border-border p-4 space-y-3 shrink-0">
-                  {!isLoadingAuth && (
+                  {isClientMounted && !isLoadingAuth && (
                     <>
                       {isAuthenticated ? (
                         <>
@@ -300,6 +306,9 @@ export function Header({ locale, dictionary }: HeaderProps) {
                       )}
                     </>
                   )}
+                   {!isClientMounted && ( // Fallback or loading state for auth buttons on mobile
+                    <div className="h-10"></div> // Placeholder to prevent layout shift
+                  )}
                 </div>
               </div>
             </SheetContent>
@@ -309,5 +318,3 @@ export function Header({ locale, dictionary }: HeaderProps) {
     </header>
   );
 }
-
-    
