@@ -10,7 +10,7 @@
 *   **Main Site Internationalization (i18n - UZ default, RU, EN):**
     *   Path-based routing (`/[locale]/...`). Dictionary files and getters in place.
     *   Key e-commerce pages (`HomePage`, `ProductsPage`, `ProductDetailPage`, `CartPage`, `CheckoutPage`, `LoginPage`, `RegisterPage`, `Account` section pages, `AboutUsPage`) are localized for static text.
-    *   "Useful Info" section (`/info`, `/info/[slug]`) implemented with dynamic, multilingual articles from admin.
+    *   "Useful Info" section (`/info`, `/info/[slug]`) implemented with dynamic, multilingual articles (including images) from admin.
     *   Functional language switcher in Header (desktop dropdown, compact mobile horizontal list).
     *   Middleware (`middleware.ts`) for locale handling and redirection.
 *   **Styling:** Tailwind CSS, ShadCN UI. Custom corporate theme. Main site header/footer hidden on admin pages. Global CSS applied to admin panel. Homepage category display improved.
@@ -29,7 +29,7 @@
     *   Filter application logic refined.
 *   **Product Sorting (Main Site):** UI for sorting by relevance, price, name, newest available. **Functionality verified** for mock data.
 *   **Product Attributes:**
-    *   `Product` type and `mock-data.ts` updated with multilingual `name` and `description`, `sku`, `isActive`, `scent`, `material`, `dimensions`, `burningTime`.
+    *   `Product` type and `mock-data.ts` updated with multilingual `name` and `description`, `sku`, `costPrice`, `isActive`, `scent`, `material`, `dimensions`, `burningTime`.
     *   Admin product forms updated to include these fields. Category, Scent, Material are `Select` inputs drawing from dynamic admin-managed attributes.
     *   Product Detail page updated to display these attributes.
 *   **Product Categories (Data):**
@@ -59,11 +59,11 @@
     *   **Mobile Access Restriction:** Admin panel shows a message to use desktop if accessed on mobile (except login).
     *   **Version Display:** Admin panel footer shows simulated version and update date. Main site footer shows only version.
     *   **Product Management Section (`/admin/products`, `/new`, `/edit/[id]`):**
-        *   UI for listing products (mock data), including **product main image, ID, SKU, and Active status display**.
+        *   UI for listing products (mock data), including **product main image, ID, SKU, Cost Price, and Active status display**.
         *   Forms for product CRUD (client-side simulated actions) with `react-hook-form` and Zod.
         *   **Multilingual Inputs:** Name and Description fields are tabbed for EN/RU/UZ.
         *   **Image Upload:** `ImageUploadArea.tsx` component integrated into product forms.
-        *   **Expanded attributes in forms:** SKU, Scent (Select), Material (Select), Category (Select), Dimensions, Burning Time, Active status. Options for Selects are dynamic based on admin-managed attributes.
+        *   **Expanded attributes in forms:** SKU, Cost Price, Scent (Select), Material (Select), Category (Select), Dimensions, Burning Time, Active status. Options for Selects are dynamic based on admin-managed attributes.
     *   **User Management Section (`/admin/users`, `/new-manager` - Admin Only):**
         *   UI for listing managers (predefined + localStorage).
         *   Form for adding new managers (client-side simulated via `localStorage`).
@@ -84,15 +84,16 @@
 
 ## 2. What's Left to Build (Key Areas - based on User's List & Project Needs)
 
-**Current Focus (User Request):**
-*   **Implement Stock-Aware Quantity Logic:** Ensure cart operations and product additions respect available stock. Update toast notifications for stock-related scenarios. (This is the immediate task)
+**Current Focus (User Request from activeContext.md):**
+1.  Main Site: Add a visual indicator for inactive products on the Product Detail page (`/[locale]/products/[id]`).
+2.  Admin Panel: Implement a basic UI for displaying the order list in `/admin/sales` (using `mockOrders` for now).
+
+**Other Potential Enhancements (from user's list):**
 
 **UX Improvements (Main Site):**
-*   **Visual indicator for inactive products on Product Detail Page.** (User's previous immediate next step)
 *   Improve the empty cart page (e.g., more engaging message, popular product suggestions).
 
 **Admin Panel Functional & UI Enhancements:**
-*   **Orders (`/admin/sales`): Implement basic UI for order list (table with ID, date, status, amount), "View Details" button.** (User's previous immediate next step)
 *   Dashboard: Implement basic data visualization (e.g., simple charts for sales, top products using `shadcn/ui` charts with mock data).
 *   Orders (`/admin/sales` - beyond basic list): Add filtering by status, view order details (linking to a new detail page stub).
 *   Pagination for admin lists (products, clients, logs - client-side initially).
@@ -119,12 +120,12 @@
 
 ## 3. Current Status
 
-*   **Main Site:** MVP with core e-commerce UI flows implemented and largely localized (UZ/RU/EN). Authentication is hybrid (NextAuth Google + Simulated Email/Pass). Product data is mocked, prices in UZS. Product filters are dynamic (including price range) and filter only active products. Sorting verified. Inactive products hidden from lists. New corporate color palette applied. "Useful Info" section has dynamic articles with multilingual text and images. Cart persists across language changes.
-*   **Admin Panel:** UI shell created with simulated authentication (ADMIN/MANAGER roles), collapsible sidebar, role-based navigation, dark/light theme, and EN/RU i18n. New corporate-derived dark theme applied.
-    *   Product management includes image display in list, ID, SKU, Active status. Forms with drag-and-drop image upload (simulated), multilingual name/description inputs, and expanded attribute fields (SKU, Scent (Select), Material (Select), Category (Select), Dimensions, Burning Time, Active status). Attribute Select options are dynamic from admin-managed localStorage.
+*   **Main Site:** MVP with core e-commerce UI flows implemented and largely localized (UZ/RU/EN). Authentication is hybrid (NextAuth Google + Simulated Email/Pass). Product data is mocked (includes `costPrice`), prices in UZS. Product filters are dynamic and filter only active products. Sorting verified. Inactive products hidden from lists. New corporate color palette applied. "Useful Info" section has dynamic articles with multilingual text and images. Cart persists across language changes.
+*   **Admin Panel:** UI shell created with simulated authentication (ADMIN/MANAGER roles), collapsible sidebar, role-based navigation, dark/light theme (dark theme reverted to corporate-derived palette), and EN/RU i18n.
+    *   Product management includes image display in list, ID, SKU, Cost Price, Active status. Forms with drag-and-drop image upload (simulated), multilingual name/description inputs, and expanded attribute fields (SKU, Cost Price, Scent (Select), Material (Select), Category (Select), Dimensions, Burning Time, Active status). Attribute Select options are dynamic from admin-managed localStorage.
     *   Article management allows CRUD for multilingual articles with shared/per-language images (simulated via `localStorage`).
     *   User (Manager) management includes adding new managers (simulated via `localStorage`).
-    *   Attribute management (Categories, Materials, Scents) allows full CRUD (simulated via `localStorage`) with warnings for in-use attributes. "Attributes" menu in sidebar is an accordion.
+    *   Attribute management (Categories, Materials, Scents) allows full CRUD (add, edit, delete from `localStorage`) with warnings for in-use attributes. "Attributes" menu in sidebar is an accordion.
     *   Clients section shows mock client data with search/simulated block.
     *   Logs section shows simulated admin actions from `localStorage` with a clear function, and client-side filtering/sorting.
     *   Dashboard shows enhanced mock stats and recent simulated activity.
@@ -145,5 +146,3 @@
 *   Corrected parsing errors in admin attribute pages and `ru.json` dictionary.
 *   Admin header/footer visibility and positioning on mobile fixed.
 *   Missing `X` icon and `SheetTrigger` imports in admin layout fixed.
-
-```

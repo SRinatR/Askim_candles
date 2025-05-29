@@ -4,8 +4,8 @@
 ## Date: 2024-07-30 (Simulated Date of Update)
 
 ## 1. Current Focus
-*   **Implement Stock-Aware Quantity Logic:** Ensure cart operations and product additions respect available stock. Update toast notifications for stock-related scenarios.
-*   Verify that product displays (cards, detail page) correctly show "Out of Stock" messages and disable "Add to Cart" buttons when stock is zero.
+*   **Implement Cost Price:** Add `costPrice` field to products. Make it visible and editable in the admin panel product forms and display it in the admin product list. This information is for admin use only and should not appear on the main site.
+*   Verify changes and ensure no regressions.
 
 ## 2. Recent Changes (Leading to this state)
 *   **Admin Panel - Dark Theme Reversion (Corporate-derived):** The admin panel's dark theme in `globals.css` was reverted to use the corporate Dark Navy/Blue as its base, as per user preference over a more "standard professional black" theme. Hover effects adjusted.
@@ -29,7 +29,7 @@
 
 ## 3. Next Steps (Potential - based on user's previous input list)
 
-**Immediate Focus (User Preference from before theme issues, now being addressed by stock logic):**
+**Immediate Focus (User Preference from before theme issues):**
 1.  Main Site: Add a visual indicator for inactive products on the Product Detail page (`/[locale]/products/[id]`). (Partially addressed by `isActive` logic, but direct page view needs clarity)
 2.  Admin Panel: Implement a basic UI for displaying the order list in `/admin/sales` (using `mockOrders` for now).
 
@@ -50,9 +50,8 @@
 *   Prepare for full backend integration (Prisma/PostgreSQL) for all simulated data.
 
 ## 4. Active Decisions & Considerations
-*   **Stock Logic:** The current task is to make cart and product adding fully stock-aware.
-*   **Admin Dark Theme:** Reverted to corporate-color-derived dark theme.
+*   **Admin Dark Theme:** Reverted to corporate-color-derived dark theme. Hover effects adjusted.
 *   **Backend Transition:** All new features are being built with future backend integration (Prisma/PostgreSQL) in mind.
 *   **Attribute & Article Management:** Now fully dynamic using `localStorage` for admin, with initial seeding from mock data if empty. Includes multilingual text and image support for articles.
 *   **Mobile Admin Access:** Restricted, user prompted to use desktop.
-*   **Simulated Data:** Product, order, client, and log data are
+*   **Simulated Data:** Product, order, client, and log data are managed client-side or via `mock-data.ts`. `costPrice` is now part of product data.

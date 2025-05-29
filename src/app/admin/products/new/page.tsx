@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,13 @@ import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
 import React, { useEffect, useState } from "react"; 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Locale } from "@/lib/types";
+import type { AdminLocale } from '@/admin/lib/i18n-config-admin';
+import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
+import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
+import type enAdminMessages from '@/admin/dictionaries/en.json';
+
+type AdminProductsPageDict = typeof enAdminMessages.adminProductsPage;
+
 
 const productSchema = z.object({
   name_en: z.string().min(1, { message: "English product name is required." }),
@@ -27,7 +35,8 @@ const productSchema = z.object({
   description_ru: z.string().min(1, { message: "Russian description is required." }),
   description_uz: z.string().min(1, { message: "Uzbek description is required." }),
   sku: z.string().optional(),
-  price: z.coerce.number().positive({ message: "Price must be a positive number (in UZS)." }),
+  price: z.coerce.number().int().positive({ message: "Price must be a positive integer (in UZS)." }),
+  costPrice: z.coerce.number().int().nonnegative({ message: "Cost price must be a non-negative integer (in UZS)." }).optional(),
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL (Data URL in this case)."})).min(1, { message: "At least one image is required." }),
@@ -53,9 +62,20 @@ export default function NewProductPage() {
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [availableMaterials, setAvailableMaterials] = useState<string[]>([]);
   const [availableScents, setAvailableScents] = useState<string[]>([]);
-
+  const [dict, setDict] = useState<AdminProductsPageDict | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
+    setIsClient(true);
+    const storedAdminLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
+    const localeToLoad = storedAdminLocale && i18nAdmin.locales.includes(storedAdminLocale) ? storedAdminLocale : i18nAdmin.defaultLocale;
+    
+    async function loadDictionary() {
+      const fullDict = await getAdminDictionary(localeToLoad);
+      setDict(fullDict.adminProductsPage);
+    }
+    loadDictionary();
+
     if (typeof window !== 'undefined') {
       const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
       setAvailableCategories(storedCustomCategories ? JSON.parse(storedCustomCategories) : []);
@@ -76,6 +96,7 @@ export default function NewProductPage() {
       description_en: "", description_ru: "", description_uz: "",
       sku: "",
       price: 0,
+      costPrice: 0,
       category: "",
       stock: 0,
       images: [],
@@ -89,7 +110,7 @@ export default function NewProductPage() {
   });
 
   const { register, handleSubmit, control, formState, setValue, watch } = formMethods;
-  const { errors } = formState; // Removed isSubmitting as it's not directly used
+  const { errors, isSubmitting } = formState; 
 
   const onSubmit = (data: ProductFormValues) => {
     const newProductData = {
@@ -98,6 +119,7 @@ export default function NewProductPage() {
       description: { en: data.description_en, ru: data.description_ru, uz: data.description_uz },
       sku: data.sku,
       price: data.price,
+      costPrice: data.costPrice,
       category: data.category,
       stock: data.stock,
       images: data.images,
@@ -110,23 +132,27 @@ export default function NewProductPage() {
     };
     console.log("New Product Data (Simulated):", newProductData);
     toast({
-      title: "Product Added (Simulated)",
-      description: `${data.name_en} has been 'added'. This change is client-side only. Image data URLs are in console.`,
+      title: dict?.addSuccessTitle || "Product Added (Simulated)",
+      description: `${dict?.addSuccessDescPrefix || ""}${data.name_en}${dict?.addSuccessDescSuffix || " has been 'added'."}`,
     });
     router.push("/admin/products");
   };
+  
+  if (!isClient || !dict) {
+    return <div>Loading form...</div>;
+  }
 
   return (
     <FormProvider {...formMethods}>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-              <h1 className="text-3xl font-bold tracking-tight">Add New Product</h1>
-              <p className="text-muted-foreground">Fill in the details for the new product.</p>
+              <h1 className="text-3xl font-bold tracking-tight">{dict.addNewTitle}</h1>
+              <p className="text-muted-foreground">{dict.addNewDesc}</p>
           </div>
           <Button variant="outline" asChild>
               <Link href="/admin/products">
-                  <ArrowLeft className="mr-2 h-4 w-4" /> Back to Products
+                  <ArrowLeft className="mr-2 h-4 w-4" /> {dict.backToProductsButton}
               </Link>
           </Button>
         </div>
@@ -136,7 +162,7 @@ export default function NewProductPage() {
             <div className="lg:col-span-2 space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Product Information</CardTitle>
+                  <CardTitle>{dict.productInfoTitle}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="en" className="w-full">
@@ -147,36 +173,36 @@ export default function NewProductPage() {
                     </TabsList>
                     <TabsContent value="en" className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name_en">Product Name (EN)</Label>
+                        <Label htmlFor="name_en">{dict.nameLabel} (EN)</Label>
                         <Input id="name_en" {...register("name_en")} />
                         {errors.name_en && <p className="text-sm text-destructive">{errors.name_en.message}</p>}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="description_en">Description (EN)</Label>
+                        <Label htmlFor="description_en">{dict.descriptionLabel} (EN)</Label>
                         <Textarea id="description_en" {...register("description_en")} />
                         {errors.description_en && <p className="text-sm text-destructive">{errors.description_en.message}</p>}
                       </div>
                     </TabsContent>
                     <TabsContent value="ru" className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name_ru">Название продукта (RU)</Label>
+                        <Label htmlFor="name_ru">{dict.nameLabel} (RU)</Label>
                         <Input id="name_ru" {...register("name_ru")} />
                         {errors.name_ru && <p className="text-sm text-destructive">{errors.name_ru.message}</p>}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="description_ru">Описание (RU)</Label>
+                        <Label htmlFor="description_ru">{dict.descriptionLabel} (RU)</Label>
                         <Textarea id="description_ru" {...register("description_ru")} />
                         {errors.description_ru && <p className="text-sm text-destructive">{errors.description_ru.message}</p>}
                       </div>
                     </TabsContent>
                     <TabsContent value="uz" className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name_uz">Mahsulot nomi (UZ)</Label>
+                        <Label htmlFor="name_uz">{dict.nameLabel} (UZ)</Label>
                         <Input id="name_uz" {...register("name_uz")} />
                         {errors.name_uz && <p className="text-sm text-destructive">{errors.name_uz.message}</p>}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="description_uz">Tavsifi (UZ)</Label>
+                        <Label htmlFor="description_uz">{dict.descriptionLabel} (UZ)</Label>
                         <Textarea id="description_uz" {...register("description_uz")} />
                         {errors.description_uz && <p className="text-sm text-destructive">{errors.description_uz.message}</p>}
                       </div>
@@ -187,36 +213,41 @@ export default function NewProductPage() {
               
               <Card>
                 <CardHeader>
-                    <CardTitle>General Details</CardTitle>
+                    <CardTitle>{dict.generalDetailsTitle}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                      <div className="space-y-2">
-                      <Label htmlFor="sku">SKU (Stock Keeping Unit)</Label>
-                      <Input id="sku" {...register("sku")} placeholder="e.g., CAND-LAV-01" />
+                      <Label htmlFor="sku">{dict.skuLabel}</Label>
+                      <Input id="sku" {...register("sku")} placeholder={dict.skuPlaceholder} />
                       {errors.sku && <p className="text-sm text-destructive">{errors.sku.message}</p>}
                     </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="price">Price (UZS)</Label>
+                      <Label htmlFor="price">{dict.priceLabel}</Label>
                       <Input id="price" type="number" step="1" {...register("price")} placeholder="0" />
                       {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
                     </div>
+                     <div className="space-y-2">
+                      <Label htmlFor="costPrice">{dict.costPriceLabel}</Label>
+                      <Input id="costPrice" type="number" step="1" {...register("costPrice")} placeholder="0" />
+                      {errors.costPrice && <p className="text-sm text-destructive">{errors.costPrice.message}</p>}
+                    </div>
                     <div className="space-y-2">
-                      <Label htmlFor="stock">Stock Quantity</Label>
+                      <Label htmlFor="stock">{dict.stockLabel}</Label>
                       <Input id="stock" type="number" {...register("stock")} placeholder="0" />
                       {errors.stock && <p className="text-sm text-destructive">{errors.stock.message}</p>}
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
+                    <Label htmlFor="category">{dict.categoryLabel}</Label>
                     <Controller
                       name="category"
                       control={control}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <SelectTrigger id="category">
-                            <SelectValue placeholder="Select a category" />
+                            <SelectValue placeholder={dict.categoryPlaceholder} />
                           </SelectTrigger>
                           <SelectContent>
                             {availableCategories.map(cat => (
@@ -231,14 +262,14 @@ export default function NewProductPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="scent">Scent</Label>
+                        <Label htmlFor="scent">{dict.scentLabel}</Label>
                          <Controller
                             name="scent"
                             control={control}
                             render={({ field }) => (
                                 <Select onValueChange={field.onChange} value={field.value || undefined} >
                                 <SelectTrigger id="scent">
-                                    <SelectValue placeholder="Select a scent" />
+                                    <SelectValue placeholder={dict.scentPlaceholder} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {availableScents.map(scent => (
@@ -251,14 +282,14 @@ export default function NewProductPage() {
                         {errors.scent && <p className="text-sm text-destructive">{errors.scent.message}</p>}
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="material">Material</Label>
+                        <Label htmlFor="material">{dict.materialLabel}</Label>
                         <Controller
                             name="material"
                             control={control}
                             render={({ field }) => (
                                 <Select onValueChange={field.onChange} value={field.value || undefined}>
                                 <SelectTrigger id="material">
-                                    <SelectValue placeholder="Select a material" />
+                                    <SelectValue placeholder={dict.materialPlaceholder} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {availableMaterials.map(material => (
@@ -273,19 +304,19 @@ export default function NewProductPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="dimensions">Dimensions</Label>
-                        <Input id="dimensions" {...register("dimensions")} placeholder="e.g., 8cm x 10cm" />
+                        <Label htmlFor="dimensions">{dict.dimensionsLabel}</Label>
+                        <Input id="dimensions" {...register("dimensions")} placeholder={dict.dimensionsPlaceholder} />
                         {errors.dimensions && <p className="text-sm text-destructive">{errors.dimensions.message}</p>}
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="burningTime">Burning Time</Label>
-                        <Input id="burningTime" {...register("burningTime")} placeholder="e.g., Approx. 45 hours" />
+                        <Label htmlFor="burningTime">{dict.burningTimeLabel}</Label>
+                        <Input id="burningTime" {...register("burningTime")} placeholder={dict.burningTimePlaceholder} />
                         {errors.burningTime && <p className="text-sm text-destructive">{errors.burningTime.message}</p>}
                     </div>
                   </div>
                    <div className="space-y-2 pt-2">
                       <Label htmlFor="isActive" className="flex items-center">
-                        Product Status
+                        {dict.statusLabel}
                         <Controller
                           name="isActive"
                           control={control}
@@ -298,7 +329,7 @@ export default function NewProductPage() {
                             />
                           )}
                         />
-                         <span className="ml-2 text-sm text-muted-foreground">({watch("isActive") ? "Active" : "Inactive"})</span>
+                         <span className="ml-2 text-sm text-muted-foreground">({watch("isActive") ? dict.statusActive : dict.statusInactive})</span>
                       </Label>
                        {errors.isActive && <p className="text-sm text-destructive">{errors.isActive.message}</p>}
                     </div>
@@ -308,8 +339,8 @@ export default function NewProductPage() {
             <div className="lg:col-span-1 space-y-6">
                <Card>
                 <CardHeader>
-                  <CardTitle>Product Images</CardTitle>
-                  <CardDescription>Upload images for the product. Select a main image.</CardDescription>
+                  <CardTitle>{dict.imagesTitle}</CardTitle>
+                  <CardDescription>{dict.imagesDesc}</CardDescription>
                 </CardHeader>
                 <CardContent>
                    <Controller
@@ -334,14 +365,14 @@ export default function NewProductPage() {
             </div>
           </div>
           <CardFooter className="mt-6 flex justify-end">
-            <Button type="submit" disabled={formState.isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               <Save className="mr-2 h-4 w-4" /> 
-              {formState.isSubmitting ? "Saving..." : "Save Product (Simulated)"}
+              {isSubmitting ? dict.savingButton : dict.saveButton}
             </Button>
           </CardFooter>
         </form>
         <p className="text-sm text-muted-foreground text-center pt-4">
-            Note: Product creation is simulated. Image data (as Data URLs) will be logged to console but not persisted.
+            {dict.simulationNote}
           </p>
       </div>
     </FormProvider>

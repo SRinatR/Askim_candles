@@ -1,5 +1,5 @@
 
-import type { Locale } from './i18n-config';
+import type { Locale } from './i1n-config';
 
 export interface Product {
   id: string;
@@ -7,6 +7,7 @@ export interface Product {
   name: { [key in Locale | 'en']: string };
   description: { [key in Locale | 'en']: string };
   price: number;
+  costPrice?: number; // Added cost price
   category: string;
   images: string[];
   mainImage?: string;
@@ -95,4 +96,3 @@ export interface Article {
   createdAt: string; 
   updatedAt: string; 
 }
-

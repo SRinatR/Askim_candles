@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -19,6 +20,13 @@ import { mockProducts } from "@/lib/mock-data";
 import type { Product, Locale } from "@/lib/types";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { AdminLocale } from '@/admin/lib/i18n-config-admin';
+import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
+import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
+import type enAdminMessages from '@/admin/dictionaries/en.json';
+
+type AdminProductsPageDict = typeof enAdminMessages.adminProductsPage;
+
 
 const productSchema = z.object({
   name_en: z.string().min(1, { message: "English product name is required." }),
@@ -28,7 +36,8 @@ const productSchema = z.object({
   description_ru: z.string().min(1, { message: "Russian description is required." }),
   description_uz: z.string().min(1, { message: "Uzbek description is required." }),
   sku: z.string().optional(),
-  price: z.coerce.number().positive({ message: "Price must be a positive number (in UZS)." }),
+  price: z.coerce.number().int().positive({ message: "Price must be a positive integer (in UZS)." }),
+  costPrice: z.coerce.number().int().nonnegative({ message: "Cost price must be a non-negative integer (in UZS)." }).optional(),
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL."})).min(1, { message: "At least one image is required." }),
@@ -56,15 +65,28 @@ export default function EditProductPage() {
   const [availableCategories, setAvailableCategories] = useState<string[]>([]);
   const [availableMaterials, setAvailableMaterials] = useState<string[]>([]);
   const [availableScents, setAvailableScents] = useState<string[]>([]);
+  const [dict, setDict] = useState<AdminProductsPageDict | null>(null);
+  const [isClient, setIsClient] = useState(false);
+
 
   const formMethods = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
   });
 
   const { register, handleSubmit, control, formState, reset, setValue, watch } = formMethods;
-  const { errors } = formState; // Removed isSubmitting as it's not directly used
+  const { errors, isSubmitting } = formState; 
 
   useEffect(() => {
+    setIsClient(true);
+    const storedAdminLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
+    const localeToLoad = storedAdminLocale && i18nAdmin.locales.includes(storedAdminLocale) ? storedAdminLocale : i18nAdmin.defaultLocale;
+    
+    async function loadDictionary() {
+      const fullDict = await getAdminDictionary(localeToLoad);
+      setDict(fullDict.adminProductsPage);
+    }
+    loadDictionary();
+
     const foundProduct = mockProducts.find(p => p.id === productId);
     if (foundProduct) {
       setProductToEdit(foundProduct);
@@ -77,6 +99,7 @@ export default function EditProductPage() {
         description_uz: foundProduct.description.uz || "",
         sku: foundProduct.sku || "",
         price: foundProduct.price,
+        costPrice: foundProduct.costPrice,
         category: foundProduct.category, 
         stock: foundProduct.stock,
         images: foundProduct.images || [],
@@ -94,20 +117,17 @@ export default function EditProductPage() {
 
     if (typeof window !== 'undefined') {
       const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
-      const baseCategories = Array.from(new Set(mockProducts.map(p => p.category).filter(Boolean)));
-      setAvailableCategories(storedCustomCategories ? JSON.parse(storedCustomCategories) : baseCategories);
+      setAvailableCategories(storedCustomCategories ? JSON.parse(storedCustomCategories) : []);
       
       const storedCustomMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
-      const baseMaterials = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m))).sort();
-      setAvailableMaterials(storedCustomMaterials ? JSON.parse(storedCustomMaterials) : baseMaterials);
+      setAvailableMaterials(storedCustomMaterials ? JSON.parse(storedCustomMaterials) : []);
 
       const storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
-      const baseScents = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s))).sort();
-      setAvailableScents(storedCustomScents ? JSON.parse(storedCustomScents) : baseScents);
+      setAvailableScents(storedCustomScents ? JSON.parse(storedCustomScents) : []);
     }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [productId, reset, router, toast]); 
+  }, [productId, router, toast]); // Removed reset to avoid potential loops if it's not stable
 
 
   const onSubmit = (data: ProductFormValues) => {
@@ -117,6 +137,7 @@ export default function EditProductPage() {
       description: { en: data.description_en, ru: data.description_ru, uz: data.description_uz },
       sku: data.sku,
       price: data.price,
+      costPrice: data.costPrice,
       category: data.category,
       stock: data.stock,
       images: data.images,
@@ -129,14 +150,14 @@ export default function EditProductPage() {
     };
     console.log("Updated Product Data (Simulated):", updatedProductData);
     toast({
-      title: "Product Updated (Simulated)",
-      description: `${data.name_en} has been 'updated'. This change is client-side only. Image data in console.`,
+      title: dict?.updateSuccessTitle || "Product Updated (Simulated)",
+      description: `${dict?.updateSuccessDescPrefix || ""}${data.name_en}${dict?.updateSuccessDescSuffix || " has been 'updated'."}`,
     });
     router.push("/admin/products");
   };
 
-  if (!productToEdit) {
-    return <div className="flex justify-center items-center min-h-[300px]"><p>Loading product data...</p></div>;
+  if (!isClient || !dict || !productToEdit) {
+    return <div>Loading product data...</div>;
   }
 
   return (
@@ -144,12 +165,12 @@ export default function EditProductPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Edit Product</h1>
-            <p className="text-muted-foreground">Product ID: {productId}</p>
+            <h1 className="text-3xl font-bold tracking-tight">{dict.editTitle}</h1>
+            <p className="text-muted-foreground">{dict.editDesc.replace('{productId}', productId)}</p>
         </div>
         <Button variant="outline" asChild>
             <Link href="/admin/products">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Products
+                <ArrowLeft className="mr-2 h-4 w-4" /> {dict.backToProductsButton}
             </Link>
         </Button>
       </div>
@@ -159,7 +180,7 @@ export default function EditProductPage() {
             <div className="lg:col-span-2 space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Product Information</CardTitle>
+                  <CardTitle>{dict.productInfoTitle}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="en" className="w-full">
@@ -170,36 +191,36 @@ export default function EditProductPage() {
                     </TabsList>
                     <TabsContent value="en" className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name_en">Product Name (EN)</Label>
+                        <Label htmlFor="name_en">{dict.nameLabel} (EN)</Label>
                         <Input id="name_en" {...register("name_en")} />
                         {errors.name_en && <p className="text-sm text-destructive">{errors.name_en.message}</p>}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="description_en">Description (EN)</Label>
+                        <Label htmlFor="description_en">{dict.descriptionLabel} (EN)</Label>
                         <Textarea id="description_en" {...register("description_en")} />
                         {errors.description_en && <p className="text-sm text-destructive">{errors.description_en.message}</p>}
                       </div>
                     </TabsContent>
                     <TabsContent value="ru" className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name_ru">Название продукта (RU)</Label>
+                        <Label htmlFor="name_ru">{dict.nameLabel} (RU)</Label>
                         <Input id="name_ru" {...register("name_ru")} />
                         {errors.name_ru && <p className="text-sm text-destructive">{errors.name_ru.message}</p>}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="description_ru">Описание (RU)</Label>
+                        <Label htmlFor="description_ru">{dict.descriptionLabel} (RU)</Label>
                         <Textarea id="description_ru" {...register("description_ru")} />
                         {errors.description_ru && <p className="text-sm text-destructive">{errors.description_ru.message}</p>}
                       </div>
                     </TabsContent>
                     <TabsContent value="uz" className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="name_uz">Mahsulot nomi (UZ)</Label>
+                        <Label htmlFor="name_uz">{dict.nameLabel} (UZ)</Label>
                         <Input id="name_uz" {...register("name_uz")} />
                         {errors.name_uz && <p className="text-sm text-destructive">{errors.name_uz.message}</p>}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="description_uz">Tavsifi (UZ)</Label>
+                        <Label htmlFor="description_uz">{dict.descriptionLabel} (UZ)</Label>
                         <Textarea id="description_uz" {...register("description_uz")} />
                         {errors.description_uz && <p className="text-sm text-destructive">{errors.description_uz.message}</p>}
                       </div>
@@ -209,35 +230,40 @@ export default function EditProductPage() {
               </Card>
               <Card>
                 <CardHeader>
-                    <CardTitle>General Details</CardTitle>
+                    <CardTitle>{dict.generalDetailsTitle}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="sku">SKU (Stock Keeping Unit)</Label>
-                        <Input id="sku" {...register("sku")} />
-                        {errors.sku && <p className="text-sm text-destructive">{errors.sku.message}</p>}
-                      </div>
-                       <div className="space-y-2">
-                        <Label htmlFor="price">Price (UZS)</Label>
-                        <Input id="price" type="number" step="1" {...register("price")} />
-                        {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
+                    <div className="space-y-2">
+                      <Label htmlFor="sku">{dict.skuLabel}</Label>
+                      <Input id="sku" {...register("sku")} />
+                      {errors.sku && <p className="text-sm text-destructive">{errors.sku.message}</p>}
                     </div>
+                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="price">{dict.priceLabel}</Label>
+                            <Input id="price" type="number" step="1" {...register("price")} />
+                            {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="costPrice">{dict.costPriceLabel}</Label>
+                          <Input id="costPrice" type="number" step="1" {...register("costPrice")} />
+                          {errors.costPrice && <p className="text-sm text-destructive">{errors.costPrice.message}</p>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="stock">{dict.stockLabel}</Label>
+                            <Input id="stock" type="number" {...register("stock")} />
+                            {errors.stock && <p className="text-sm text-destructive">{errors.stock.message}</p>}
+                        </div>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="stock">Stock Quantity</Label>
-                        <Input id="stock" type="number" {...register("stock")} />
-                        {errors.stock && <p className="text-sm text-destructive">{errors.stock.message}</p>}
-                    </div>
-                    <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
+                    <Label htmlFor="category">{dict.categoryLabel}</Label>
                     <Controller
                         name="category"
                         control={control}
                         render={({ field }) => (
                         <Select onValueChange={field.onChange} value={field.value}>
                             <SelectTrigger id="category">
-                            <SelectValue placeholder="Select a category" />
+                            <SelectValue placeholder={dict.categoryPlaceholder} />
                             </SelectTrigger>
                             <SelectContent>
                             {availableCategories.map(cat => (
@@ -251,14 +277,14 @@ export default function EditProductPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="scent">Scent</Label>
+                            <Label htmlFor="scent">{dict.scentLabel}</Label>
                             <Controller
                                 name="scent"
                                 control={control}
                                 render={({ field }) => (
                                     <Select onValueChange={field.onChange} value={field.value || undefined}>
                                     <SelectTrigger id="scent">
-                                        <SelectValue placeholder="Select a scent" />
+                                        <SelectValue placeholder={dict.scentPlaceholder} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {availableScents.map(scent => (
@@ -271,14 +297,14 @@ export default function EditProductPage() {
                             {errors.scent && <p className="text-sm text-destructive">{errors.scent.message}</p>}
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="material">Material</Label>
+                            <Label htmlFor="material">{dict.materialLabel}</Label>
                             <Controller
                                 name="material"
                                 control={control}
                                 render={({ field }) => (
                                     <Select onValueChange={field.onChange} value={field.value || undefined}>
                                     <SelectTrigger id="material">
-                                        <SelectValue placeholder="Select a material" />
+                                        <SelectValue placeholder={dict.materialPlaceholder} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {availableMaterials.map(material => (
@@ -293,19 +319,19 @@ export default function EditProductPage() {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="dimensions">Dimensions</Label>
+                            <Label htmlFor="dimensions">{dict.dimensionsLabel}</Label>
                             <Input id="dimensions" {...register("dimensions")} />
                             {errors.dimensions && <p className="text-sm text-destructive">{errors.dimensions.message}</p>}
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="burningTime">Burning Time</Label>
+                            <Label htmlFor="burningTime">{dict.burningTimeLabel}</Label>
                             <Input id="burningTime" {...register("burningTime")} />
                             {errors.burningTime && <p className="text-sm text-destructive">{errors.burningTime.message}</p>}
                         </div>
                     </div>
                     <div className="space-y-2 pt-2">
                       <Label htmlFor="isActive" className="flex items-center">
-                        Product Status
+                        {dict.statusLabel}
                         <Controller
                           name="isActive"
                           control={control}
@@ -318,7 +344,7 @@ export default function EditProductPage() {
                             />
                           )}
                         />
-                        <span className="ml-2 text-sm text-muted-foreground">({watch("isActive") ? "Active" : "Inactive"})</span>
+                        <span className="ml-2 text-sm text-muted-foreground">({watch("isActive") ? dict.statusActive : dict.statusInactive})</span>
                       </Label>
                        {errors.isActive && <p className="text-sm text-destructive">{errors.isActive.message}</p>}
                     </div>
@@ -328,8 +354,8 @@ export default function EditProductPage() {
             <div className="lg:col-span-1 space-y-6">
                 <Card>
                     <CardHeader>
-                    <CardTitle>Product Images</CardTitle>
-                    <CardDescription>Upload new images or manage existing ones. Select a main image.</CardDescription>
+                    <CardTitle>{dict.imagesTitle}</CardTitle>
+                    <CardDescription>{dict.imagesDesc}</CardDescription>
                     </CardHeader>
                     <CardContent>
                          <Controller
@@ -355,14 +381,14 @@ export default function EditProductPage() {
         </div>
 
         <CardFooter className="mt-6 flex justify-end">
-          <Button type="submit" disabled={formState.isSubmitting}>
+          <Button type="submit" disabled={isSubmitting}>
             <Save className="mr-2 h-4 w-4" />
-             {formState.isSubmitting ? "Saving..." : "Save Changes (Simulated)"}
+             {isSubmitting ? dict.savingButton : dict.updateButton}
           </Button>
         </CardFooter>
       </form>
       <p className="text-sm text-muted-foreground text-center pt-4">
-          Note: Product updates are simulated. Image data (as Data URLs for new uploads, or existing URLs) will be logged to console but not persisted in mock data.
+          {dict.simulationNote}
         </p>
     </div>
     </FormProvider>

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { mockProducts } from "@/lib/mock-data";
 import type { Product } from "@/lib/types";
-import { PlusCircle, Edit3, Trash2, Search } from "lucide-react"; // Removed Eye, ToggleLeft, ToggleRight
+import { PlusCircle, Edit3, Trash2, Search } from "lucide-react"; 
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import React, { useState, useEffect, useMemo } from "react";
@@ -16,26 +16,42 @@ import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import { logAdminAction } from '@/admin/lib/admin-logger';
-import type { Locale } from "@/lib/i1n-config"; // Import Locale
+import type { Locale } from "@/lib/i1n-config"; 
+import type { AdminLocale } from '@/admin/lib/i18n-config-admin';
+import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
+import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
+import type enAdminMessages from '@/admin/dictionaries/en.json';
+
+type AdminProductsPageDict = typeof enAdminMessages.adminProductsPage;
+
 
 export default function AdminProductsPage() {
   const { toast } = useToast();
   const [products, setProducts] = useState<Product[]>(mockProducts);
   const [searchTerm, setSearchTerm] = useState("");
   const { currentAdminUser } = useAdminAuth();
-  const [adminLocale, setAdminLocale] = useState<Locale>('en');
+  const [adminLocale, setAdminLocale] = useState<AdminLocale>('en');
+  const [dict, setDict] = useState<AdminProductsPageDict | null>(null);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const storedLocale = localStorage.getItem('admin-lang') as Locale | null;
-    if (storedLocale) {
-      setAdminLocale(storedLocale);
+    setIsClient(true);
+    const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
+    const localeToLoad = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
+    setAdminLocale(localeToLoad);
+    
+    async function loadDictionary() {
+      const fullDict = await getAdminDictionary(localeToLoad);
+      setDict(fullDict.adminProductsPage);
     }
+    loadDictionary();
   }, []);
 
   const filteredProducts = useMemo(() => {
+    if (!dict) return []; // Ensure dict is loaded
     return products.filter(product => {
         const nameInAdminLocale = product.name[adminLocale] || product.name.en || '';
-        const category = product.category || ''; // Assuming category is a simple string for now
+        const category = product.category || ''; 
         const sku = product.sku || '';
         return (
             nameInAdminLocale.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -43,64 +59,72 @@ export default function AdminProductsPage() {
             sku.toLowerCase().includes(searchTerm.toLowerCase())
         );
     });
-  }, [products, searchTerm, adminLocale]);
+  }, [products, searchTerm, adminLocale, dict]);
 
   const handleDeleteProduct = (productId: string, productNameObj: Product['name']) => {
     const productName = productNameObj[adminLocale] || productNameObj.en;
     setProducts(prev => prev.filter(p => p.id !== productId));
-    if (currentAdminUser?.email) {
-      logAdminAction(currentAdminUser.email, "Product Deleted (Simulated)", { productId, productName });
+    if (currentAdminUser?.email && dict) {
+      logAdminAction(currentAdminUser.email, dict.logProductDeleted, { productId, productName });
     }
     toast({
-      title: "Product Deleted (Simulated)",
-      description: `Product "${productName}" (ID: ${productId}) has been 'deleted'. This change is client-side only.`,
+      title: dict?.deleteSuccessTitle || "Product Deleted (Simulated)",
+      description: `${dict?.deleteSuccessDescPrefix || ""}${productName}${dict?.deleteSuccessDescSuffix || " has been 'deleted'."}`,
     });
   };
 
   const toggleProductStatus = (productId: string) => {
+    let productName = "Product";
     setProducts(prevProducts =>
-      prevProducts.map(product =>
-        product.id === productId ? { ...product, isActive: !product.isActive } : product
-      )
+      prevProducts.map(product => {
+        if (product.id === productId) {
+          productName = product.name[adminLocale] || product.name.en;
+          const newStatus = !product.isActive;
+          if (currentAdminUser?.email && dict) {
+            const logAction = newStatus ? dict.logProductActivated : dict.logProductDeactivated;
+            logAdminAction(currentAdminUser.email, logAction, { productId: product.id, productName });
+          }
+          toast({
+            title: dict?.statusChangeSuccessTitle || `Product Status Changed (Simulated)`,
+            description: `${dict?.statusChangeDescPrefix || ""}${productName}${newStatus ? (dict?.statusChangeDescSuffixActive || " is now Active.") : (dict?.statusChangeDescSuffixInactive || " is now Inactive.")}`,
+          });
+          return { ...product, isActive: newStatus };
+        }
+        return product;
+      })
     );
-    const product = products.find(p => p.id === productId);
-    if (product && currentAdminUser?.email) {
-      const productName = product.name[adminLocale] || product.name.en;
-      logAdminAction(currentAdminUser.email, `Product ${product.isActive ? "Deactivated" : "Activated"} (Simulated)`, { productId: product.id, productName });
-    }
-    toast({
-      title: `Product Status Changed (Simulated)`,
-      description: `Product "${product?.name[adminLocale] || product?.name.en}" is now ${product?.isActive ? "Inactive" : "Active"}. Client-side only.`,
-    });
   };
 
+  if (!isClient || !dict) {
+    return <div>Loading products...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Products</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{dict.title}</h1>
           <p className="text-muted-foreground">
-            Add, edit, or remove products from your store catalog.
+            {dict.description}
           </p>
         </div>
         <Button asChild>
           <Link href="/admin/products/new">
-            <PlusCircle className="mr-2 h-4 w-4" /> Add New Product
+            <PlusCircle className="mr-2 h-4 w-4" /> {dict.addNewButton}
           </Link>
         </Button>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Product List</CardTitle>
+          <CardTitle>{dict.listTitle}</CardTitle>
           <CardDescription>
-            Displaying {filteredProducts.length} of {products.length} products. Product data is currently mocked.
+            {dict.listDescription.replace('{count}', String(filteredProducts.length)).replace('{total}', String(products.length))}
           </CardDescription>
            <div className="relative mt-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
-              placeholder="Search by name, category, or SKU..."
+              placeholder={dict.searchPlaceholder}
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -112,15 +136,16 @@ export default function AdminProductsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[60px]">Image</TableHead>
-                  <TableHead className="w-[80px]">ID</TableHead>
-                  <TableHead className="w-[120px]">SKU</TableHead>
-                  <TableHead>Name ({adminLocale.toUpperCase()})</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Price (UZS)</TableHead>
-                  <TableHead className="text-center">Stock</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead className="w-[60px]">{dict.imageHeader}</TableHead>
+                  <TableHead className="w-[80px]">{dict.idHeader}</TableHead>
+                  <TableHead className="w-[120px]">{dict.skuHeader}</TableHead>
+                  <TableHead>{dict.nameHeader.replace('{locale}', adminLocale.toUpperCase())}</TableHead>
+                  <TableHead>{dict.categoryHeader}</TableHead>
+                  <TableHead className="text-right">{dict.priceHeader}</TableHead>
+                  <TableHead className="text-right">{dict.costPriceHeader}</TableHead>
+                  <TableHead className="text-center">{dict.stockHeader}</TableHead>
+                  <TableHead className="text-center">{dict.statusHeader}</TableHead>
+                  <TableHead className="text-center">{dict.actionsHeader}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -129,7 +154,7 @@ export default function AdminProductsPage() {
                     <TableCell>
                       <div className="relative h-10 w-10 rounded-md overflow-hidden border">
                         <Image
-                          src={product.mainImage || product.images[0] || "https://placehold.co/100x100.png?text=No+Image"}
+                          src={product.mainImage || (product.images && product.images.length > 0 ? product.images[0] : "https://placehold.co/100x100.png?text=No+Image")}
                           alt={product.name[adminLocale] || product.name.en || 'Product Image'}
                           fill
                           sizes="40px"
@@ -143,6 +168,7 @@ export default function AdminProductsPage() {
                     <TableCell className="font-medium">{product.name[adminLocale] || product.name.en}</TableCell>
                     <TableCell>{product.category}</TableCell>
                     <TableCell className="text-right">{product.price.toLocaleString('en-US')}</TableCell>
+                    <TableCell className="text-right">{product.costPrice?.toLocaleString('en-US') || '-'}</TableCell>
                     <TableCell className="text-center">{product.stock}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center space-x-2">
@@ -150,17 +176,17 @@ export default function AdminProductsPage() {
                           id={`status-${product.id}`}
                           checked={product.isActive}
                           onCheckedChange={() => toggleProductStatus(product.id)}
-                          aria-label={product.isActive ? "Deactivate product" : "Activate product"}
+                          aria-label={product.isActive ? dict.deactivateAction : dict.activateAction}
                         />
                         <Badge variant={product.isActive ? "secondary" : "outline"}>
-                          {product.isActive ? "Active" : "Inactive"}
+                          {product.isActive ? dict.statusActive : dict.statusInactive}
                         </Badge>
                       </div>
                     </TableCell>
                     <TableCell className="text-center space-x-1">
-                      <Button variant="outline" size="sm" asChild title={`Edit ${product.name[adminLocale] || product.name.en}`}>
+                      <Button variant="outline" size="sm" asChild title={`${dict.editAction} ${product.name[adminLocale] || product.name.en}`}>
                         <Link href={`/admin/products/edit/${product.id}`}>
-                          <Edit3 className="mr-1 h-3 w-3" /> Edit
+                          <Edit3 className="mr-1 h-3 w-3" /> {dict.editButton}
                         </Link>
                       </Button>
                       <Button
@@ -168,9 +194,9 @@ export default function AdminProductsPage() {
                         size="sm"
                         className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => handleDeleteProduct(product.id, product.name)}
-                        title={`Delete ${product.name[adminLocale] || product.name.en}`}
+                        title={`${dict.deleteAction} ${product.name[adminLocale] || product.name.en}`}
                       >
-                        <Trash2 className="mr-1 h-3 w-3" /> Delete
+                        <Trash2 className="mr-1 h-3 w-3" /> {dict.deleteButton}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -178,12 +204,12 @@ export default function AdminProductsPage() {
               </TableBody>
             </Table>
           ) : (
-            <p className="text-muted-foreground text-center py-8">No products found matching your search.</p>
+            <p className="text-muted-foreground text-center py-8">{dict.noProductsFound}</p>
           )}
         </CardContent>
       </Card>
        <p className="text-sm text-muted-foreground text-center">
-          Note: All product data and operations are simulated on the client-side and will reset on page refresh.
+          {dict.simulationNote}
         </p>
     </div>
   );
