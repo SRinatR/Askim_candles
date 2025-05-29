@@ -60,8 +60,19 @@
     "signingInButton": "Signing In...",
     "restrictedAccess": "Access to this panel is restricted to authorized personnel only.",
     "loading": "Loading admin panel...",
-    "loginErrorTitle": "Login Error",
+    "loginSuccessTitle": "Admin Login Successful",
+    "loginWelcomeMessage": "Welcome, {name}!",
+    "loginErrorTitle": "Admin Login Failed",
     "loginErrorDescRequired": "Email and password are required.",
     "loginErrorDescInvalid": "Invalid email or password."
+  },
+  "adminContextToasts": {
+    "logoutSuccessTitle": "Logged Out",
+    "logoutSuccessDesc": "You have been successfully logged out from the admin panel.",
+    "addManagerSuccessTitle": "Manager Added (Simulated)",
+    "addManagerSuccessDesc": "{name} ({email}) has been 'added' as a manager. This change is client-side (localStorage).",
+    "addManagerErrorEmailExistsTitle": "Failed to Add Manager",
+    "addManagerErrorEmailExistsDesc": "An account with this email address already exists. Please use a different email."
   }
 }
+

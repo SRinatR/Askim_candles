@@ -60,8 +60,19 @@
     "signingInButton": "Вход...",
     "restrictedAccess": "Доступ к этой панели ограничен только авторизованным персоналом.",
     "loading": "Загрузка панели администратора...",
-    "loginErrorTitle": "Ошибка входа",
+    "loginSuccessTitle": "Вход в админ-панель успешен",
+    "loginWelcomeMessage": "Добро пожаловать, {name}!",
+    "loginErrorTitle": "Ошибка входа в админ-панель",
     "loginErrorDescRequired": "Требуются email и пароль.",
     "loginErrorDescInvalid": "Неверный email или пароль."
+  },
+  "adminContextToasts": {
+    "logoutSuccessTitle": "Выход выполнен",
+    "logoutSuccessDesc": "Вы успешно вышли из панели администратора.",
+    "addManagerSuccessTitle": "Менеджер добавлен (симуляция)",
+    "addManagerSuccessDesc": "{name} ({email}) был 'добавлен' как менеджер. Это изменение только на стороне клиента (localStorage).",
+    "addManagerErrorEmailExistsTitle": "Ошибка добавления менеджера",
+    "addManagerErrorEmailExistsDesc": "Аккаунт с таким email уже существует. Пожалуйста, используйте другой email."
   }
 }
+
