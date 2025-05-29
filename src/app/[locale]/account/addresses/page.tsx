@@ -4,7 +4,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-// import { Label } from "@/components/ui/label"; // Not used by FormField
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -27,7 +26,25 @@ import {
 import { useParams } from "next/navigation";
 import type { Locale } from '@/lib/i1n-config';
 
-// TODO: Translate Zod messages
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages;
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
+const getAddressesPageDictionary = (locale: Locale) => {
+  const dict = dictionaries[locale] || dictionaries.en;
+  return dict.accountAddressesPage;
+};
+
+
+// TODO: Translate Zod messages properly
 const addressSchema = z.object({
   id: z.string().optional(), 
   street: z.string().min(1, { message: "Street address is required." }),
@@ -45,77 +62,6 @@ const mockAddresses: Address[] = [
   { id: 'addr2', street: '456 Oak Ave', city: 'Otherville', state: 'NY', zipCode: '10001', country: 'USA', isDefault: false },
 ];
 
-// Placeholder dictionary
-const getAddressesPageDictionary = (locale: Locale) => {
-  // Basic translations, expand as needed
-  if (locale === 'uz') {
-    return {
-      manageAddressesTitle: "Manzillarni Boshqarish",
-      manageAddressesDesc: "Yetkazib berish manzillaringizni qo'shing, tahrirlang yoki o'chiring.",
-      addNewAddressButton: "Yangi Manzil Qo'shish",
-      noAddressesYet: "Siz hali hech qanday manzil qo'shmadingiz.",
-      editAddressTitle: "Manzilni Tahrirlash",
-      addAddressTitle: "Yangi Manzil Qo'shish",
-      streetAddressLabel: "Ko'cha Manzili",
-      cityLabel: "Shahar",
-      stateProvinceLabel: "Viloyat/Respublika",
-      zipPostalCodeLabel: "Pochta Indeksi",
-      countryLabel: "Mamlakat",
-      setDefaultAddressLabel: "Asosiy manzil sifatida belgilash",
-      cancelButton: "Bekor qilish",
-      saveChangesButton: "O'zgarishlarni Saqlash",
-      addAddressFormButton: "Manzil Qo'shish",
-      defaultBadge: "Asosiy",
-      setDefaultButton: "Asosiy qilish",
-      editButtonLabel: "Tahrirlash",
-      deleteButtonLabel: "O'chirish",
-      confirmDeleteTitle: "Ishonchingiz komilmi?",
-      confirmDeleteDesc: "Bu amalni qaytarib bo'lmaydi. Bu manzilni butunlay o'chiradi.",
-      deleteConfirmButton: "O'chirish",
-      addressDeletedToast: "Manzil O'chirildi",
-      addressDeletedDescToast: "Manzil olib tashlandi.",
-      defaultAddressSetToast: "Asosiy Manzil Belgilandi",
-      defaultAddressDescToast: "Bu manzil endi sizning asosiy manzilingiz.",
-      addressUpdatedToast: "Manzil Yangilandi",
-      addressUpdatedDescToast: "Manzilingiz muvaffaqiyatli yangilandi.",
-      addressAddedToast: "Manzil Qo'shildi",
-      addressAddedDescToast: "Yangi manzilingiz saqlandi."
-    };
-  }
-  // Add RU and EN similarly
-  return { // Default EN
-      manageAddressesTitle: "Manage Addresses",
-      manageAddressesDesc: "Add, edit, or remove your shipping addresses.",
-      addNewAddressButton: "Add New Address",
-      noAddressesYet: "You haven't added any addresses yet.",
-      editAddressTitle: "Edit Address",
-      addAddressTitle: "Add New Address",
-      streetAddressLabel: "Street Address",
-      cityLabel: "City",
-      stateProvinceLabel: "State/Province",
-      zipPostalCodeLabel: "ZIP/Postal Code",
-      countryLabel: "Country",
-      setDefaultAddressLabel: "Set as default address",
-      cancelButton: "Cancel",
-      saveChangesButton: "Save Changes",
-      addAddressFormButton: "Add Address",
-      defaultBadge: "Default",
-      setDefaultButton: "Set as Default",
-      editButtonLabel: "Edit address",
-      deleteButtonLabel: "Delete address",
-      confirmDeleteTitle: "Are you sure?",
-      confirmDeleteDesc: "This action cannot be undone. This will permanently delete this address.",
-      deleteConfirmButton: "Delete",
-      addressDeletedToast: "Address Deleted",
-      addressDeletedDescToast: "The address has been removed.",
-      defaultAddressSetToast: "Default Address Set",
-      defaultAddressDescToast: "This address is now your default.",
-      addressUpdatedToast: "Address Updated",
-      addressUpdatedDescToast: "Your address has been successfully updated.",
-      addressAddedToast: "Address Added",
-      addressAddedDescToast: "Your new address has been saved."
-  };
-};
 
 export default function AddressesPage() {
   const params = useParams();
@@ -129,7 +75,7 @@ export default function AddressesPage() {
 
   const form = useForm<AddressFormValues>({
     resolver: zodResolver(addressSchema),
-    defaultValues: { street: '', city: '', state: '', zipCode: '', country: 'USA', isDefault: false }, // TODO: Default country from locale?
+    defaultValues: { street: '', city: '', state: '', zipCode: '', country: 'USA', isDefault: false },
   });
 
   const handleAddNew = () => {
@@ -250,5 +196,3 @@ export default function AddressesPage() {
     </div>
   );
 }
-
-// Delete original: src/app/account/addresses/page.tsx

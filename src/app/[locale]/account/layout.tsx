@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useParams } from "next/navigation"; // Added useParams
+import { usePathname, useRouter, useParams } from "next/navigation"; 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { User, MapPin, ShoppingBag, LogOut, Link2 } from "lucide-react";
@@ -14,57 +14,20 @@ import React, { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import type { Locale } from '@/lib/i1n-config';
 
-// Placeholder dictionary
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages; // Assuming en.json has all keys
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
 const getAccountLayoutDictionary = (locale: Locale) => {
-  if (locale === 'uz') {
-    return {
-      myAccountTitle: "Mening Hisobim",
-      welcomeBack: (name: string) => `Xush kelibsiz, ${name}!`,
-      logoutButton: "Chiqish",
-      navProfile: "Profil",
-      navAddresses: "Manzillar",
-      navOrderHistory: "Buyurtmalar Tarixi",
-      navAccountLinking: "Hisoblarni Bog'lash",
-      loggedOutTitle: "Chiqib Ketildi",
-      loggedOutDesc: "Siz tizimdan muvaffaqiyatli chiqdingiz.",
-      logoutFailedTitle: "Chiqish Muvaffaqiyatsiz",
-      logoutFailedDesc: "Sizni tizimdan chiqara olmadik. Iltimos, qaytadan urinib ko'ring.",
-      loadingAccount: "Hisob yuklanmoqda...",
-      guest: "Mehmon"
-    };
-  }
-   if (locale === 'ru') {
-    return {
-      myAccountTitle: "Мой аккаунт",
-      welcomeBack: (name: string) => `С возвращением, ${name}!`,
-      logoutButton: "Выйти",
-      navProfile: "Профиль",
-      navAddresses: "Адреса",
-      navOrderHistory: "История заказов",
-      navAccountLinking: "Привязка аккаунтов",
-      loggedOutTitle: "Выход выполнен",
-      loggedOutDesc: "Вы успешно вышли из системы.",
-      logoutFailedTitle: "Ошибка выхода",
-      logoutFailedDesc: "Не удалось выйти из системы. Пожалуйста, попробуйте еще раз.",
-      loadingAccount: "Загрузка аккаунта...",
-      guest: "Гость"
-    };
-  }
-  return { // en
-    myAccountTitle: "My Account",
-    welcomeBack: (name: string) => `Welcome back, ${name}!`,
-    logoutButton: "Logout",
-    navProfile: "Profile",
-    navAddresses: "Addresses",
-    navOrderHistory: "Order History",
-    navAccountLinking: "Account Linking",
-    loggedOutTitle: "Logged Out",
-    loggedOutDesc: "You have been successfully logged out.",
-    logoutFailedTitle: "Logout Failed",
-    logoutFailedDesc: "Could not log you out. Please try again.",
-    loadingAccount: "Loading account...",
-    guest: "Guest"
-  };
+  return dictionaries[locale]?.accountLayout || dictionaries.en.accountLayout;
 };
 
 
@@ -91,7 +54,6 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   useEffect(() => {
     if (!isLoadingAuth && !isAuthenticated) {
-      // Ensure callbackUrl is also localized
       router.replace(`/${locale}/login?callbackUrl=${encodeURIComponent(pathname)}`);
     }
   }, [isLoadingAuth, isAuthenticated, router, pathname, locale]);
@@ -102,7 +64,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         await nextAuthSignOut({ callbackUrl: `/${locale}/login` });
       }
       if (simulatedUser) {
-        simulatedLogout(); // AuthContext logout (already redirects to /${locale}/login via context)
+        simulatedLogout(); 
       }
       toast({
         title: dictionary.loggedOutTitle,
@@ -133,7 +95,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">{dictionary.myAccountTitle}</h1>
-          <p className="text-muted-foreground">{dictionary.welcomeBack(welcomeName)}</p>
+          <p className="text-muted-foreground">{dictionary.welcomeBack.replace('{name}', welcomeName)}</p>
         </div>
         <Button variant="outline" onClick={handleLogout}>
           <LogOut className="mr-2 h-4 w-4" /> {dictionary.logoutButton}

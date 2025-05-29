@@ -16,69 +16,31 @@ import React, { useEffect } from "react";
 import { useParams } from "next/navigation";
 import type { Locale } from '@/lib/i1n-config';
 
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages; // Assuming en.json has all keys
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
+const getProfilePageDictionary = (locale: Locale) => {
+  const dict = dictionaries[locale] || dictionaries.en;
+  return dict.accountProfilePage;
+};
+
+// TODO: Localize Zod messages properly
 const profileSchema = z.object({
-  name: z.string().min(2, { message: "Name must be at least 2 characters." }), // TODO: Translate messages
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }), 
   email: z.string().email({ message: "Invalid email address." }),
   phone: z.string().optional(),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
-
-// Placeholder dictionary
-const getProfilePageDictionary = (locale: Locale) => {
-  if (locale === 'uz') {
-    return {
-      profileInfoTitle: "Profil Ma'lumotlari",
-      profileInfoDesc: "Shaxsiy ma'lumotlaringizni ko'ring va yangilang. Ijtimoiy tarmoqlar orqali kirilgan email provayder tomonidan boshqariladi.",
-      fullNameLabel: "To'liq Ism",
-      emailAddressLabel: "Elektron Pochta Manzili",
-      emailManagedByProvider: "Email sizning identifikatsiya provayderingiz tomonidan boshqariladi va bu yerda o'zgartirilmaydi.",
-      emailForLogin: "Tizimga kirish uchun ishlatiladigan email.",
-      phoneLabel: "Telefon Raqami (ixtiyoriy)",
-      phonePlaceholder: "masalan, +998 90 123-45-67",
-      phoneBackendNote: "Telefon raqamlarini saqlash uchun backend integratsiyasi talab qilinadi.",
-      saveChangesButton: "O'zgarishlarni Saqlash (Mijoz Demosi)",
-      loadingProfile: "Profil yuklanmoqda...",
-      pleaseLogin: "Profilingizni ko'rish uchun kiring.",
-      updateDemoTitle: "Profil Yangilanishi (Demo)",
-      updateDemoDesc: "Profil ma'lumotlari qayd etildi. Haqiqiy yangilash uchun backend integratsiyasi talab etiladi."
-    };
-  }
-  if (locale === 'ru') {
-    return {
-      profileInfoTitle: "Информация профиля",
-      profileInfoDesc: "Просмотр и обновление ваших личных данных. Email для входа через соцсети управляется провайдером.",
-      fullNameLabel: "Полное имя",
-      emailAddressLabel: "Адрес электронной почты",
-      emailManagedByProvider: "Email управляется вашим провайдером идентификации и не может быть изменен здесь.",
-      emailForLogin: "Email, используемый для входа.",
-      phoneLabel: "Номер телефона (необязательно)",
-      phonePlaceholder: "например, +7 900 123-45-67",
-      phoneBackendNote: "Для сохранения номеров телефонов требуется интеграция с бэкендом.",
-      saveChangesButton: "Сохранить изменения (Демо на клиенте)",
-      loadingProfile: "Загрузка профиля...",
-      pleaseLogin: "Пожалуйста, войдите, чтобы просмотреть свой профиль.",
-      updateDemoTitle: "Обновление профиля (Демо)",
-      updateDemoDesc: "Информация профиля принята. Для реального обновления требуется интеграция с бэкендом."
-    };
-  }
-  return { // en
-    profileInfoTitle: "Profile Information",
-    profileInfoDesc: "View and update your personal details. Email for social logins is managed by the provider.",
-    fullNameLabel: "Full Name",
-    emailAddressLabel: "Email Address",
-    emailManagedByProvider: "Email is managed by your identity provider and cannot be changed here.",
-    emailForLogin: "Email used for login.",
-    phoneLabel: "Phone Number (Optional)",
-    phonePlaceholder: "e.g., +1 555-123-4567",
-    phoneBackendNote: "Storing phone numbers requires backend database integration.",
-    saveChangesButton: "Save Changes (Client Demo)",
-    loadingProfile: "Loading profile...",
-    pleaseLogin: "Please log in to view your profile.",
-    updateDemoTitle: "Profile Update (Demo)",
-    updateDemoDesc: "Profile information noted. Actual update would require backend integration."
-  };
-};
 
 
 export default function ProfilePage() {
@@ -107,11 +69,13 @@ export default function ProfilePage() {
       email = simulatedUser.email || "";
     }
     
-    form.reset({ name, email, phone: "" });
+    form.reset({ name, email, phone: simulatedUser?.phone || "" }); // Assuming phone might be in simulatedUser
   }, [nextAuthSession, simulatedUser, form]);
 
   async function onSubmit(data: ProfileFormValues) {
     console.log("Profile data to update:", data);
+    // Here you would typically call an API to update the user's profile
+    // For simulated auth, you might update localStorage or context state if implemented
     toast({
       title: dictionary.updateDemoTitle,
       description: dictionary.updateDemoDesc,
@@ -139,10 +103,10 @@ export default function ProfilePage() {
             <FormField control={form.control} name="email" render={({ field }) => (
                 <FormItem>
                   <FormLabel>{dictionary.emailAddressLabel}</FormLabel>
-                  <FormControl><Input type="email" {...field} disabled={!!nextAuthSession?.user?.email} /></FormControl>
+                  <FormControl><Input type="email" {...field} disabled={!!nextAuthSession?.user?.email || !!simulatedUser?.email} /></FormControl>
                   <FormMessage />
                   <p className="text-xs text-muted-foreground pt-1">
-                    {nextAuthSession?.user?.email ? dictionary.emailManagedByProvider : dictionary.emailForLogin}
+                    {nextAuthSession?.user?.email ? dictionary.emailManagedByProvider : (simulatedUser?.email ? dictionary.emailForLogin : '')}
                   </p>
                 </FormItem>
               )}/>
@@ -165,5 +129,3 @@ export default function ProfilePage() {
     </Card>
   );
 }
-
-// Delete original: src/app/account/profile/page.tsx

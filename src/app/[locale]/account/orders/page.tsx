@@ -2,7 +2,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"; // Removed CardDescription, CardFooter
+import { Card, CardContent } from "@/components/ui/card"; 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockOrders } from "@/lib/mock-data";
 import type { Order } from "@/lib/types";
@@ -12,47 +12,21 @@ import { Badge } from "@/components/ui/badge";
 import { useParams } from "next/navigation";
 import type { Locale } from '@/lib/i1n-config';
 
-// Placeholder dictionary
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages;
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
 const getOrderHistoryDictionary = (locale: Locale) => {
-  if (locale === 'uz') {
-    return {
-      title: "Buyurtmalar Tarixi",
-      description: "O'tgan xaridlaringiz tafsilotlarini ko'ring.",
-      noOrdersYetTitle: "Hali Buyurtmalar Yo'q",
-      noOrdersYetDesc: "Siz biz bilan hali hech qanday buyurtma bermagansiz. Buyurtmalaringizni shu yerda ko'rish uchun xarid qilishni boshlang!",
-      startShoppingButton: "Xaridni Boshlash",
-      orderIdHeader: "Buyurtma ID",
-      dateHeader: "Sana",
-      statusHeader: "Holat",
-      totalHeader: "Jami",
-      actionsHeader: "Amallar",
-      viewDetailsButton: "Tafsilotlarni Ko'rish",
-      statusDelivered: "Yetkazildi",
-      statusShipped: "Jo'natildi",
-      statusProcessing: "Qayta ishlanmoqda",
-      statusPending: "Kutilmoqda",
-      statusCancelled: "Bekor qilindi",
-    };
-  }
-  // Add RU and EN similarly
-  return { // en
-    title: "Order History",
-    description: "View details of your past purchases.",
-    noOrdersYetTitle: "No Orders Yet",
-    noOrdersYetDesc: "You haven't placed any orders with us. Start shopping to see your orders here!",
-    startShoppingButton: "Start Shopping",
-    orderIdHeader: "Order ID",
-    dateHeader: "Date",
-    statusHeader: "Status",
-    totalHeader: "Total",
-    actionsHeader: "Actions",
-    viewDetailsButton: "View Details",
-    statusDelivered: "Delivered",
-    statusShipped: "Shipped",
-    statusProcessing: "Processing",
-    statusPending: "Pending",
-    statusCancelled: "Cancelled",
-  };
+  const dict = dictionaries[locale] || dictionaries.en;
+  return dict.accountOrderHistoryPage;
 };
 
 function getStatusBadgeVariant(status: Order['status']): "default" | "secondary" | "destructive" | "outline" {
@@ -83,7 +57,7 @@ export default function OrderHistoryPage() {
   const locale = params.locale as Locale || 'uz';
   const dictionary = getOrderHistoryDictionary(locale);
 
-  const orders = mockOrders; // In a real app, fetch user's orders
+  const orders = mockOrders; 
 
   return (
     <div className="space-y-6">

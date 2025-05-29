@@ -3,13 +3,30 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator"; // Keep if used, seems not directly
+import { Separator } from "@/components/ui/separator"; 
 import { useSession } from "next-auth/react";
 import { Chrome, Send, Globe, Link2, CheckCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import React from "react"; // Added for React.ElementType
+import React from "react"; 
 import { useParams } from "next/navigation";
 import type { Locale } from '@/lib/i1n-config';
+
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages;
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
+const getLinkingDictionary = (locale: Locale) => {
+  const dict = dictionaries[locale] || dictionaries.en;
+  return dict.accountLinkingPage;
+};
 
 interface LinkedAccount {
   provider: string;
@@ -18,49 +35,6 @@ interface LinkedAccount {
   linked: boolean;
   email?: string; 
 }
-
-// Placeholder dictionary
-const getLinkingDictionary = (locale: Locale) => {
-  if (locale === 'uz') {
-    return {
-      title: "Hisoblarni Bog'lash",
-      description: "Osonroq kirish uchun ulangan ijtimoiy hisoblaringizni boshqaring.",
-      connectedAccountsTitle: "Ulangan Hisoblar",
-      connectedAccountsDesc: "Bu hisoblar hozirda ScentSational Showcase profilingizga ulangan.",
-      google: "Google",
-      telegram: "Telegram",
-      yandex: "Yandex",
-      linkedStatus: "Ulangan",
-      linkAccountButton: "Hisobni Bog'lash",
-      unlinkButton: "Uzish",
-      featureComingSoonTitle: "Funksiya Tez Kunda",
-      linkFeatureComingSoon: (provider: string) => `${provider} bilan bog'lanish hali amalga oshirilmagan.`,
-      unlinkFeatureComingSoon: (provider: string) => `${provider}ni uzish hali amalga oshirilmagan. Bu odatda backend chaqiruvini o'z ichiga oladi.`,
-      unlinkNotAllowedTitle: "Uzish Mumkin Emas",
-      unlinkNotAllowedDesc: "Yagona kirish usulingizni uza olmaysiz.",
-      primarySignInMethodNote: "Bu sizning asosiy kirish usulingiz. Agar boshqa usullar bog'lanmagan bo'lsa, uzish sizni tizimdan chiqarib yuborishi mumkin."
-    };
-  }
-  // Add RU and EN similarly
-  return { // en
-      title: "Account Linking",
-      description: "Manage your connected social accounts for easier sign-in.",
-      connectedAccountsTitle: "Connected Accounts",
-      connectedAccountsDesc: "These accounts are currently linked to your ScentSational Showcase profile.",
-      google: "Google",
-      telegram: "Telegram",
-      yandex: "Yandex",
-      linkedStatus: "Linked",
-      linkAccountButton: "Link Account",
-      unlinkButton: "Unlink",
-      featureComingSoonTitle: "Feature Coming Soon",
-      linkFeatureComingSoon: (provider: string) => `Linking with ${provider} is not yet implemented.`,
-      unlinkFeatureComingSoon: (provider: string) => `Unlinking ${provider} is not yet implemented. This would typically involve a backend call.`,
-      unlinkNotAllowedTitle: "Unlink Not Allowed",
-      unlinkNotAllowedDesc: "You cannot unlink your only sign-in method.",
-      primarySignInMethodNote: "This is your primary sign-in method. Unlinking may lock you out if no other methods are linked."
-  };
-};
 
 
 export default function AccountLinkingPage() {
@@ -79,7 +53,7 @@ export default function AccountLinkingPage() {
   const handleLinkAccount = (provider: string) => {
     toast({
       title: dictionary.featureComingSoonTitle,
-      description: dictionary.linkFeatureComingSoon(provider),
+      description: dictionary.linkFeatureComingSoon.replace('{provider}', provider),
     });
   };
 
@@ -94,7 +68,7 @@ export default function AccountLinkingPage() {
     }
     toast({
       title: dictionary.featureComingSoonTitle,
-      description: dictionary.unlinkFeatureComingSoon(providerName),
+      description: dictionary.unlinkFeatureComingSoon.replace('{provider}', providerName),
     });
   };
 
@@ -157,5 +131,3 @@ export default function AccountLinkingPage() {
     </div>
   );
 }
-
-// Delete original: src/app/account/linking/page.tsx
