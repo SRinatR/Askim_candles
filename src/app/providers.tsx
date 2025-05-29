@@ -1,18 +1,17 @@
 
-
 "use client";
 
 import type { ReactNode } from "react";
 import { SessionProvider } from "next-auth/react";
 import { CartProvider } from "@/contexts/CartContext";
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider as SimulatedAuthProvider } from "@/contexts/AuthContext"; // For frontend users
-// AdminAuthProvider is applied specifically in admin layouts/pages to avoid nesting contexts unnecessarily for non-admin parts
+import { AuthProvider as SimulatedAuthProvider } from "@/contexts/AuthContext";
+// AdminAuthProvider is applied specifically in admin layouts/pages
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <SessionProvider> {/* For NextAuth social logins (frontend) */}
-      <SimulatedAuthProvider> {/* For client-side email/password simulation (frontend) */}
+    <SessionProvider>
+      <SimulatedAuthProvider>
         <CartProvider>
           {children}
           <Toaster />
@@ -21,4 +20,3 @@ export function Providers({ children }: { children: ReactNode }) {
     </SessionProvider>
   );
 }
-

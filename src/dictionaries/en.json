@@ -1,0 +1,45 @@
+
+{
+  "metadata": {
+    "title": "ScentSational Showcase",
+    "description": "Discover artisanal candles, wax figures, and gypsum products."
+  },
+  "navigation": {
+    "home": "Home",
+    "products": "Products",
+    "about": "About Us",
+    "cart": "Cart",
+    "account": "My Account",
+    "login": "Login",
+    "logout": "Logout",
+    "searchPlaceholder": "Search products...",
+    "mainMenuTitle": "Main Menu",
+    "langUz": "UZ",
+    "langRu": "RU",
+    "langEn": "EN"
+  },
+  "homepage": {
+    "heroTitle": {
+      "main": "Discover Your Perfect",
+      "highlight": "Scent"
+    },
+    "heroSubtitle": "Explore our exquisite collection of handcrafted candles, unique wax figures, and elegant gypsum products.",
+    "shopAllButton": "Shop All Products",
+    "categoriesTitle": "Shop by Category",
+    "featuredProductsTitle": "Featured Products",
+    "viewAllButton": "View All",
+    "ctaTitle": "Crafted with Passion, Designed for You",
+    "ctaSubtitle": "At ScentSational Showcase, we believe in the art of creation. Each piece is thoughtfully designed and meticulously crafted to bring warmth, beauty, and tranquility to your space.",
+    "learnMoreButton": "Learn More About Us"
+  },
+  "footer": {
+    "rightsReserved": "All rights reserved.",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service"
+  },
+  "categories": {
+    "artisanal-candles": "Artisanal Candles",
+    "wax-figures": "Wax Figures",
+    "gypsum-products": "Gypsum Products"
+  }
+}

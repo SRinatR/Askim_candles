@@ -2,22 +2,36 @@
 "use client";
 
 import { usePathname } from 'next/navigation';
+import type { Locale } from '@/lib/i1n-config';
+import Link from 'next/link';
 
-export function Footer() {
+interface FooterProps {
+  locale: Locale;
+  dictionary: {
+    rightsReserved: string;
+    privacyPolicy: string;
+    termsOfService: string;
+  };
+}
+
+export function Footer({ locale, dictionary }: FooterProps) {
   const pathname = usePathname();
   const currentYear = new Date().getFullYear();
 
-  if (pathname.startsWith('/admin')) {
-    return null; // Do not render the main site footer on admin routes
+  // Check if the current path starts with `/admin` or is exactly `/admin`
+  // The path from usePathname will include the locale, so we need to check for `/${locale}/admin`
+  if (pathname.startsWith(`/${locale}/admin`) || pathname.startsWith(`/admin`)) {
+    return null;
   }
-
+  
   return (
     <footer className="border-t border-border/40 bg-background">
       <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
-        <p>&copy; {currentYear} ScentSational Showcase. All rights reserved.</p>
+        <p>&copy; {currentYear} ScentSational Showcase. {dictionary.rightsReserved}</p>
         <div className="flex space-x-4">
-          <a href="#" className="hover:text-foreground">Privacy Policy</a>
-          <a href="#" className="hover:text-foreground">Terms of Service</a>
+          {/* TODO: Update Link hrefs with locale */}
+          <Link href={`/${locale}/privacy`} className="hover:text-foreground">{dictionary.privacyPolicy}</Link>
+          <Link href={`/${locale}/terms`} className="hover:text-foreground">{dictionary.termsOfService}</Link>
         </div>
       </div>
     </footer>

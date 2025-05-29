@@ -1,0 +1,45 @@
+
+{
+  "metadata": {
+    "title": "ScentSational Витрина",
+    "description": "Откройте для себя авторские свечи, восковые фигуры и изделия из гипса."
+  },
+  "navigation": {
+    "home": "Главная",
+    "products": "Товары",
+    "about": "О нас",
+    "cart": "Корзина",
+    "account": "Мой аккаунт",
+    "login": "Войти",
+    "logout": "Выйти",
+    "searchPlaceholder": "Поиск товаров...",
+    "mainMenuTitle": "Главное меню",
+    "langUz": "UZ",
+    "langRu": "RU",
+    "langEn": "EN"
+  },
+  "homepage": {
+    "heroTitle": {
+      "main": "Откройте Свою Идеальную",
+      "highlight": "Аромат"
+    },
+    "heroSubtitle": "Исследуйте нашу изысканную коллекцию свечей ручной работы, уникальных восковых фигур и элегантных изделий из гипса.",
+    "shopAllButton": "Все товары",
+    "categoriesTitle": "Категории товаров",
+    "featuredProductsTitle": "Популярные товары",
+    "viewAllButton": "Смотреть все",
+    "ctaTitle": "Создано с Душой, Дизайн для Вас",
+    "ctaSubtitle": "В ScentSational Showcase мы верим в искусство творения. Каждое изделие продумано и тщательно изготовлено, чтобы принести тепло, красоту и спокойствие в ваше пространство.",
+    "learnMoreButton": "Узнать о нас больше"
+  },
+  "footer": {
+    "rightsReserved": "Все права защищены.",
+    "privacyPolicy": "Политика конфиденциальности",
+    "termsOfService": "Условия использования"
+  },
+  "categories": {
+    "artisanal-candles": "Авторские свечи",
+    "wax-figures": "Восковые фигуры",
+    "gypsum-products": "Изделия из гипса"
+  }
+}

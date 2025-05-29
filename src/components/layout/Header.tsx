@@ -6,20 +6,35 @@ import { ShoppingBag, User, Menu, Search, X, LogIn, LogOut } from 'lucide-react'
 import { Logo } from '@/components/icons/Logo';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
-import { useSession, signIn, signOut as nextAuthSignOut } from "next-auth/react"; // For NextAuth
-import { useAuth as useSimulatedAuth } from "@/contexts/AuthContext"; // For simulated email/password auth
+import { useSession, signOut as nextAuthSignOut } from "next-auth/react";
+import { useAuth as useSimulatedAuth } from "@/contexts/AuthContext";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import React, { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import type { Locale, I18nConfig } from '@/lib/i1n-config'; // Assuming i18n config is here
+import { i18n } from '@/lib/i1n-config';
 
-const navLinks = [
-  { href: '/', label: 'Home' },
-  { href: '/products', label: 'Products' },
-  { href: '/about', label: 'About Us' },
-];
 
-export function Header() {
+interface HeaderProps {
+  locale: Locale;
+  dictionary: { // Define the expected shape of the dictionary for navigation
+    home: string;
+    products: string;
+    about: string;
+    cart: string;
+    account: string;
+    login: string;
+    logout: string;
+    searchPlaceholder: string;
+    mainMenuTitle: string;
+    langUz: string;
+    langRu: string;
+    langEn: string;
+  };
+}
+
+export function Header({ locale, dictionary }: HeaderProps) {
   const pathname = usePathname();
   const { cartCount } = useCart();
   const { data: nextAuthSession, status: nextAuthStatus } = useSession();
@@ -32,31 +47,37 @@ export function Header() {
   const router = useRouter();
 
   if (pathname.startsWith('/admin')) {
-    return null; // Do not render the main site header on admin routes
+    return null;
   }
+
+  const navLinks = [
+    { href: '/', label: dictionary.home },
+    { href: '/products', label: dictionary.products },
+    { href: '/about', label: dictionary.about },
+  ];
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const searchQuery = formData.get('search') as string;
     if (searchQuery.trim()) {
-      router.push(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/${locale}/products?search=${encodeURIComponent(searchQuery.trim())}`);
       if (isMobileMenuOpen) setIsMobileMenuOpen(false); 
     }
   };
 
   const handleLogout = async () => {
     if (nextAuthSession) {
-      await nextAuthSignOut({ callbackUrl: '/' });
+      await nextAuthSignOut({ callbackUrl: `/${locale}/` });
     }
     if (simulatedUser) {
       simulatedLogout();
-      router.push('/'); // Redirect after simulated logout
+      router.push(`/${locale}/`);
     }
     if (isMobileMenuOpen) setIsMobileMenuOpen(false);
   };
 
-  const accountLink = isAuthenticated ? "/account/profile" : "/login";
+  const accountLink = isAuthenticated ? `/${locale}/account/profile` : `/${locale}/login`;
   
   let userName = "";
   if (nextAuthSession?.user?.name) {
@@ -69,11 +90,34 @@ export function Header() {
     userName = simulatedUser.email;
   }
 
+  // Basic language switcher UI
+  const LanguageSwitcher = () => {
+    // Filter out the current locale from the path
+    const currentPathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
+    
+    return (
+      <div className="flex items-center space-x-2 text-sm ml-4">
+        {i18n.locales.map((loc) => (
+          <Link
+            key={loc}
+            href={`/${loc}${currentPathWithoutLocale}`}
+            className={cn(
+              "hover:text-primary",
+              locale === loc ? "font-semibold text-primary" : "text-muted-foreground"
+            )}
+          >
+            {loc === 'uz' ? dictionary.langUz : loc === 'ru' ? dictionary.langRu : dictionary.langEn}
+          </Link>
+        ))}
+      </div>
+    );
+  };
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center" aria-label="Back to homepage">
+        <Link href={`/${locale}/`} className="flex items-center" aria-label="Back to homepage">
           <Logo className="h-8 w-auto" />
         </Link>
 
@@ -81,7 +125,7 @@ export function Header() {
           {navLinks.map(link => (
             <Link
               key={link.href}
-              href={link.href}
+              href={`/${locale}${link.href}`}
               className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
             >
               {link.label}
@@ -89,9 +133,9 @@ export function Header() {
           ))}
         </nav>
         
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-1 sm:space-x-3">
           <form onSubmit={handleSearch} className="hidden sm:flex items-center relative">
-            <Input type="search" name="search" placeholder="Search products..." className="h-9 pr-10 w-48 lg:w-64" />
+            <Input type="search" name="search" placeholder={dictionary.searchPlaceholder} className="h-9 pr-10 w-32 sm:w-48 lg:w-64" />
             <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-9 w-9">
               <Search className="h-4 w-4" />
               <span className="sr-only">Search</span>
@@ -101,22 +145,22 @@ export function Header() {
           {!isLoadingAuth && (
             <>
               {isAuthenticated ? (
-                <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex" title={userName || "My Account"}>
+                <Button variant="ghost" size="icon" asChild className="hidden md:inline-flex" title={userName || dictionary.account}>
                   <Link href={accountLink}>
                     <User className="h-5 w-5" />
                   </Link>
                 </Button>
               ) : (
-                 <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex" title="Login">
-                   <Link href="/login">
-                     <LogIn className="mr-1 h-4 w-4" /> Login
+                 <Button variant="ghost" size="sm" asChild className="hidden md:inline-flex" title={dictionary.login}>
+                   <Link href={`/${locale}/login`}>
+                     <LogIn className="mr-1 h-4 w-4" /> {dictionary.login}
                    </Link>
                 </Button>
               )}
             </>
           )}
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/cart" className="relative" aria-label={`Shopping Cart, ${cartCount} items`}>
+            <Link href={`/${locale}/cart`} className="relative" aria-label={`${dictionary.cart}, ${cartCount} items`}>
               <ShoppingBag className="h-5 w-5" />
               {cartCount > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
@@ -125,6 +169,10 @@ export function Header() {
               )}
             </Link>
           </Button>
+          
+          <div className="hidden md:flex">
+            <LanguageSwitcher />
+          </div>
 
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <SheetTrigger asChild>
@@ -135,10 +183,10 @@ export function Header() {
             <SheetContent side="right" className="w-full max-w-xs bg-background p-0">
               <div className="flex flex-col space-y-6 h-full">
                 <SheetHeader className="flex flex-row justify-between items-center border-b p-6">
-                   <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                   <Link href={`/${locale}/`} onClick={() => setIsMobileMenuOpen(false)}>
                       <Logo className="h-7 w-auto" />
                    </Link>
-                   <SheetTitle className="sr-only">Main Menu</SheetTitle> {/* Visually hidden title */}
+                   <SheetTitle className="sr-only">{dictionary.mainMenuTitle}</SheetTitle>
                    <SheetClose asChild>
                       <Button variant="ghost" size="icon">
                          <X className="h-6 w-6" />
@@ -148,7 +196,7 @@ export function Header() {
                 
                 <div className="px-6 space-y-6">
                   <form onSubmit={handleSearch} className="flex items-center relative">
-                    <Input type="search" name="search" placeholder="Search products..." className="h-10 pr-12 w-full" />
+                    <Input type="search" name="search" placeholder={dictionary.searchPlaceholder} className="h-10 pr-12 w-full" />
                     <Button type="submit" variant="ghost" size="icon" className="absolute right-0 top-1/2 -translate-y-1/2 h-10 w-10">
                       <Search className="h-5 w-5" />
                       <span className="sr-only">Search</span>
@@ -159,7 +207,7 @@ export function Header() {
                     {navLinks.map(link => (
                       <Link
                         key={link.href}
-                        href={link.href}
+                        href={`/${locale}${link.href}`}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
                       >
@@ -167,6 +215,9 @@ export function Header() {
                       </Link>
                     ))}
                   </nav>
+                  <div className="pt-4 border-t">
+                     <LanguageSwitcher />
+                  </div>
                 </div>
                 
                 <div className="mt-auto border-t border-border p-6 space-y-3">
@@ -180,24 +231,24 @@ export function Header() {
                             className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground"
                           >
                             <User className="h-5 w-5" />
-                            <span>{userName || "My Account"}</span>
+                            <span>{userName || dictionary.account}</span>
                           </Link>
                           <Button variant="outline" 
                             onClick={handleLogout}
                             className="w-full text-lg"
                           >
                             <LogOut className="mr-2 h-5 w-5" />
-                            <span>Logout</span>
+                            <span>{dictionary.logout}</span>
                           </Button>
                         </>
                       ) : (
                         <Button 
                           variant="ghost" 
-                          onClick={() => { router.push('/login'); setIsMobileMenuOpen(false); }}
+                          onClick={() => { router.push(`/${locale}/login`); setIsMobileMenuOpen(false); }}
                           className="flex items-center space-x-2 text-lg font-medium text-foreground/80 transition-colors hover:text-foreground w-full justify-start p-0"
                         >
                           <LogIn className="h-5 w-5" />
-                          <span>Login</span>
+                          <span>{dictionary.login}</span>
                         </Button>
                       )}
                     </>

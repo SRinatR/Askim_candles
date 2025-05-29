@@ -1,0 +1,45 @@
+
+{
+  "metadata": {
+    "title": "ScentSational Ko'rgazmasi",
+    "description": "Qo'lda ishlangan shamlar, mum figuralar va gips mahsulotlarini kashf eting."
+  },
+  "navigation": {
+    "home": "Bosh sahifa",
+    "products": "Mahsulotlar",
+    "about": "Biz haqimizda",
+    "cart": "Savatcha",
+    "account": "Mening hisobim",
+    "login": "Kirish",
+    "logout": "Chiqish",
+    "searchPlaceholder": "Mahsulotlarni qidirish...",
+    "mainMenuTitle": "Asosiy menyu",
+    "langUz": "UZ",
+    "langRu": "RU",
+    "langEn": "EN"
+  },
+  "homepage": {
+    "heroTitle": {
+      "main": "O'zingiz uchun Mukammal",
+      "highlight": "Xushbo'ylikni"
+    },
+    "heroSubtitle": "Qo'lda ishlangan shamlar, noyob mum figuralari va nafis gips mahsulotlarining ajoyib to'plamini o'rganing.",
+    "shopAllButton": "Barcha mahsulotlar",
+    "categoriesTitle": "Mahsulot Turkumlari",
+    "featuredProductsTitle": "Ommabop mahsulotlar",
+    "viewAllButton": "Hammasini ko'rish",
+    "ctaTitle": "Mehr bilan Yaratilgan, Siz uchun Dizayn",
+    "ctaSubtitle": "ScentSational Showcase'da biz ijod san'atiga ishonamiz. Har bir buyum sizning makoningizga iliqlik, go'zallik va osoyishtalik olib kelish uchun puxta o'ylangan va sinchkovlik bilan yaratilgan.",
+    "learnMoreButton": "Biz haqimizda ko'proq bilish"
+  },
+  "footer": {
+    "rightsReserved": "Barcha huquqlar himoyalangan.",
+    "privacyPolicy": "Maxfiylik siyosati",
+    "termsOfService": "Foydalanish shartlari"
+  },
+  "categories": {
+    "artisanal-candles": "Qo'lda yasalgan shamlar",
+    "wax-figures": "Mumdan yasalgan figuralar",
+    "gypsum-products": "Gips mahsulotlari"
+  }
+}
