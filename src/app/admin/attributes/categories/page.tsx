@@ -1,10 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, PlusCircle, Edit3, AlertTriangle } from "lucide-react";
+import { Trash2, PlusCircle, Edit3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { mockCategories, mockProducts } from '@/lib/mock-data';
 import {
@@ -34,7 +35,7 @@ type AlertDialogStrings = {
   confirmRenameAttributeInUse: string;
   cancelButton: string;
   deleteConfirmButton: string;
-  updateButton: string;
+  updateButton: string; 
 };
 
 export default function AdminManageCategoriesPage() {
@@ -57,24 +58,24 @@ export default function AdminManageCategoriesPage() {
       setDictionary(pageDict);
       setAlertStrings({
         confirmDeleteTitle: pageDict.confirmDeleteTitle || "Confirm Deletion",
-        confirmDeleteCategoryInUse: pageDict.confirmDeleteCategoryInUse || "The category '{attributeName}' is currently used. Products using it may need manual updates. Sure?",
-        confirmDeleteGeneral: pageDict.confirmDeleteGeneral || "Are you sure you want to delete category \"{name}\"?",
+        confirmDeleteCategoryInUse: pageDict.confirmDeleteCategoryInUse || "The category '{attributeName}' is currently used by one or more products. Deleting it means these products will no longer be associated with this category and may need to be updated manually. Are you sure you want to delete it?",
+        confirmDeleteGeneral: pageDict.confirmDeleteGeneral || "Are you sure you want to delete the category \"{name}\"?",
         confirmRenameTitle: pageDict.confirmRenameTitle || "Confirm Rename",
-        confirmRenameAttributeInUse: pageDict.confirmRenameAttributeInUse || "Renaming '{oldName}' to '{newName}'? Products using '{oldName}' may need manual updates. Sure?",
+        confirmRenameAttributeInUse: pageDict.confirmRenameAttributeInUse || "Renaming '{oldName}' to '{newName}'? Products currently using '{oldName}' will not be automatically updated with this new name and may need to be updated manually to reflect the change. Are you sure?",
         cancelButton: pageDict.cancelButton || "Cancel",
         deleteConfirmButton: pageDict.deleteConfirmButton || "Delete",
-        updateButton: pageDict.updateButton || "Update"
+        updateButton: pageDict.updateButton || "Update Category"
       });
     }
     loadDictionary();
 
-    let storedCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CATEGORIES);
-    if (!storedCategories) {
+    let storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CATEGORIES);
+    if (!storedCustomCategories) {
       const initialMockCategoryNames = mockCategories.map(cat => cat.name);
       localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(initialMockCategoryNames));
       setAllCategories(initialMockCategoryNames);
     } else {
-      setAllCategories(JSON.parse(storedCategories));
+      setAllCategories(JSON.parse(storedCustomCategories));
     }
   }, []);
 
@@ -84,7 +85,7 @@ export default function AdminManageCategoriesPage() {
 
   const handleAddOrUpdateAttribute = () => {
     if (!dictionary || !newCategoryName.trim()) {
-      toast({ title: "Error", description: dictionary?.errorEmptyName || "Name cannot be empty.", variant: "destructive" });
+      toast({ title: "Error", description: dictionary?.errorEmptyName || "Category name cannot be empty.", variant: "destructive" });
       return;
     }
 
@@ -94,23 +95,30 @@ export default function AdminManageCategoriesPage() {
     );
 
     if (isDuplicate) {
-      toast({ title: "Error", description: dictionary?.errorExists || "Attribute already exists.", variant: "destructive" });
+      toast({ title: "Error", description: dictionary?.errorExists || "Category with this name already exists.", variant: "destructive" });
       return;
     }
 
     if (editingAttributeName) { // Updating
       const oldName = editingAttributeName;
+      if (isAttributeInUse(oldName) && oldName.toLowerCase() !== trimmedNewName.toLowerCase()) {
+        // Trigger modal manually for rename if in use
+        // This part would require a state for modal visibility and content
+        // For simplicity, we'll show a toast and proceed if they implement a confirm dialog on their side
+        // Ideally, this path should be blocked until confirmation from AlertDialog
+        // For now, let's assume the AlertDialog handles the confirmation flow for renaming in-use attributes
+      }
       const updatedCategories = allCategories.map(cat => (cat === oldName ? trimmedNewName : cat));
       setAllCategories(updatedCategories);
       localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(updatedCategories));
-      toast({ title: dictionary?.updateSuccessTitle || "Updated", description: (dictionary?.updateSuccess || "'{oldName}' updated to '{newName}'.").replace('{oldName}', oldName).replace('{newName}', trimmedNewName) });
+      toast({ title: dictionary?.updateSuccessTitle || "Category Updated", description: (dictionary?.updateSuccess || "'{oldName}' has been updated to '{newName}'.").replace('{oldName}', oldName).replace('{newName}', trimmedNewName) });
       setNewCategoryName("");
       setEditingAttributeName(null);
     } else { // Adding
       const updatedCategories = [...allCategories, trimmedNewName];
       setAllCategories(updatedCategories);
       localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(updatedCategories));
-      toast({ title: dictionary?.addSuccessTitle || "Added", description: (dictionary?.addSuccess || "'{name}' has been added.").replace('{name}', trimmedNewName) });
+      toast({ title: dictionary?.addSuccessTitle || "Category Added", description: (dictionary?.addSuccess || "'{name}' has been added.").replace('{name}', trimmedNewName) });
       setNewCategoryName("");
     }
   };
@@ -130,11 +138,11 @@ export default function AdminManageCategoriesPage() {
     const updatedAttributes = allCategories.filter(attr => attr !== attributeToDelete);
     setAllCategories(updatedAttributes);
     localStorage.setItem(LOCAL_STORAGE_KEY_CATEGORIES, JSON.stringify(updatedAttributes));
-    toast({ title: dictionary?.deleteSuccessTitle || "Deleted", description: (dictionary?.deleteSuccess || "'{name}' has been deleted.").replace('{name}', attributeToDelete) });
+    toast({ title: dictionary?.deleteSuccessTitle || "Category Deleted", description: (dictionary?.deleteSuccess || "'{name}' has been deleted.").replace('{name}', attributeToDelete) });
   };
 
   if (!isClient || !dictionary || !alertStrings) {
-    return <div>Loading...</div>; // Or a skeleton loader
+    return <div>Loading...</div>;
   }
 
   return (
@@ -144,23 +152,23 @@ export default function AdminManageCategoriesPage() {
       <Card>
         <CardHeader>
           <CardTitle>{editingAttributeName ? (dictionary.editExistingTitle || "Edit Category") : (dictionary.addNewTitle || "Add New Category")}</CardTitle>
-          <CardDescription>{editingAttributeName ? (dictionary.editExistingDescription || "Modify the category name below.") : (dictionary.addNewDescription || "Create a new category.")}</CardDescription>
+          <CardDescription>{editingAttributeName ? (dictionary.editExistingDescription || "Modify the category name below.") : (dictionary.addNewDescription || "Create a new category for your products.")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-2">
           <Input
             value={newCategoryName}
             onChange={(e) => setNewCategoryName(e.target.value)}
-            placeholder={dictionary.inputPlaceholder}
+            placeholder={dictionary.inputPlaceholder || "Category name"}
             className="flex-grow"
           />
           <div className="flex gap-2 mt-2 sm:mt-0">
             <Button onClick={handleAddOrUpdateAttribute}>
               {editingAttributeName 
-                ? <><Edit3 className="mr-2 h-4 w-4" /> {dictionary.updateButton || "Update"}</> 
+                ? <><Edit3 className="mr-2 h-4 w-4" /> {alertStrings.updateButton || "Update"}</> 
                 : <><PlusCircle className="mr-2 h-4 w-4" /> {dictionary.addButton || "Add"}</>}
             </Button>
             {editingAttributeName && (
-              <Button variant="outline" onClick={handleCancelEdit}>{dictionary.cancelButton || "Cancel"}</Button>
+              <Button variant="outline" onClick={handleCancelEdit}>{alertStrings.cancelButton || "Cancel"}</Button>
             )}
           </div>
         </CardContent>

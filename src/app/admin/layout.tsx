@@ -20,7 +20,7 @@ import { i18nAdmin, type AdminLocale } from '@/admin/lib/i18n-config-admin';
 import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
 import type enAdminMessages from '@/admin/dictionaries/en.json';
 import { useIsMobile } from '@/hooks/use-mobile';
-import '../globals.css';
+import '../globals.css'; // Ensure global styles are applied
 
 type AdminDictionary = typeof enAdminMessages;
 type AdminLayoutStrings = AdminDictionary['adminLayout'];
@@ -39,7 +39,7 @@ const navItems: NavItem[] = [
   { href: '/admin/products', labelKey: 'products', icon: Package, managerOrAdmin: true },
   { href: '/admin/articles', labelKey: 'articles', icon: FileText, managerOrAdmin: true },
   {
-    href: '#!', labelKey: 'attributes', icon: Tags, adminOnly: true, // Attributes section is Admin only for now
+    href: '#!', labelKey: 'attributes', icon: Tags, adminOnly: true, 
     subItems: [
       { href: '/admin/attributes/categories', labelKey: 'categories', icon: Tags, adminOnly: true },
       { href: '/admin/attributes/materials', labelKey: 'materials', icon: Beaker, adminOnly: true },
@@ -89,7 +89,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if(isClient) { // Only run on client
+    if(isClient) { 
       localStorage.setItem('sidebar-collapsed', String(isSidebarCollapsed));
     }
   }, [isSidebarCollapsed, isClient]);
@@ -99,8 +99,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       const dictModule = await getAdminDictionary(currentLocale);
       setDictionary(dictModule.adminLayout);
     }
-    loadDictionary();
-  }, [currentLocale]);
+    if(isClient) loadDictionary();
+  }, [currentLocale, isClient]);
   
   const toggleDarkMode = () => {
     const newMode = !darkMode;
@@ -146,7 +146,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   
-  if (!currentAdminUser) return null; // Should be caught by useEffect redirect
+  if (!currentAdminUser) return null; 
 
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) return isAdmin;
@@ -204,10 +204,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </Tooltip>
           </TooltipProvider>
           <DropdownMenuContent 
-            side={isMobileContext ? "bottom" : "right"} 
+            side={isMobileContext ? "bottom" : "bottom"} 
             align={isMobileContext ? "center" : "start"} 
-            sideOffset={isMobileContext ? 4 : (isSidebarActuallyCollapsed ? 2 : 8)}
-            className={cn("z-50", isMobileContext ? "w-[calc(100vw-4rem)]" : "min-w-[180px]")} // Ensure z-index for dropdown content
+            sideOffset={isMobileContext ? 4 : (isSidebarActuallyCollapsed ? (isMobile ? 4 : 2) : 8)}
+            className={cn("z-50", isMobileContext ? "w-[calc(100vw-4rem)]" : "min-w-[180px]")}
           >
             {item.subItems?.filter(subItem => subItem.adminOnly ? isAdmin : (subItem.managerOrAdmin ? (isManager || isAdmin) : true)).map(subItem => {
               const subLabel = dictionary[subItem.labelKey] || subItem.labelKey;
@@ -386,16 +386,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // Ensure AdminAuthProvider wraps the login page as well to allow login logic access to context
   if (pathname === '/admin/login') { 
     return <AdminAuthProvider>{children}</AdminAuthProvider>;
   }
-
-  // For all other admin pages, wrap with AdminAuthProvider and then the layout content
   return (
     <AdminAuthProvider>
       <AdminLayoutContent>{children}</AdminLayoutContent>
     </AdminAuthProvider>
   );
 }
-

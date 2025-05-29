@@ -1,10 +1,11 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash2, PlusCircle, Edit3, AlertTriangle } from "lucide-react";
+import { Trash2, PlusCircle, Edit3 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { mockProducts } from '@/lib/mock-data';
 import {
@@ -57,24 +58,24 @@ export default function AdminManageScentsPage() {
       setDictionary(pageDict);
       setAlertStrings({
         confirmDeleteTitle: pageDict.confirmDeleteTitle || "Confirm Deletion",
-        confirmDeleteScentInUse: pageDict.confirmDeleteScentInUse || "The scent '{attributeName}' is currently used. Products using it may need manual updates. Sure?",
-        confirmDeleteGeneral: pageDict.confirmDeleteGeneral || "Are you sure you want to delete scent \"{name}\"?",
+        confirmDeleteScentInUse: pageDict.confirmDeleteScentInUse || "The scent '{attributeName}' is currently used by one or more products. Deleting it means these products will no longer be associated with this scent and may need to be updated manually. Are you sure you want to delete it?",
+        confirmDeleteGeneral: pageDict.confirmDeleteGeneral || "Are you sure you want to delete the scent \"{name}\"?",
         confirmRenameTitle: pageDict.confirmRenameTitle || "Confirm Rename",
-        confirmRenameAttributeInUse: pageDict.confirmRenameAttributeInUse || "Renaming '{oldName}' to '{newName}'? Products using '{oldName}' may need manual updates. Sure?",
+        confirmRenameAttributeInUse: pageDict.confirmRenameAttributeInUse || "Renaming '{oldName}' to '{newName}'? Products currently using '{oldName}' will not be automatically updated with this new name and may need to be updated manually to reflect the change. Are you sure?",
         cancelButton: pageDict.cancelButton || "Cancel",
         deleteConfirmButton: pageDict.deleteConfirmButton || "Delete",
-        updateButton: pageDict.updateButton || "Update"
+        updateButton: pageDict.updateButton || "Update Scent"
       });
     }
     loadDictionary();
 
-    let storedScents = localStorage.getItem(LOCAL_STORAGE_KEY_SCENTS);
-    if (!storedScents) {
+    let storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_SCENTS);
+    if (!storedCustomScents) {
       const initialMockScentNames = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s))).sort();
       localStorage.setItem(LOCAL_STORAGE_KEY_SCENTS, JSON.stringify(initialMockScentNames));
       setAllScents(initialMockScentNames);
     } else {
-        setAllScents(JSON.parse(storedScents));
+        setAllScents(JSON.parse(storedCustomScents));
     }
   }, []);
   
@@ -84,7 +85,7 @@ export default function AdminManageScentsPage() {
 
   const handleAddOrUpdateAttribute = () => {
     if (!dictionary || !newScentName.trim()) {
-      toast({ title: "Error", description: dictionary?.errorEmptyName || "Name cannot be empty.", variant: "destructive" });
+      toast({ title: "Error", description: dictionary?.errorEmptyName || "Scent name cannot be empty.", variant: "destructive" });
       return;
     }
     const trimmedNewName = newScentName.trim();
@@ -93,7 +94,7 @@ export default function AdminManageScentsPage() {
     );
 
     if (isDuplicate) {
-      toast({ title: "Error", description: dictionary?.errorExists || "Attribute already exists.", variant: "destructive" });
+      toast({ title: "Error", description: dictionary?.errorExists || "Scent with this name already exists.", variant: "destructive" });
       return;
     }
 
@@ -102,14 +103,14 @@ export default function AdminManageScentsPage() {
       const updatedScents = allScents.map(scent => (scent === oldName ? trimmedNewName : scent));
       setAllScents(updatedScents);
       localStorage.setItem(LOCAL_STORAGE_KEY_SCENTS, JSON.stringify(updatedScents));
-      toast({ title: dictionary?.updateSuccessTitle || "Updated", description: (dictionary?.updateSuccess || "'{oldName}' updated to '{newName}'.").replace('{oldName}', oldName).replace('{newName}', trimmedNewName) });
+      toast({ title: dictionary?.updateSuccessTitle || "Scent Updated", description: (dictionary?.updateSuccess || "'{oldName}' has been updated to '{newName}'.").replace('{oldName}', oldName).replace('{newName}', trimmedNewName) });
       setNewScentName("");
       setEditingAttributeName(null);
     } else { // Adding
       const updatedScents = [...allScents, trimmedNewName];
       setAllScents(updatedScents);
       localStorage.setItem(LOCAL_STORAGE_KEY_SCENTS, JSON.stringify(updatedScents));
-      toast({ title: dictionary?.addSuccessTitle || "Added", description: (dictionary?.addSuccess || "'{name}' has been added.").replace('{name}', trimmedNewName) });
+      toast({ title: dictionary?.addSuccessTitle || "Scent Added", description: (dictionary?.addSuccess || "'{name}' has been added.").replace('{name}', trimmedNewName) });
       setNewScentName("");
     }
   };
@@ -129,7 +130,7 @@ export default function AdminManageScentsPage() {
     const updatedAttributes = allScents.filter(attr => attr !== attributeToDelete);
     setAllScents(updatedAttributes);
     localStorage.setItem(LOCAL_STORAGE_KEY_SCENTS, JSON.stringify(updatedAttributes));
-    toast({ title: dictionary?.deleteSuccessTitle || "Deleted", description: (dictionary?.deleteSuccess || "'{name}' has been deleted.").replace('{name}', attributeToDelete) });
+    toast({ title: dictionary?.deleteSuccessTitle || "Scent Deleted", description: (dictionary?.deleteSuccess || "'{name}' has been deleted.").replace('{name}', attributeToDelete) });
   };
   
   if (!isClient || !dictionary || !alertStrings) {
@@ -143,23 +144,23 @@ export default function AdminManageScentsPage() {
       <Card>
         <CardHeader>
           <CardTitle>{editingAttributeName ? (dictionary.editExistingTitle || "Edit Scent") : (dictionary.addNewTitle || "Add New Scent")}</CardTitle>
-          <CardDescription>{editingAttributeName ? (dictionary.editExistingDescription || "Modify the scent name below.") : (dictionary.addNewDescription || "Create a new scent.")}</CardDescription>
+          <CardDescription>{editingAttributeName ? (dictionary.editExistingDescription || "Modify the scent name below.") : (dictionary.addNewDescription || "Create a new scent option for your products.")}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col sm:flex-row gap-2">
           <Input
             value={newScentName}
             onChange={(e) => setNewScentName(e.target.value)}
-            placeholder={dictionary.inputPlaceholder}
+            placeholder={dictionary.inputPlaceholder || "Scent name"}
             className="flex-grow"
           />
           <div className="flex gap-2 mt-2 sm:mt-0">
             <Button onClick={handleAddOrUpdateAttribute}>
               {editingAttributeName 
-                ? <><Edit3 className="mr-2 h-4 w-4" /> {dictionary.updateButton || "Update"}</> 
+                ? <><Edit3 className="mr-2 h-4 w-4" /> {alertStrings.updateButton || "Update"}</> 
                 : <><PlusCircle className="mr-2 h-4 w-4" /> {dictionary.addButton || "Add"}</>}
             </Button>
             {editingAttributeName && (
-              <Button variant="outline" onClick={handleCancelEdit}>{dictionary.cancelButton || "Cancel"}</Button>
+              <Button variant="outline" onClick={handleCancelEdit}>{alertStrings.cancelButton || "Cancel"}</Button>
             )}
           </div>
         </CardContent>
