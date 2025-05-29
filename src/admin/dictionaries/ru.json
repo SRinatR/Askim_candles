@@ -79,7 +79,11 @@
     "addManagerSuccessTitle": "Менеджер добавлен (симуляция)",
     "addManagerSuccessDesc": "{name} ({email}) был 'добавлен' как менеджер. Это изменение только на стороне клиента (localStorage).",
     "addManagerErrorEmailExistsTitle": "Ошибка добавления менеджера",
-    "addManagerErrorEmailExistsDesc": "Аккаунт с таким email уже существует. Пожалуйста, используйте другой email."
+    "addManagerErrorEmailExistsDesc": "Аккаунт с таким email уже существует. Пожалуйста, используйте другой email.",
+    "managerBlockedToastTitle": "Менеджер заблокирован",
+    "managerUnblockedToastTitle": "Менеджер разблокирован",
+    "managerStatusUpdatedToastDesc": "Статус менеджера {name} обновлен на {status}.",
+    "accountBlockedErrorDesc": "Этот аккаунт заблокирован. Пожалуйста, свяжитесь с администратором."
   },
   "adminManageCategoriesPage": {
     "title": "Управление категориями товаров",
@@ -318,7 +322,35 @@
     "logsClearedToastDesc": "Все логи администратора были очищены из localStorage.",
     "simulationNote": "Примечание: Данные логов симулируются и хранятся в localStorage браузера. Для продакшена требуется надежное бэкенд-решение для логирования.",
     "clearFiltersButton": "Сбросить фильтры"
+  },
+  "adminUsersPage": {
+    "title": "Управление Пользователями и Менеджерами",
+    "description": "Просмотр пользователей, назначение ролей и управление аккаунтами менеджеров. (Только ADMIN)",
+    "addNewManagerButton": "Добавить Нового Менеджера",
+    "managerListTitle": "Список Менеджеров",
+    "managerListDesc": "Отображается {count} менеджеров. Данные менеджеров симулируются.",
+    "nameHeader": "Имя",
+    "emailHeader": "Email",
+    "roleHeader": "Роль",
+    "statusHeader": "Статус",
+    "actionsHeader": "Действия",
+    "statusActive": "Активен",
+    "statusBlocked": "Заблокирован",
+    "blockUserAction": "Блок.",
+    "unblockUserAction": "Разблок.",
+    "changeRoleActionSimulated": "Изменить Роль (Сим.)",
+    "permissionsActionPlaceholder": "Права (Скоро)",
+    "roleManager": "Менеджер",
+    "roleUser": "Пользователь",
+    "predefinedUserText": "Предопределенный",
+    "currentUserAdminText": "Текущий Админ",
+    "noManagersFound": "Менеджеры не найдены.",
+    "mainSiteUserManagementNote": "Управление пользователями основного сайта потребует интеграции с базой данных.",
+    "simulationNote": "Примечание: Добавление менеджеров и изменение их статуса симулируется через localStorage.",
+    "loadingPage": "Загрузка управления пользователями...",
+    "accessDeniedTitle": "Доступ запрещен",
+    "accessDeniedDesc": "У вас нет прав для просмотра этой страницы.",
+    "roleChangeSimulatedTitle": "Изменение Роли (Симуляция)",
+    "roleChangeSimulatedDesc": "Показан UI для изменения роли. Для сохранения и реального изменения прав требуется бэкенд."
   }
 }
-
-    

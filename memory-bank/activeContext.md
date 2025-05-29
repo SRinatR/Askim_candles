@@ -4,13 +4,14 @@
 ## Date: 2024-07-30 (Simulated Date of Update)
 
 ## 1. Current Focus
-*   **Admin Panel - Clients Section Enhancements:** Implement client-side filtering by status (Active/Blocked), sorting by various columns, and pagination for the client list.
+*   **Admin Panel - Users & Managers Section Enhancements:** Implement UI for displaying roles and statuses (Active/Blocked) for admin users and managers. Add simulated actions for blocking/unblocking dynamically added managers and a placeholder UI for changing roles and managing permissions.
 *   Verify all changes and ensure no regressions.
 
 ## 2. Recent Changes (Leading to this state)
+*   **Admin Panel - Clients Section Enhancements:** Implemented client-side filtering by status (Active/Blocked), sorting by various columns, and pagination for the client list. Added simulated "View Details," "Edit Client," and "Delete Client" functionalities with modals.
 *   **Cost Price Feature:** `costPrice` field added to products. Visible and editable in admin product forms and displayed in the admin product list.
 *   **Admin Panel - Table Layout Fixes:** Addressed horizontal scrolling issues in the admin product list by adjusting column widths and padding.
-*   **Product Category Filter Fix:** Resolved issue where selecting a category in main site filters resulted in "No products found" due to mismatch in comparison logic (slug vs. name). Filter now correctly compares slugs.
+*   **Product Category Filter Fix:** Resolved issue where selecting a category in main site filters resulted in "No products found" due to mismatch in comparison logic (slug vs. name). Filter now correctly compares slugs after normalizing strings.
 *   **Product Deactivation Feature & SKU/ID:** Implemented. Products can be marked inactive, hiding them from main site listings. SKU and Product ID are now part of product data and admin UI.
 *   **Admin Panel - Dynamic Attributes Management (Categories, Materials, Scents):** Implemented full CRUD (add, edit, delete from `localStorage`, with initial seeding from mock data) with warning modals for deleting/renaming in-use attributes. Product forms updated to use these dynamic attributes in `Select` components. Attribute menu in sidebar now an accordion.
 *   **Admin Panel - Article Management with Images:**
@@ -56,6 +57,6 @@
 *   **Backend Transition:** All new features are being built with future backend integration (Prisma/PostgreSQL) in mind.
 *   **Attribute & Article Management:** Now fully dynamic using `localStorage` for admin, with initial seeding from mock data if empty. Includes multilingual text and image support for articles.
 *   **Mobile Admin Access:** Restricted, user prompted to use desktop.
-*   **Simulated Data:** Product, order, client, and log data are managed client-side or via `mock-data.ts`. `costPrice` is now part of product data. Client list in admin now supports filtering by status, sorting, and pagination (client-side).
+*   **Simulated Data:** Product, order, client, and log data are managed client-side or via `mock-data.ts`. `costPrice` is now part of product data. Client list in admin now supports filtering by status, sorting, and pagination (client-side). Admin user management allows adding managers (to localStorage) and simulating block/unblock status for them.
 
     

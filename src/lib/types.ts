@@ -7,7 +7,7 @@ export interface Product {
   name: { [key in Locale | 'en']: string };
   description: { [key in Locale | 'en']: string };
   price: number;
-  costPrice?: number; // Added cost price
+  costPrice?: number;
   category: string;
   images: string[];
   mainImage?: string;
@@ -50,6 +50,7 @@ export interface AdminUser {
   name: string;
   role: AdminRole;
   password?: string;
+  isBlocked?: boolean; // Added for manager status
 }
 
 
@@ -83,16 +84,16 @@ export interface MockAdminClient {
 }
 
 export interface Article {
-  id: string; 
+  id: string;
   slug: string;
   title: { [key in Locale | 'en']: string };
   content: { [key in Locale | 'en']: string };
-  sharedMainImage?: string; 
-  mainImage_en?: string;    
-  mainImage_ru?: string;    
-  mainImage_uz?: string;    
+  sharedMainImage?: string;
+  mainImage_en?: string;
+  mainImage_ru?: string;
+  mainImage_uz?: string;
   useSharedImage: boolean;
   isActive: boolean;
-  createdAt: string; 
-  updatedAt: string; 
+  createdAt: string;
+  updatedAt: string;
 }

@@ -25,6 +25,7 @@ interface AdminAuthContextType {
   predefinedUsers: Record<string, AdminUser>;
   dynamicallyAddedManagers: AdminUser[];
   addManager: (name: string, email: string, pass: string) => Promise<boolean>;
+  toggleBlockManagerStatus: (email: string) => Promise<void>;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
@@ -39,6 +40,7 @@ const initialPredefinedUsers: Record<string, AdminUser> = {
     name: 'Store Administrator',
     role: 'ADMIN',
     password: 'adminpass',
+    isBlocked: false,
   },
   'manager@scentsational.com': {
     id: 'manager001',
@@ -46,6 +48,7 @@ const initialPredefinedUsers: Record<string, AdminUser> = {
     name: 'Store Manager',
     role: 'MANAGER',
     password: 'managerpass',
+    isBlocked: false,
   },
 };
 
@@ -100,18 +103,16 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     setIsLoading(false);
-  }, []); // Runs once on mount
+  }, []);
 
-  // Effect to reload translations if admin language preference changes
   useEffect(() => {
     async function loadTranslations() {
       const dict = await getAdminDictionary(currentAdminLocale);
       setAuthStrings({ login: dict.adminLoginPage, contextToasts: dict.adminContextToasts });
     }
-    if (!isLoading) { // Avoid loading translations before initial locale is set
+    if (!isLoading) { 
       loadTranslations();
     }
-    // This effect should ideally also listen to changes in 'admin-lang' in localStorage if set by other means
   }, [currentAdminLocale, isLoading]);
 
 
@@ -127,6 +128,17 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (userToLogin && userToLogin.password === pass) {
+      if (userToLogin.isBlocked) {
+        logAdminAction(email, "Admin Login Failed", { reason: "Account blocked" });
+        toast({
+          title: authStrings.login?.loginErrorTitle || "Admin Login Failed",
+          description: authStrings.contextToasts?.accountBlockedErrorDesc || "This account is blocked. Please contact an administrator.",
+          variant: "destructive",
+          duration: 5000
+        });
+        setIsLoading(false);
+        return false;
+      }
       setCurrentAdminUser(userToLogin);
       localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(userToLogin));
       logAdminAction(userToLogin.email, "Admin Login Success");
@@ -183,6 +195,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password: pass,
         role: 'MANAGER',
+        isBlocked: false, // Initialize as not blocked
     };
     const updatedManagers = [...dynamicallyAddedManagers, newManager];
     setDynamicallyAddedManagers(updatedManagers);
@@ -197,6 +210,30 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       logAdminAction(currentAdminUser.email, "Manager Added (Simulated)", { managerEmail: email, managerName: name });
     }
     return true;
+  };
+
+  const toggleBlockManagerStatus = async (emailToToggle: string): Promise<void> => {
+    const updatedManagers = dynamicallyAddedManagers.map(manager => {
+        if (manager.email.toLowerCase() === emailToToggle.toLowerCase()) {
+            return { ...manager, isBlocked: !manager.isBlocked };
+        }
+        return manager;
+    });
+    setDynamicallyAddedManagers(updatedManagers);
+    localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
+
+    const manager = updatedManagers.find(m => m.email.toLowerCase() === emailToToggle.toLowerCase());
+    if (manager && currentAdminUser) {
+        const action = manager.isBlocked ? "Manager Blocked (Simulated)" : "Manager Unblocked (Simulated)";
+        logAdminAction(currentAdminUser.email, action, { managerEmail: manager.email, managerName: manager.name });
+        toast({
+            title: manager.isBlocked ? (authStrings.contextToasts?.managerBlockedToastTitle || "Manager Blocked") 
+                                     : (authStrings.contextToasts?.managerUnblockedToastTitle || "Manager Unblocked"),
+            description: (authStrings.contextToasts?.managerStatusUpdatedToastDesc || "{name} status updated to {status}.")
+                            .replace('{name}', manager.name)
+                            .replace('{status}', manager.isBlocked ? 'Blocked' : 'Active'),
+        });
+    }
   };
 
   const role = currentAdminUser?.role || null;
@@ -221,7 +258,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         role,
         predefinedUsers,
         dynamicallyAddedManagers,
-        addManager
+        addManager,
+        toggleBlockManagerStatus
     }}>
       {children}
     </AdminAuthContext.Provider>
@@ -235,4 +273,3 @@ export const useAdminAuth = () => {
   }
   return context;
 };
-

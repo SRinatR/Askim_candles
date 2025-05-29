@@ -79,7 +79,11 @@
     "addManagerSuccessTitle": "Manager Added (Simulated)",
     "addManagerSuccessDesc": "{name} ({email}) has been 'added' as a manager. This change is client-side (localStorage).",
     "addManagerErrorEmailExistsTitle": "Failed to Add Manager",
-    "addManagerErrorEmailExistsDesc": "An account with this email address already exists. Please use a different email."
+    "addManagerErrorEmailExistsDesc": "An account with this email address already exists. Please use a different email.",
+    "managerBlockedToastTitle": "Manager Blocked",
+    "managerUnblockedToastTitle": "Manager Unblocked",
+    "managerStatusUpdatedToastDesc": "{name} status updated to {status}.",
+    "accountBlockedErrorDesc": "This account is blocked. Please contact an administrator."
   },
   "adminManageCategoriesPage": {
     "title": "Manage Product Categories",
@@ -318,7 +322,35 @@
     "logsClearedToastDesc": "All admin logs have been cleared from localStorage.",
     "simulationNote": "Note: Log data is simulated and stored in browser localStorage. For production, a robust backend logging solution is required.",
     "clearFiltersButton": "Clear Filters"
+  },
+  "adminUsersPage": {
+    "title": "Manage Users & Managers",
+    "description": "View users, assign roles, and manage manager accounts. (ADMIN Only)",
+    "addNewManagerButton": "Add New Manager",
+    "managerListTitle": "Manager List",
+    "managerListDesc": "Displaying {count} managers. Manager data is simulated.",
+    "nameHeader": "Name",
+    "emailHeader": "Email",
+    "roleHeader": "Role",
+    "statusHeader": "Status",
+    "actionsHeader": "Actions",
+    "statusActive": "Active",
+    "statusBlocked": "Blocked",
+    "blockUserAction": "Block",
+    "unblockUserAction": "Unblock",
+    "changeRoleActionSimulated": "Change Role (Sim.)",
+    "permissionsActionPlaceholder": "Permissions (Soon)",
+    "roleManager": "Manager",
+    "roleUser": "User",
+    "predefinedUserText": "Predefined",
+    "currentUserAdminText": "Current Admin",
+    "noManagersFound": "No managers found.",
+    "mainSiteUserManagementNote": "Main site user management will require database integration.",
+    "simulationNote": "Note: Manager additions and status changes are simulated via localStorage.",
+    "loadingPage": "Loading User Management...",
+    "accessDeniedTitle": "Access Denied",
+    "accessDeniedDesc": "You do not have permission to view this page.",
+    "roleChangeSimulatedTitle": "Role Change (Simulated)",
+    "roleChangeSimulatedDesc": "Role change UI demonstrated. Backend required for persistence and actual permission changes."
   }
 }
-
-    

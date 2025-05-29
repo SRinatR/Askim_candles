@@ -22,7 +22,7 @@
 *   **Checkout Flow:** Users must be logged in (either NextAuth or simulated) to proceed to checkout.
 *   **Prices in UZS:** Product prices in `mock-data.ts` adjusted; display components show UZS using `toLocaleString`.
 *   **Product Filters (Main Site):**
-    *   Category, Scent, Material filters. Category filter logic fixed to compare slugs.
+    *   Category, Scent, Material filters. Category filter logic fixed to compare slugs after normalization.
     *   Scent and Material options are dynamically generated from `mockProducts` (active products only).
     *   Price range filter with slider and input fields, with **dynamic min/max price calculation** based on `allProducts` (active products only). Robustness improved for empty product lists.
     *   Filters available in a mobile-friendly sheet with "Apply Filters" button.
@@ -65,17 +65,18 @@
         *   **Image Upload:** `ImageUploadArea.tsx` component integrated into product forms.
         *   **Expanded attributes in forms:** SKU, Cost Price, Scent (Select), Material (Select), Category (Select), Dimensions, Burning Time, Active status. Options for Selects are dynamic based on admin-managed attributes.
     *   **User Management Section (`/admin/users`, `/new-manager` - Admin Only):**
-        *   UI for listing managers (predefined + localStorage).
+        *   UI for listing managers (predefined + localStorage). Includes display of Role and Status (Active/Blocked).
         *   Form for adding new managers (client-side simulated via `localStorage`).
+        *   Simulated actions for Block/Unblock and (UI only) Change Role for dynamically added managers.
     *   **Client Management Section (`/admin/clients`):**
-        *   UI for listing mock clients with client-side search, **filtering by status (Active/Blocked), sorting by columns, and pagination.** Simulated block/unblock functionality.
+        *   UI for listing mock clients with client-side search, **filtering by status (Active/Blocked), sorting by columns, and pagination.** Simulated block/unblock functionality. **Modals for View Details, Edit Client, and Delete Client (all simulated).**
     *   **Attribute Management Section (`/admin/attributes/*` - Admin Only):**
         *   Full CRUD UI for managing Categories, Materials, and Scents (add, view, **edit**, delete from `localStorage`).
         *   Modal warning implemented for deleting/renaming attributes currently in use by products.
     *   **Logs Section (`/admin/logs` - Admin Only):**
         *   UI for displaying simulated logs from `localStorage`.
         *   **Functionality to clear all logs.** Client-side **filtering (user email, action text) and sorting (timestamp, email, action)** implemented.
-        *   Logging for admin login/logout, product "delete", product status toggle, manager "add".
+        *   Logging for admin login/logout, product "delete", product status toggle, manager "add", manager block/unblock.
     *   **Dashboard (`/admin/dashboard`):**
         *   UI stubs for various statistics (revenue, payments, products, clients etc.). More detailed placeholders added.
         *   **"Recent Activity" section** displaying latest logs from the simulated logger.
@@ -99,6 +100,7 @@
 *   Pagination for admin lists (products, logs - client-side initially).
 *   Further detail Marketing, Reports, Finances, Discounts, Content, Settings sections beyond current placeholders.
 *   Real file uploads and management for product/article images (instead of Data URLs).
+*   Admin User Management: UI for assigning actual permissions (requires backend).
 
 **Technical Improvements & Future Prep:**
 *   **Backend Integration (Prisma/PostgreSQL - Next Major Phase):**
@@ -108,6 +110,7 @@
     *   Implement real NextAuth Credentials provider for admin login using the database.
     *   Implement real logging to the database.
     *   Implement real client management and attribute management (Categories, Materials, Scents) in the database.
+    *   Implement real user/manager role and permission system in the database.
 *   **Full Content Localization (Main Site & Admin):**
     *   Translate all remaining text strings in all dictionary files (main site & admin).
     *   Localize Zod validation messages.
@@ -124,9 +127,9 @@
 *   **Admin Panel:** UI shell created with simulated authentication (ADMIN/MANAGER roles), collapsible sidebar, role-based navigation, dark/light theme (dark theme reverted to corporate-derived palette, hover effects adjusted), and EN/RU i18n.
     *   Product management includes image display in list, ID, SKU, Cost Price, Active status. Forms with drag-and-drop image upload (simulated), multilingual name/description inputs, and expanded attribute fields (SKU, Cost Price, Scent (Select), Material (Select), Category (Select), Dimensions, Burning Time, Active status). Attribute Select options are dynamic from admin-managed localStorage.
     *   Article management allows CRUD for multilingual articles with shared/per-language images (simulated via `localStorage`).
-    *   User (Manager) management includes adding new managers (simulated via `localStorage`).
+    *   User (Manager) management includes adding new managers (simulated via `localStorage`), displaying their role/status, and simulated block/unblock actions.
     *   Attribute management (Categories, Materials, Scents) allows full CRUD (add, **edit**, delete from `localStorage`) with warnings for in-use attributes. "Attributes" menu in sidebar is an accordion opening downwards.
-    *   Clients section shows mock client data with search, **filtering by status, sorting by columns, and pagination**. Simulated block/unblock.
+    *   Clients section shows mock client data with search, **filtering by status, sorting by columns, pagination, and simulated View/Edit/Delete modals.**
     *   Logs section shows simulated admin actions from `localStorage` with a clear function, and client-side **filtering/sorting**.
     *   Dashboard shows enhanced mock stats and recent simulated activity.
     *   Sales, Marketing, Reports, Finances pages have more structured placeholders.
@@ -135,19 +138,20 @@
 *   **Memory Bank system active.** `deployment_guide.md` created and updated.
 
 ## 4. Known Issues/Previous Errors Addressed (Recent)
-*   Admin panel `DropdownMenu` for "Attributes" corrected to `Accordion` for downward expansion, fixed order of items in sidebar.
-*   Addressed various `cn is not defined`, `SheetTrigger is not defined`, `FormProvider is not defined`, JSON parsing, and hydration errors.
-*   Corrected issue where "Articles" section was missing from admin navigation.
-*   Fixed issue where cart items would disappear on language change.
-*   Admin dark theme styling, hover effects, and sidebar text color issues addressed.
-*   Main site search bar width increased.
-*   Removed `<SelectItem value="">None</SelectItem>` to fix Select component errors.
-*   `formState` not defined in admin product forms fixed.
-*   Corrected parsing errors in admin attribute pages and `ru.json` dictionary.
-*   Admin header/footer visibility and positioning on mobile fixed.
-*   Missing `X` icon and `SheetTrigger` imports in admin layout fixed.
-*   Main site product category filter logic fixed to compare slugs.
-*   Admin product list table horizontal scroll issue addressed by adjusting column widths and padding.
-*   Admin "Clients" page enhanced with status filtering, sorting, and pagination.
+*   Admin panel "Attributes" menu fixed to be a proper accordion.
+*   JSON parsing errors in `ru.json` fixed.
+*   "formState is not defined" in admin product forms fixed.
+*   `FormProvider` not imported error in admin product edit form fixed.
+*   Horizontal scrolling in admin product table significantly improved.
+*   Main site category filter logic made more robust.
+*   `CartContext` updated to better persist cart items on language change.
+*   `cn is not defined` and `currentPathWithoutLocale is not defined` errors in Header fixed.
+*   `SheetTrigger` and `X` icon import errors in admin layout fixed.
+*   Admin login toast messages fixed.
+*   Admin panel version display logic in footer fixed.
+*   Admin panel mobile access restriction logic verified.
+*   "Cannot read properties of undefined (reading 'addToCart')" error in ProductCard fixed by ensuring dictionary prop is always passed.
+*   HTML nesting `<div>` in `<p>` for `Badge` in client view modal fixed.
+*   Parsing error in `admin/clients/page.tsx` for `setSortConfig` fixed.
 
     
