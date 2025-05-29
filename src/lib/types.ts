@@ -1,4 +1,5 @@
 
+
 export interface Product {
   id: string;
   name: string;
@@ -24,7 +25,7 @@ export interface Category {
   description?: string;
 }
 
-// User type for client-side email/password auth simulation
+// User type for client-side email/password auth simulation (FRONTEND USERS)
 export interface SimulatedUser {
   id: string;
   email: string;
@@ -35,6 +36,17 @@ export interface SimulatedUser {
   isRegistered?: boolean;
   isConfirmed?: boolean;
 }
+
+// User type for client-side ADMIN PANEL auth simulation
+export type AdminRole = 'ADMIN' | 'MANAGER';
+export interface AdminUser {
+  id: string;
+  email: string;
+  name: string;
+  role: AdminRole;
+  password?: string; // For form handling/mock storage in simulation
+}
+
 
 export interface Address {
   id: string;
@@ -54,4 +66,3 @@ export interface Order {
   totalAmount: number;
   items: CartItem[]; // Simplified, ideally OrderItem with price snapshot
 }
-
