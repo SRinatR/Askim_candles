@@ -5,120 +5,29 @@ import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-// import { Label } from "@/components/ui/label"; // Not used by FormField
 import { useToast } from "@/hooks/use-toast";
-import { useRouter, useParams } from "next/navigation"; // Added useParams
+import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Mail, KeyRound, User as UserIcon, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import { useAuth } from '@/contexts/AuthContext';
 import { Progress } from '@/components/ui/progress';
 import type { Locale } from '@/lib/i1n-config';
 
-// Placeholder dictionary
-const getRegisterDictionary = (locale: Locale) => {
-  if (locale === 'uz') {
-    return {
-      createAccountTitle: "Hisob Yaratish",
-      createAccountDesc: "Bugunoq ScentSational Showcase'ga qo'shiling!",
-      step: (current: number, total: number) => `Qadam ${current} / ${total}`,
-      emailLabel: "Elektron pochta manzili",
-      emailPlaceholder: "siz@misol.com",
-      passwordLabel: "Parol",
-      passwordCreatePlaceholder: "Parol yarating",
-      confirmPasswordLabel: "Parolni tasdiqlang",
-      confirmPasswordPlaceholder: "Parolingizni tasdiqlang",
-      nextDetailsButton: "Keyingisi: Ma'lumotlaringiz",
-      firstNameLabel: "Ism",
-      firstNamePlaceholder: "Ismingiz",
-      lastNameLabel: "Familiya",
-      lastNamePlaceholder: "Familiyangiz",
-      nextConfirmButton: "Keyingisi: Tasdiqlash",
-      backButton: "Orqaga",
-      almostThereTitle: "Deyarli Tayyor!",
-      confirmAccountInstruction: "Ro'yxatdan o'tishingiz deyarli yakunlandi. Demo maqsadida, hisobingizni tasdiqlash uchun quyidagi tugmani bosing. Haqiqiy ilovada sizga tasdiqlash xati yuboriladi.",
-      registeredEmailLabel: "Ro'yxatdan o'tgan email:",
-      confirmAccountButton: "Hisobni Tasdiqlash",
-      processingButton: "Qayta ishlanmoqda...",
-      confirmingButton: "Tasdiqlanmoqda...",
-      errorPasswordsDontMatch: "Parollar mos kelmadi.",
-      errorEmailExists: "Email allaqachon mavjud.",
-      errorRegDataMissing: "Oldingi qadam ma'lumotlari yetishmayapti.",
-      errorNoPendingReg: "Tasdiqlash uchun kutilayotgan ro'yxatdan o'tish topilmadi yoki ro'yxatdan o'tish tugallanmagan.",
-      errorCouldNotFindUser: "Tasdiqlash uchun foydalanuvchi topilmadi.",
-      accountConfirmedTitle: "Hisob Tasdiqlandi!",
-      accountConfirmedDesc: "Endi tizimga kirishingiz mumkin.",
-      alreadyHaveAccount: "Hisobingiz bormi?",
-      signInLink: "Kirish",
-    };
-  }
-  if (locale === 'ru') {
-    return {
-      createAccountTitle: "Создать аккаунт",
-      createAccountDesc: "Присоединяйтесь к ScentSational Showcase уже сегодня!",
-      step: (current: number, total: number) => `Шаг ${current} из ${total}`,
-      emailLabel: "Адрес электронной почты",
-      emailPlaceholder: "you@example.com",
-      passwordLabel: "Пароль",
-      passwordCreatePlaceholder: "Создайте пароль",
-      confirmPasswordLabel: "Подтвердите пароль",
-      confirmPasswordPlaceholder: "Подтвердите ваш пароль",
-      nextDetailsButton: "Далее: Ваши данные",
-      firstNameLabel: "Имя",
-      firstNamePlaceholder: "Ваше имя",
-      lastNameLabel: "Фамилия",
-      lastNamePlaceholder: "Ваша фамилия",
-      nextConfirmButton: "Далее: Подтверждение",
-      backButton: "Назад",
-      almostThereTitle: "Почти готово!",
-      confirmAccountInstruction: "Ваша регистрация почти завершена. В демонстрационных целях, нажмите кнопку ниже, чтобы подтвердить свой аккаунт. В реальном приложении вам будет отправлено письмо с подтверждением.",
-      registeredEmailLabel: "Зарегистрированный email:",
-      confirmAccountButton: "Подтвердить аккаунт",
-      processingButton: "Обработка...",
-      confirmingButton: "Подтверждение...",
-      errorPasswordsDontMatch: "Пароли не совпадают.",
-      errorEmailExists: "Email уже существует.",
-      errorRegDataMissing: "Отсутствуют данные предыдущего шага.",
-      errorNoPendingReg: "Ожидающая подтверждения регистрация не найдена или регистрация не завершена.",
-      errorCouldNotFindUser: "Не удалось найти пользователя для подтверждения.",
-      accountConfirmedTitle: "Аккаунт подтвержден!",
-      accountConfirmedDesc: "Теперь вы можете войти.",
-      alreadyHaveAccount: "Уже есть аккаунт?",
-      signInLink: "Войти",
-    };
-  }
-  return { // en
-    createAccountTitle: "Create an Account",
-    createAccountDesc: "Join ScentSational Showcase today!",
-    step: (current: number, total: number) => `Step ${current} of ${total}`,
-    emailLabel: "Email Address",
-    emailPlaceholder: "you@example.com",
-    passwordLabel: "Password",
-    passwordCreatePlaceholder: "Create a password",
-    confirmPasswordLabel: "Confirm Password",
-    confirmPasswordPlaceholder: "Confirm your password",
-    nextDetailsButton: "Next: Your Details",
-    firstNameLabel: "First Name",
-    firstNamePlaceholder: "Your first name",
-    lastNameLabel: "Last Name",
-    lastNamePlaceholder: "Your last name",
-    nextConfirmButton: "Next: Confirm",
-    backButton: "Back",
-    almostThereTitle: "Almost There!",
-    confirmAccountInstruction: "Your registration is nearly complete. For demo purposes, click the button below to confirm your account. In a real application, you would receive a confirmation email.",
-    registeredEmailLabel: "Registered email:",
-    confirmAccountButton: "Confirm Account",
-    processingButton: "Processing...",
-    confirmingButton: "Confirming...",
-    errorPasswordsDontMatch: "Passwords do not match.",
-    errorEmailExists: "Email already exists.",
-    errorRegDataMissing: "Previous step data missing.",
-    errorNoPendingReg: "No pending registration found to confirm or registration incomplete.",
-    errorCouldNotFindUser: "Could not find user to confirm.",
-    accountConfirmedTitle: "Account Confirmed!",
-    accountConfirmedDesc: "You can now log in.",
-    alreadyHaveAccount: "Already have an account?",
-    signInLink: "Sign In",
-  };
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages;
+type RegisterPageDictionary = Dictionary['registerPage'];
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
+const getRegisterDictionary = (locale: Locale): RegisterPageDictionary => {
+  return dictionaries[locale]?.registerPage || dictionaries.en.registerPage;
 };
 
 
@@ -144,11 +53,8 @@ export default function RegisterPage() {
 
   const handleStep1Submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      toast({ title: dictionary.errorPasswordsDontMatch, variant: "destructive" });
-      return;
-    }
-    const success = await registerStep1(email, password); // AuthContext shows its own toasts
+    // Toast for password mismatch is now handled by AuthContext
+    const success = await registerStep1(email, password, confirmPassword); 
     if (success) {
       setCurrentStep(2);
     }
@@ -156,7 +62,7 @@ export default function RegisterPage() {
 
   const handleStep2Submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await registerStep2(firstName, lastName); // AuthContext shows its own toasts
+    const success = await registerStep2(firstName, lastName);
     if (success) {
       setCurrentStep(3);
     }
@@ -182,7 +88,7 @@ export default function RegisterPage() {
           <CardTitle className="text-2xl font-bold">{dictionary.createAccountTitle}</CardTitle>
           <CardDescription>{dictionary.createAccountDesc}</CardDescription>
            <Progress value={progressValue} className="w-full mt-2" />
-           <p className="text-sm text-muted-foreground mt-1">{dictionary.step(currentStep, totalSteps)}</p>
+           <p className="text-sm text-muted-foreground mt-1">{dictionary.step.replace('{current}', String(currentStep)).replace('{total}', String(totalSteps))}</p>
         </CardHeader>
 
         <CardContent>

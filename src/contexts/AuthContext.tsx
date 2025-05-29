@@ -7,10 +7,29 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation'; 
 import type { Locale } from '@/lib/i1n-config';
 
+// Import main dictionaries
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages;
+type AuthContextToastsDictionary = Dictionary['authContextToasts'];
+
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
+const getAuthContextToastsDictionary = (locale: Locale): AuthContextToastsDictionary => {
+  return dictionaries[locale]?.authContextToasts || dictionaries.en.authContextToasts;
+};
+
 interface AuthContextType {
   currentUser: SimulatedUser | null;
   login: (email: string, pass: string) => Promise<boolean>;
-  registerStep1: (email: string, pass: string) => Promise<boolean>;
+  registerStep1: (email: string, pass: string, confirmPass: string) => Promise<boolean>;
   registerStep2: (firstName: string, lastName: string) => Promise<boolean>;
   confirmAccount: () => Promise<boolean>;
   logout: () => void;
@@ -23,69 +42,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const MOCK_USERS_STORAGE_KEY = 'scentSationalSimulatedUsers';
 const CURRENT_USER_STORAGE_KEY = 'scentSationalSimulatedCurrentUser';
-
-// Placeholder dictionary for AuthContext toasts
-const getAuthContextDictionary = (locale: Locale) => {
-  // This is a simplified version. In a real app, you might get these from a global i18n provider.
-  if (locale === 'uz') {
-    return {
-      loginSuccessful: "Muvaffaqiyatli kirildi",
-      welcomeBack: (name: string) => `Xush kelibsiz, ${name}!`,
-      loginFailed: "Kirish muvaffaqiyatsiz",
-      accountNotConfirmed: "Hisob tasdiqlanmagan. Ro'yxatdan o'tishni yakunlang.",
-      invalidEmailPassword: "Noto'g'ri email yoki parol.",
-      registrationFailed: "Ro'yxatdan o'tish muvaffaqiyatsiz",
-      emailExists: "Email allaqachon mavjud.",
-      registrationError: "Ro'yxatdan o'tishda xatolik",
-      prevStepDataMissing: "Oldingi qadam ma'lumotlari yo'q.",
-      confirmationError: "Tasdiqlashda xatolik",
-      noPendingReg: "Tasdiqlash uchun kutilayotgan ro'yxatdan o'tish topilmadi.",
-      confirmFailedUserNotFound: "Tasdiqlash uchun foydalanuvchi topilmadi.",
-      accountConfirmed: "Hisob tasdiqlandi!",
-      youCanNowLogin: "Endi tizimga kirishingiz mumkin.",
-      loggedOut: "Chiqib ketildi",
-      loggedOutSuccess: "Siz tizimdan muvaffaqiyatli chiqdingiz."
-    };
-  }
-  if (locale === 'ru') {
-    return {
-      loginSuccessful: "Вход выполнен",
-      welcomeBack: (name: string) => `С возвращением, ${name}!`,
-      loginFailed: "Ошибка входа",
-      accountNotConfirmed: "Аккаунт не подтвержден. Пожалуйста, завершите регистрацию.",
-      invalidEmailPassword: "Неверный email или пароль.",
-      registrationFailed: "Ошибка регистрации",
-      emailExists: "Email уже существует.",
-      registrationError: "Ошибка регистрации",
-      prevStepDataMissing: "Отсутствуют данные предыдущего шага.",
-      confirmationError: "Ошибка подтверждения",
-      noPendingReg: "Ожидающая подтверждения регистрация не найдена.",
-      confirmFailedUserNotFound: "Не удалось найти пользователя для подтверждения.",
-      accountConfirmed: "Аккаунт подтвержден!",
-      youCanNowLogin: "Теперь вы можете войти.",
-      loggedOut: "Выход выполнен",
-      loggedOutSuccess: "Вы успешно вышли из системы."
-    };
-  }
-  return { // en
-    loginSuccessful: "Login Successful",
-    welcomeBack: (name: string) => `Welcome back, ${name}!`,
-    loginFailed: "Login Failed",
-    accountNotConfirmed: "Account not confirmed. Please complete registration.",
-    invalidEmailPassword: "Invalid email or password.",
-    registrationFailed: "Registration Failed",
-    emailExists: "Email already exists.",
-    registrationError: "Registration Error",
-    prevStepDataMissing: "Previous step data missing.",
-    confirmationError: "Confirmation Error",
-    noPendingReg: "No pending registration found to confirm.",
-    confirmFailedUserNotFound: "Could not find user to confirm.",
-    accountConfirmed: "Account Confirmed!",
-    youCanNowLogin: "You can now log in.",
-    loggedOut: "Logged Out",
-    loggedOutSuccess: "You have been successfully logged out."
-  };
-};
+const REG_DATA_STORAGE_KEY = 'scentSationalSimulatedRegData';
 
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -96,7 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const params = useParams();
   const locale = params.locale as Locale || 'uz'; 
-  const dictionary = getAuthContextDictionary(locale);
+  const dictionary = getAuthContextToastsDictionary(locale);
 
 
   useEffect(() => {
@@ -104,7 +61,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
     }
-    const storedRegData = localStorage.getItem('scentSationalSimulatedRegData'); 
+    const storedRegData = localStorage.getItem(REG_DATA_STORAGE_KEY); 
     if (storedRegData) {
       setRegistrationData(JSON.parse(storedRegData));
     }
@@ -113,19 +70,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => { 
     if (registrationData) {
-        localStorage.setItem('scentSationalSimulatedRegData', JSON.stringify(registrationData));
+        localStorage.setItem(REG_DATA_STORAGE_KEY, JSON.stringify(registrationData));
     } else {
-        localStorage.removeItem('scentSationalSimulatedRegData');
+        localStorage.removeItem(REG_DATA_STORAGE_KEY);
     }
   }, [registrationData]);
 
 
   const getStoredUsers = (): Record<string, SimulatedUser> => {
+    if (typeof window === 'undefined') return {};
     const users = localStorage.getItem(MOCK_USERS_STORAGE_KEY);
     return users ? JSON.parse(users) : {};
   };
 
   const saveStoredUsers = (users: Record<string, SimulatedUser>) => {
+    if (typeof window === 'undefined') return;
     localStorage.setItem(MOCK_USERS_STORAGE_KEY, JSON.stringify(users));
   };
 
@@ -137,8 +96,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (user && user.password === pass && user.isConfirmed) { 
       setCurrentUser(user);
-      localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(user));
-      toast({ title: dictionary.loginSuccessful, description: dictionary.welcomeBack(user.name || user.email) });
+      if (typeof window !== 'undefined') localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(user));
+      toast({ title: dictionary.loginSuccessful, description: dictionary.welcomeBack.replace('{name}', user.name || user.email) });
       setIsLoading(false);
       return true;
     } else if (user && user.password === pass && !user.isConfirmed) {
@@ -150,8 +109,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return false;
   };
 
-  const registerStep1 = async (email: string, pass: string): Promise<boolean> => {
+  const registerStep1 = async (email: string, pass: string, confirmPass: string): Promise<boolean> => {
     setIsLoading(true);
+     if (pass !== confirmPass) {
+      toast({ title: dictionary.registrationError, description: dictionary.errorPasswordsDontMatch, variant: "destructive" });
+      setIsLoading(false);
+      return false;
+    }
     const users = getStoredUsers();
     if (users[email.toLowerCase()]) {
       toast({ title: dictionary.registrationFailed, description: dictionary.emailExists, variant: "destructive" });
@@ -195,7 +159,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       users[registrationData.email] = userToConfirm;
       saveStoredUsers(users);
       setRegistrationData(null); 
-      localStorage.removeItem('scentSationalSimulatedRegData'); 
+      if (typeof window !== 'undefined') localStorage.removeItem(REG_DATA_STORAGE_KEY); 
       toast({ title: dictionary.accountConfirmed, description: dictionary.youCanNowLogin });
       router.push(`/${locale}/login`);
       setIsLoading(false);
@@ -208,9 +172,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setCurrentUser(null);
-    localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+    if (typeof window !== 'undefined') localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
     setRegistrationData(null); 
-    localStorage.removeItem('scentSationalSimulatedRegData');
+    if (typeof window !== 'undefined') localStorage.removeItem(REG_DATA_STORAGE_KEY);
     toast({ title: dictionary.loggedOut, description: dictionary.loggedOutSuccess });
     router.push(`/${locale}/login`); 
   };

@@ -4,7 +4,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useSearchParams, useParams } from "next/navigation"; 
@@ -15,84 +14,21 @@ import { Chrome, Send, Globe, Mail, KeyRound } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext"; 
 import type { Locale } from '@/lib/i1n-config';
 
-// Placeholder dictionary
-const getLoginDictionary = (locale: Locale) => {
-  if (locale === 'uz') {
-    return {
-      signInTitle: "Kirish",
-      signInDesc: "ScentSational Showcase hisobingizga kiring.",
-      emailLabel: "Elektron pochta manzili",
-      emailPlaceholder: "siz@misol.com",
-      passwordLabel: "Parol",
-      passwordPlaceholder: "••••••••",
-      signInWithEmailButton: "Email bilan kirish",
-      signingInButton: "Kirilmoqda...",
-      orContinueWith: "Yoki quyidagilar bilan davom eting",
-      signInWithGoogle: "Google bilan kirish",
-      signInWithTelegram: "Telegram bilan kirish",
-      signInWithYandex: "Yandex bilan kirish",
-      processingButton: "Qayta ishlanmoqda...",
-      dontHaveAccount: "Hisobingiz yo'qmi?",
-      signUpLink: "Ro'yxatdan o'tish",
-      termsAgree: "Kirish orqali siz bizning Foydalanish shartlari va Maxfiylik siyosatimizga rozilik bildirasiz.",
-      loginFailedTitle: "Kirish muvaffaqiyatsiz",
-      loginFailedDescGeneric: "Sizni tizimga kirita olmadik. Iltimos, qaytadan urinib ko'ring.",
-      accountNotConfirmedDesc: "Hisobingiz tasdiqlanmagan. Iltimos, ro'yxatdan o'tishni yakunlang yoki tasdiqlash xatini tekshiring.",
-      loginComingSoonTitle: "Tez kunda!",
-      loginComingSoonDesc: (provider: string) => `${provider} orqali kirish hozircha mavjud emas.`,
-      loading: "Yuklanmoqda...",
-    };
-  }
-   if (locale === 'ru') {
-    return {
-      signInTitle: "Вход",
-      signInDesc: "Войдите в свой аккаунт ScentSational Showcase.",
-      emailLabel: "Адрес электронной почты",
-      emailPlaceholder: "you@example.com",
-      passwordLabel: "Пароль",
-      passwordPlaceholder: "••••••••",
-      signInWithEmailButton: "Войти с Email",
-      signingInButton: "Вход...",
-      orContinueWith: "Или продолжить с помощью",
-      signInWithGoogle: "Войти через Google",
-      signInWithTelegram: "Войти через Telegram",
-      signInWithYandex: "Войти через Yandex",
-      processingButton: "Обработка...",
-      dontHaveAccount: "Нет аккаунта?",
-      signUpLink: "Зарегистрироваться",
-      termsAgree: "Входя в систему, вы соглашаетесь с нашими Условиями обслуживания и Политикой конфиденциальности.",
-      loginFailedTitle: "Ошибка входа",
-      loginFailedDescGeneric: "Не удалось войти. Пожалуйста, попробуйте еще раз.",
-      accountNotConfirmedDesc: "Аккаунт не подтвержден. Пожалуйста, завершите регистрацию или проверьте письмо с подтверждением.",
-      loginComingSoonTitle: "Скоро!",
-      loginComingSoonDesc: (provider: string) => `Вход через ${provider} пока недоступен.`,
-      loading: "Загрузка...",
-    };
-  }
-  return { // en
-    signInTitle: "Sign In",
-    signInDesc: "Access your ScentSational Showcase account.",
-    emailLabel: "Email Address",
-    emailPlaceholder: "you@example.com",
-    passwordLabel: "Password",
-    passwordPlaceholder: "••••••••",
-    signInWithEmailButton: "Sign In with Email",
-    signingInButton: "Signing In...",
-    orContinueWith: "Or continue with",
-    signInWithGoogle: "Sign in with Google",
-    signInWithTelegram: "Sign in with Telegram",
-    signInWithYandex: "Sign in with Yandex",
-    processingButton: "Processing...",
-    dontHaveAccount: "Don't have an account?",
-    signUpLink: "Sign Up",
-    termsAgree: "By signing in, you agree to our Terms of Service and Privacy Policy.",
-    loginFailedTitle: "Login Failed",
-    loginFailedDescGeneric: "Could not sign you in. Please try again.",
-    accountNotConfirmedDesc: "Account not confirmed. Please complete registration or check your confirmation email.",
-    loginComingSoonTitle: "Coming Soon!",
-    loginComingSoonDesc: (provider: string) => `Sign in with ${provider} is not yet available.`,
-    loading: "Loading...",
-  };
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages;
+type LoginPageDictionary = Dictionary['loginPage'];
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
+const getLoginDictionary = (locale: Locale): LoginPageDictionary => {
+  return dictionaries[locale]?.loginPage || dictionaries.en.loginPage;
 };
 
 
@@ -118,7 +54,7 @@ export default function LoginPage() {
     if (nextAuthStatus === "authenticated" || simulatedUser) {
       router.push(callbackUrl); 
     }
-  }, [nextAuthStatus, simulatedUser, router, callbackUrl]);
+  }, [nextAuthStatus, simulatedUser, router, callbackUrl, locale]); // Added locale to dependency array
 
   const handleSocialSignIn = async (provider: string) => {
     setIsSubmittingSocial(provider);
@@ -126,11 +62,13 @@ export default function LoginPage() {
       if (provider !== "google") { 
         toast({
           title: dictionary.loginComingSoonTitle,
-          description: dictionary.loginComingSoonDesc(provider.charAt(0).toUpperCase() + provider.slice(1)),
+          description: dictionary.loginComingSoonDesc.replace('{provider}', provider.charAt(0).toUpperCase() + provider.slice(1)),
         });
         setIsSubmittingSocial("");
         return;
       }
+      // Ensure callbackUrl is correctly prefixed with locale if NextAuth doesn't handle it.
+      // For now, assuming NextAuth's default redirect logic is sufficient with middleware.
       const result = await signIn(provider, { callbackUrl });
       if (result?.error) {
         toast({
@@ -154,7 +92,10 @@ export default function LoginPage() {
   const handleEmailPasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmittingEmail(true);
-    await simulatedLogin(email, password); 
+    const loginSuccess = await simulatedLogin(email, password); 
+    if(loginSuccess) {
+        router.push(callbackUrl);
+    }
     setIsSubmittingEmail(false);
   };
   
