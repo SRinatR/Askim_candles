@@ -1,9 +1,5 @@
 
 "use client";
-// This file needs to be moved into src/app/[locale]/cart/page.tsx
-// and adapted to use translations.
-// For client components, translations would typically come via context or props
-// For simplicity in this step, we'll use hardcoded or placeholder text.
 
 import { useCart } from '@/contexts/CartContext';
 import Image from 'next/image';
@@ -19,88 +15,21 @@ import { Slash } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import type { Locale } from '@/lib/i1n-config';
 
-// Placeholder dictionary for cart page
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages;
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
 const getCartDictionary = (locale: Locale) => {
-  if (locale === 'uz') {
-    return {
-      emptyCartTitle: "Savatingiz bo'sh",
-      emptyCartSubtitle: "Hali savatga hech narsa qo'shmaganga o'xshaysiz.",
-      startShopping: "Xarid qilishni boshlash",
-      yourCartTitle: "Sizning savatingiz",
-      itemRemoved: "Mahsulot o'chirildi",
-      itemRemovedDesc: (name: string) => `${name} savatingizdan o'chirildi.`,
-      cartCleared: "Savatcha tozalandi",
-      cartClearedDesc: "Barcha mahsulotlar savatingizdan o'chirildi.",
-      price: "Narx",
-      quantityFor: (name: string) => `${name} uchun miqdor`,
-      remove: (name: string) => `${name}ni savatdan olib tashlash`,
-      clearCart: "Savatni tozalash",
-      orderSummary: "Buyurtma xulosasi",
-      subtotal: "Oraliq jami",
-      shipping: "Yetkazib berish",
-      free: "Bepul",
-      taxes: "Soliqlar",
-      calculatedAtCheckout: "To'lovda hisoblanadi",
-      total: "Jami",
-      proceedToCheckout: "To'lovga o'tish",
-      continueShopping: "Xaridni davom ettirish",
-      home: "Bosh sahifa",
-      shoppingCartBreadcrumb: "Savatcha"
-    };
-  }
-  if (locale === 'ru') {
-    return {
-      emptyCartTitle: "Ваша корзина пуста",
-      emptyCartSubtitle: "Похоже, вы еще ничего не добавили в корзину.",
-      startShopping: "Начать покупки",
-      yourCartTitle: "Ваша корзина",
-      itemRemoved: "Товар удален",
-      itemRemovedDesc: (name: string) => `${name} был удален из вашей корзины.`,
-      cartCleared: "Корзина очищена",
-      cartClearedDesc: "Все товары были удалены из вашей корзины.",
-      price: "Цена",
-      quantityFor: (name: string) => `Количество для ${name}`,
-      remove: (name: string) => `Удалить ${name} из корзины`,
-      clearCart: "Очистить корзину",
-      orderSummary: "Сводка заказа",
-      subtotal: "Промежуточный итог",
-      shipping: "Доставка",
-      free: "Бесплатно",
-      taxes: "Налоги",
-      calculatedAtCheckout: "Рассчитывается при оформлении",
-      total: "Итого",
-      proceedToCheckout: "Перейти к оформлению",
-      continueShopping: "Продолжить покупки",
-      home: "Главная",
-      shoppingCartBreadcrumb: "Корзина"
-    };
-  }
-  // Default to English
-  return {
-    emptyCartTitle: "Your Cart is Empty",
-    emptyCartSubtitle: "Looks like you haven't added anything to your cart yet.",
-    startShopping: "Start Shopping",
-    yourCartTitle: "Your Shopping Cart",
-    itemRemoved: "Item Removed",
-    itemRemovedDesc: (name: string) => `${name} has been removed from your cart.`,
-    cartCleared: "Cart Cleared",
-    cartClearedDesc: "All items have been removed from your cart.",
-    price: "Price",
-    quantityFor: (name: string) => `Quantity for ${name}`,
-    remove: (name: string) => `Remove ${name} from cart`,
-    clearCart: "Clear Cart",
-    orderSummary: "Order Summary",
-    subtotal: "Subtotal",
-    shipping: "Shipping",
-    free: "Free",
-    taxes: "Taxes",
-    calculatedAtCheckout: "Calculated at checkout",
-    total: "Total",
-    proceedToCheckout: "Proceed to Checkout",
-    continueShopping: "Continue Shopping",
-    home: "Home",
-    shoppingCartBreadcrumb: "Shopping Cart"
-  };
+  const dict = dictionaries[locale] || dictionaries.en;
+  return dict.cartPage;
 };
 
 
@@ -116,7 +45,7 @@ export default function CartPage() {
     removeFromCart(productId);
     toast({
       title: dictionary.itemRemoved,
-      description: dictionary.itemRemovedDesc(productName),
+      description: dictionary.itemRemovedDesc.replace('{name}', productName),
     });
   };
 
@@ -176,9 +105,9 @@ export default function CartPage() {
                   value={item.quantity}
                   onChange={e => updateQuantity(item.id, parseInt(e.target.value))}
                   className="w-20 h-9 text-center"
-                  aria-label={dictionary.quantityFor(item.name)}
+                  aria-label={dictionary.quantityFor.replace('{name}', item.name)}
                 />
-                <Button variant="ghost" size="icon" onClick={() => handleRemove(item.id, item.name)} aria-label={dictionary.remove(item.name)}>
+                <Button variant="ghost" size="icon" onClick={() => handleRemove(item.id, item.name)} aria-label={dictionary.remove.replace('{name}', item.name)}>
                   <Trash2 className="h-5 w-5 text-destructive" />
                 </Button>
               </div>

@@ -2,7 +2,7 @@
 "use client";
 
 import { mockProducts } from '@/lib/mock-data';
-import { notFound, useParams } from 'next/navigation'; // Added useParams
+import { notFound, useParams } from 'next/navigation';
 import { ProductImageGallery } from '@/components/products/ProductImageGallery';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -14,72 +14,27 @@ import Link from 'next/link';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
-import Image from 'next/image'; // For related products
+import Image from 'next/image'; 
 
-// Placeholder dictionary
-const getProductDetailPageDictionary = (locale: Locale) => {
-  if (locale === 'uz') {
-    return {
-      home: "Bosh sahifa",
-      products: "Mahsulotlar",
-      addedToCartTitle: "Savatchaga qo'shildi",
-      addedToCartDesc: (name: string) => `${name} savatchangizga qo'shildi.`,
-      onlyLeftInStock: (stock: number) => `Faqat ${stock} dona qoldi!`,
-      outOfStock: "Sotuvda yo'q",
-      categoryLabel: "Turkum",
-      scentLabel: "Xushbo'ylik",
-      materialLabel: "Material",
-      dimensionsLabel: "O'lchamlari",
-      addToCartButton: "Savatchaga qo'shish",
-      outOfStockButton: "Sotuvda Yo'q",
-      fastDispatch: "Tez jo'natish",
-      secureCheckout: "Xavfsiz to'lov",
-      easyReturns: "Oson qaytarish",
-      relatedProductsTitle: "Sizga Yoqishi Mumkin Bo'lgan Mahsulotlar",
-    };
-  }
-  if (locale === 'ru') {
-    return {
-      home: "Главная",
-      products: "Товары",
-      addedToCartTitle: "Добавлено в корзину",
-      addedToCartDesc: (name: string) => `${name} добавлен в вашу корзину.`,
-      onlyLeftInStock: (stock: number) => `Осталось всего ${stock} шт.!`,
-      outOfStock: "Нет в наличии",
-      categoryLabel: "Категория",
-      scentLabel: "Аромат",
-      materialLabel: "Материал",
-      dimensionsLabel: "Размеры",
-      addToCartButton: "В корзину",
-      outOfStockButton: "Нет в Наличии",
-      fastDispatch: "Быстрая отправка",
-      secureCheckout: "Безопасная оплата",
-      easyReturns: "Легкий возврат",
-      relatedProductsTitle: "Вам также могут понравиться",
-    };
-  }
-  return { // en
-    home: "Home",
-    products: "Products",
-    addedToCartTitle: "Added to cart",
-    addedToCartDesc: (name: string) => `${name} has been added to your cart.`,
-    onlyLeftInStock: (stock: number) => `Only ${stock} left in stock!`,
-    outOfStock: "Out of Stock",
-    categoryLabel: "Category",
-    scentLabel: "Scent",
-    materialLabel: "Material",
-    dimensionsLabel: "Dimensions",
-    addToCartButton: "Add to Cart",
-    outOfStockButton: "Out of Stock",
-    fastDispatch: "Fast Dispatch",
-    secureCheckout: "Secure Checkout",
-    easyReturns: "Easy Returns",
-    relatedProductsTitle: "You Might Also Like",
-  };
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages;
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
 };
 
-export default function ProductDetailPage({ params: routeParams }: { params: { id: string; locale: Locale } }) { // routeParams already includes locale
-  const clientParams = useParams(); // For client-side access if needed, or to be sure
+const getProductDetailPageDictionary = (locale: Locale) => {
+  const dict = dictionaries[locale] || dictionaries.en;
+  return dict.productDetailPage;
+};
+
+export default function ProductDetailPage({ params: routeParams }: { params: { id: string; locale: Locale } }) { 
+  const clientParams = useParams(); 
   const locale = routeParams.locale || clientParams.locale as Locale || 'uz';
   const dictionary = getProductDetailPageDictionary(locale);
 
@@ -95,7 +50,7 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
     addToCart(product);
     toast({
       title: dictionary.addedToCartTitle,
-      description: dictionary.addedToCartDesc(product.name),
+      description: dictionary.addedToCartDesc.replace('{name}', product.name),
     });
   };
 
@@ -128,7 +83,7 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
             <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">{product.name}</h1>
             <p className="text-2xl font-semibold text-primary">${product.price.toFixed(2)}</p>
             {product.stock > 0 && product.stock <= 5 && (
-              <Badge variant="destructive" className="text-xs">{dictionary.onlyLeftInStock(product.stock)}</Badge>
+              <Badge variant="destructive" className="text-xs">{dictionary.onlyLeftInStock.replace('{stock}', String(product.stock))}</Badge>
             )}
             {product.stock === 0 && (
               <Badge variant="outline" className="text-xs">{dictionary.outOfStock}</Badge>
@@ -182,7 +137,7 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
             {relatedProducts.map(related => (
               <Link key={related.id} href={`/${locale}/products/${related.id}`} className="group block border rounded-lg overflow-hidden shadow hover:shadow-lg transition-shadow">
                 <div className="aspect-video relative">
-                  <Image src={related.images[0]} alt={related.name} layout="fill" objectFit="cover" className="group-hover:scale-105 transition-transform" data-ai-hint={`${related.category.toLowerCase().replace(' ', '-')} product`} />
+                  <Image src={related.images[0]} alt={related.name} fill objectFit="cover" className="group-hover:scale-105 transition-transform" data-ai-hint={`${related.category.toLowerCase().replace(' ', '-')} product`} sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw" />
                 </div>
                 <div className="p-4">
                   <h3 className="font-medium text-lg group-hover:text-primary">{related.name}</h3>
@@ -196,5 +151,3 @@ export default function ProductDetailPage({ params: routeParams }: { params: { i
     </div>
   );
 }
-
-// Delete original: src/app/products/[id]/page.tsx

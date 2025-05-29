@@ -4,7 +4,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // Not used by FormField, but can be kept if used elsewhere
+// import { Label } from '@/components/ui/label'; // Not used by FormField, but can be kept if used elsewhere
 import { Separator } from '@/components/ui/separator';
 import { useCart } from '@/contexts/CartContext';
 import Image from 'next/image';
@@ -15,13 +15,31 @@ import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
-import { useRouter, useParams } from 'next/navigation'; // Added useParams
+import { useRouter, useParams } from 'next/navigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Slash } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
 
+import enMessages from '@/dictionaries/en.json';
+import ruMessages from '@/dictionaries/ru.json';
+import uzMessages from '@/dictionaries/uz.json';
+
+type Dictionary = typeof enMessages;
+
+const dictionaries: Record<Locale, Dictionary> = {
+  en: enMessages,
+  ru: ruMessages,
+  uz: uzMessages,
+};
+
+const getCheckoutDictionary = (locale: Locale) => {
+  const dict = dictionaries[locale] || dictionaries.en;
+  return dict.checkoutPage;
+};
+
+// TODO: Translate Zod validation messages
 const checkoutSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }), // TODO: Translate validation messages
+  email: z.string().email({ message: "Invalid email address." }),
   firstName: z.string().min(1, { message: "First name is required." }),
   lastName: z.string().min(1, { message: "Last name is required." }),
   address: z.string().min(1, { message: "Address is required." }),
@@ -36,113 +54,6 @@ const checkoutSchema = z.object({
 });
 
 type CheckoutFormValues = z.infer<typeof checkoutSchema>;
-
-// Placeholder dictionary
-const getCheckoutDictionary = (locale: Locale) => {
-  if (locale === 'uz') {
-    return {
-      home: "Bosh sahifa",
-      cart: "Savatcha",
-      checkoutBreadcrumb: "To'lov",
-      orderSummaryTitle: "Buyurtma xulosasi",
-      subtotal: "Oraliq jami",
-      shipping: "Yetkazib berish",
-      free: "Bepul",
-      total: "Jami",
-      returnToCart: "Savatchaga qaytish",
-      checkoutTitle: "To'lov",
-      contactInfoTitle: "Aloqa ma'lumotlari",
-      emailLabel: "Elektron pochta",
-      shippingAddressTitle: "Yetkazib berish manzili",
-      firstNameLabel: "Ism",
-      lastNameLabel: "Familiya",
-      addressLabel: "Manzil",
-      apartmentLabel: "Kvartira, uy (ixtiyoriy)",
-      cityLabel: "Shahar",
-      countryLabel: "Mamlakat",
-      postalCodeLabel: "Pochta indeksi",
-      phoneLabel: "Telefon (ixtiyoriy)",
-      paymentTitle: "To'lov",
-      paymentDesc: "Barcha tranzaksiyalar xavfsiz va shifrlangan.",
-      cardNumberLabel: "Karta raqami",
-      expiryDateLabel: "Amal qilish muddati",
-      cvcLabel: "CVC",
-      payButton: (total: string) => `To'lash ${total}`,
-      orderPlacedTitle: "Buyurtma qabul qilindi!",
-      orderPlacedDesc: "Xaridingiz uchun rahmat. Buyurtmangiz qayta ishlanmoqda.",
-      emptyCartTitle: "Savatingiz bo'sh.",
-      continueShopping: "Xaridni davom ettirish"
-    };
-  }
-   if (locale === 'ru') {
-    return {
-      home: "Главная",
-      cart: "Корзина",
-      checkoutBreadcrumb: "Оформление заказа",
-      orderSummaryTitle: "Сводка заказа",
-      subtotal: "Промежуточный итог",
-      shipping: "Доставка",
-      free: "Бесплатно",
-      total: "Итого",
-      returnToCart: "Вернуться в корзину",
-      checkoutTitle: "Оформление заказа",
-      contactInfoTitle: "Контактная информация",
-      emailLabel: "Электронная почта",
-      shippingAddressTitle: "Адрес доставки",
-      firstNameLabel: "Имя",
-      lastNameLabel: "Фамилия",
-      addressLabel: "Адрес",
-      apartmentLabel: "Квартира, офис и т.д. (необязательно)",
-      cityLabel: "Город",
-      countryLabel: "Страна",
-      postalCodeLabel: "Почтовый индекс",
-      phoneLabel: "Телефон (необязательно)",
-      paymentTitle: "Оплата",
-      paymentDesc: "Все транзакции безопасны и зашифрованы.",
-      cardNumberLabel: "Номер карты",
-      expiryDateLabel: "Срок действия",
-      cvcLabel: "CVC",
-      payButton: (total: string) => `Оплатить ${total}`,
-      orderPlacedTitle: "Заказ размещен!",
-      orderPlacedDesc: "Спасибо за покупку. Ваш заказ обрабатывается.",
-      emptyCartTitle: "Ваша корзина пуста.",
-      continueShopping: "Продолжить покупки"
-    };
-  }
-  return { // en
-    home: "Home",
-    cart: "Cart",
-    checkoutBreadcrumb: "Checkout",
-    orderSummaryTitle: "Order Summary",
-    subtotal: "Subtotal",
-    shipping: "Shipping",
-    free: "Free",
-    total: "Total",
-    returnToCart: "Return to Cart",
-    checkoutTitle: "Checkout",
-    contactInfoTitle: "Contact Information",
-    emailLabel: "Email",
-    shippingAddressTitle: "Shipping Address",
-    firstNameLabel: "First Name",
-    lastNameLabel: "Last Name",
-    addressLabel: "Address",
-    apartmentLabel: "Apartment, suite, etc. (optional)",
-    cityLabel: "City",
-    countryLabel: "Country",
-    postalCodeLabel: "Postal Code",
-    phoneLabel: "Phone (optional)",
-    paymentTitle: "Payment",
-    paymentDesc: "All transactions are secure and encrypted.",
-    cardNumberLabel: "Card Number",
-    expiryDateLabel: "Expiry Date",
-    cvcLabel: "CVC",
-    payButton: (total: string) => `Pay ${total}`,
-    orderPlacedTitle: "Order Placed!",
-    orderPlacedDesc: "Thank you for your purchase. Your order is being processed.",
-    emptyCartTitle: "Your cart is empty.",
-    continueShopping: "Continue Shopping"
-  };
-};
 
 
 export default function CheckoutPage() {
@@ -177,9 +88,9 @@ export default function CheckoutPage() {
     router.push(`/${locale}/account/orders`); 
   }
   
-  if (cartItems.length === 0 && typeof window !== 'undefined') { // Check window to avoid SSR issues before redirect
-     router.replace(`/${locale}/products`); // Redirect if cart is empty on client
-     return ( // Render a temporary message or loader
+  if (cartItems.length === 0 && typeof window !== 'undefined') { 
+     router.replace(`/${locale}/products`); 
+     return ( 
         <div className="text-center py-12">
           <h1 className="text-3xl font-semibold mb-4">{dictionary.emptyCartTitle}</h1>
           <Button asChild>
@@ -259,7 +170,7 @@ export default function CheckoutPage() {
                   <CardTitle>{dictionary.contactInfoTitle}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <FormField control={form.control} name="email" render={({ field }) => ( <FormItem><FormLabel>{dictionary.emailLabel}</FormLabel><FormControl><Input placeholder="you@example.com" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                  <FormField control={form.control} name="email" render={({ field }) => ( <FormItem><FormLabel>{dictionary.emailLabel}</FormLabel><FormControl><Input placeholder={dictionary.emailPlaceholder} {...field} /></FormControl><FormMessage /></FormItem> )} />
                 </CardContent>
               </Card>
 
@@ -289,16 +200,16 @@ export default function CheckoutPage() {
                     <CardDescription>{dictionary.paymentDesc}</CardDescription>
                  </CardHeader>
                  <CardContent className="space-y-4">
-                    <FormField name="cardNumber" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.cardNumberLabel}</FormLabel><FormControl><Input placeholder="•••• •••• •••• ••••" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                    <FormField name="cardNumber" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.cardNumberLabel}</FormLabel><FormControl><Input placeholder={dictionary.cardPlaceholder || "•••• •••• •••• ••••"} {...field} /></FormControl><FormMessage /></FormItem> )} />
                     <div className="grid grid-cols-2 gap-4">
-                       <FormField name="expiryDate" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.expiryDateLabel}</FormLabel><FormControl><Input placeholder="MM/YY" {...field} /></FormControl><FormMessage /></FormItem> )} />
-                       <FormField name="cvc" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.cvcLabel}</FormLabel><FormControl><Input placeholder="•••" {...field} /></FormControl><FormMessage /></FormItem> )} />
+                       <FormField name="expiryDate" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.expiryDateLabel}</FormLabel><FormControl><Input placeholder={dictionary.expiryPlaceholder || "MM/YY"} {...field} /></FormControl><FormMessage /></FormItem> )} />
+                       <FormField name="cvc" control={form.control} render={({ field }) => ( <FormItem><FormLabel>{dictionary.cvcLabel}</FormLabel><FormControl><Input placeholder={dictionary.cvcPlaceholder || "•••"} {...field} /></FormControl><FormMessage /></FormItem> )} />
                     </div>
                  </CardContent>
               </Card>
 
               <Button type="submit" size="lg" className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                <Lock className="mr-2 h-4 w-4" /> {dictionary.payButton(`$${cartTotal.toFixed(2)}`)}
+                <Lock className="mr-2 h-4 w-4" /> {dictionary.payButton.replace('{total}', `$${cartTotal.toFixed(2)}`)}
               </Button>
             </form>
           </Form>
