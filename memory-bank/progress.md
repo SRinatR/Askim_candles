@@ -6,14 +6,14 @@
 ## 1. What Works (Implemented Features)
 
 *   **Brand Name:** "Askim candles" (updated in Logo, dictionaries).
-*   **Corporate Color Palette:** Applied to `globals.css` for main site and admin panel.
+*   **Corporate Color Palette:** Applied to `globals.css` for main site. Admin panel dark theme reverted to corporate-derived palette with adjusted hover effects.
 *   **Main Site Internationalization (i18n - UZ default, RU, EN):**
     *   Path-based routing (`/[locale]/...`). Dictionary files and getters in place.
     *   Key e-commerce pages (`HomePage`, `ProductsPage`, `ProductDetailPage`, `CartPage`, `CheckoutPage`, `LoginPage`, `RegisterPage`, `Account` section pages, `AboutUsPage`) are localized for static text.
     *   "Useful Info" section (`/info`, `/info/[slug]`) implemented with dynamic, multilingual articles (including images) from admin.
     *   Functional language switcher in Header (desktop dropdown, compact mobile horizontal list).
     *   Middleware (`middleware.ts`) for locale handling and redirection.
-*   **Styling:** Tailwind CSS, ShadCN UI. Custom corporate theme. Main site header/footer hidden on admin pages. Global CSS applied to admin panel. Homepage category display improved.
+*   **Styling:** Tailwind CSS, ShadCN UI. Custom corporate theme. Main site header/footer hidden on admin pages. Global CSS applied to admin panel. Homepage category display improved. Admin product table layout adjusted.
 *   **Main Site User Authentication (Hybrid & Localized):**
     *   NextAuth.js with Google Provider: Functional.
     *   Client-Simulated Email/Password (`AuthContext`): Multi-step registration with simulated confirmation, login, logout. All locale-aware.
@@ -22,7 +22,7 @@
 *   **Checkout Flow:** Users must be logged in (either NextAuth or simulated) to proceed to checkout.
 *   **Prices in UZS:** Product prices in `mock-data.ts` adjusted; display components show UZS using `toLocaleString`.
 *   **Product Filters (Main Site):**
-    *   Category, Scent, Material filters.
+    *   Category, Scent, Material filters. Category filter logic fixed to compare slugs.
     *   Scent and Material options are dynamically generated from `mockProducts` (active products only).
     *   Price range filter with slider and input fields, with **dynamic min/max price calculation** based on `allProducts` (active products only). Robustness improved for empty product lists.
     *   Filters available in a mobile-friendly sheet with "Apply Filters" button.
@@ -50,11 +50,11 @@
     *   **Password visibility toggle** added to admin login and new manager forms.
     *   **Enhanced toast feedback** for admin login/auth errors.
     *   **Role-Based Access:**
-        *   Navigation items in `AdminLayout.tsx` are strictly visible based on 'ADMIN' or 'MANAGER' roles. Dropdown for "Attributes" now opens downwards (accordion style for desktop).
+        *   Navigation items in `AdminLayout.tsx` are strictly visible based on 'ADMIN' or 'MANAGER' roles. Dropdown for "Attributes" now an accordion that opens downwards for desktop.
         *   Page-level access control for admin-only pages (`/admin/users`, `/admin/settings`, `/admin/logs`, `/admin/attributes/*`) with redirection.
     *   **Admin Layout (`src/app/admin/layout.tsx`):**
         *   Collapsible sidebar, header with toggles.
-        *   **Dark/Light Theme Toggle:** Functional, preference saved in `localStorage`. Applied new corporate color palette (with specific dark theme variant).
+        *   **Dark/Light Theme Toggle:** Functional, preference saved in `localStorage`. Applied new corporate color palette (with specific dark theme variant, hover effects adjusted).
         *   **i18n (EN/RU):** Functional language switcher (dropdown), preference saved in `localStorage`. Admin layout text and some page titles (Dashboard, Login, Attribute pages) are localized.
     *   **Mobile Access Restriction:** Admin panel shows a message to use desktop if accessed on mobile (except login).
     *   **Version Display:** Admin panel footer shows simulated version and update date. Main site footer shows only version.
@@ -68,13 +68,13 @@
         *   UI for listing managers (predefined + localStorage).
         *   Form for adding new managers (client-side simulated via `localStorage`).
     *   **Client Management Section (`/admin/clients`):**
-        *   UI for listing mock clients with client-side search and simulated block/unblock functionality.
+        *   UI for listing mock clients with client-side search, **filtering by status (Active/Blocked), sorting by columns, and pagination.** Simulated block/unblock functionality.
     *   **Attribute Management Section (`/admin/attributes/*` - Admin Only):**
-        *   Full CRUD UI for managing Categories, Materials, and Scents (add, view, edit, delete from `localStorage`).
+        *   Full CRUD UI for managing Categories, Materials, and Scents (add, view, **edit**, delete from `localStorage`).
         *   Modal warning implemented for deleting/renaming attributes currently in use by products.
     *   **Logs Section (`/admin/logs` - Admin Only):**
         *   UI for displaying simulated logs from `localStorage`.
-        *   **Functionality to clear all logs.** Client-side filtering (user email, action text) and sorting (timestamp, email, action) implemented.
+        *   **Functionality to clear all logs.** Client-side **filtering (user email, action text) and sorting (timestamp, email, action)** implemented.
         *   Logging for admin login/logout, product "delete", product status toggle, manager "add".
     *   **Dashboard (`/admin/dashboard`):**
         *   UI stubs for various statistics (revenue, payments, products, clients etc.). More detailed placeholders added.
@@ -96,8 +96,8 @@
 **Admin Panel Functional & UI Enhancements:**
 *   Dashboard: Implement basic data visualization (e.g., simple charts for sales, top products using `shadcn/ui` charts with mock data).
 *   Orders (`/admin/sales` - beyond basic list): Add filtering by status, view order details (linking to a new detail page stub).
-*   Pagination for admin lists (products, clients, logs - client-side initially).
-*   Further detail Clients, Marketing, Reports, Finances, Discounts, Content, Settings sections beyond current placeholders.
+*   Pagination for admin lists (products, logs - client-side initially).
+*   Further detail Marketing, Reports, Finances, Discounts, Content, Settings sections beyond current placeholders.
 *   Real file uploads and management for product/article images (instead of Data URLs).
 
 **Technical Improvements & Future Prep:**
@@ -120,14 +120,14 @@
 
 ## 3. Current Status
 
-*   **Main Site:** MVP with core e-commerce UI flows implemented and largely localized (UZ/RU/EN). Authentication is hybrid (NextAuth Google + Simulated Email/Pass). Product data is mocked (includes `costPrice`), prices in UZS. Product filters are dynamic and filter only active products. Sorting verified. Inactive products hidden from lists. New corporate color palette applied. "Useful Info" section has dynamic articles with multilingual text and images. Cart persists across language changes.
-*   **Admin Panel:** UI shell created with simulated authentication (ADMIN/MANAGER roles), collapsible sidebar, role-based navigation, dark/light theme (dark theme reverted to corporate-derived palette), and EN/RU i18n.
+*   **Main Site:** MVP with core e-commerce UI flows implemented and largely localized (UZ/RU/EN). Authentication is hybrid (NextAuth Google + Simulated Email/Pass). Product data is mocked (includes `costPrice`), prices in UZS. Product filters are dynamic and filter only active products, category filter logic corrected. Sorting verified. Inactive products hidden from lists. New corporate color palette applied. "Useful Info" section has dynamic articles with multilingual text and images. Cart persists across language changes.
+*   **Admin Panel:** UI shell created with simulated authentication (ADMIN/MANAGER roles), collapsible sidebar, role-based navigation, dark/light theme (dark theme reverted to corporate-derived palette, hover effects adjusted), and EN/RU i18n.
     *   Product management includes image display in list, ID, SKU, Cost Price, Active status. Forms with drag-and-drop image upload (simulated), multilingual name/description inputs, and expanded attribute fields (SKU, Cost Price, Scent (Select), Material (Select), Category (Select), Dimensions, Burning Time, Active status). Attribute Select options are dynamic from admin-managed localStorage.
     *   Article management allows CRUD for multilingual articles with shared/per-language images (simulated via `localStorage`).
     *   User (Manager) management includes adding new managers (simulated via `localStorage`).
-    *   Attribute management (Categories, Materials, Scents) allows full CRUD (add, edit, delete from `localStorage`) with warnings for in-use attributes. "Attributes" menu in sidebar is an accordion.
-    *   Clients section shows mock client data with search/simulated block.
-    *   Logs section shows simulated admin actions from `localStorage` with a clear function, and client-side filtering/sorting.
+    *   Attribute management (Categories, Materials, Scents) allows full CRUD (add, **edit**, delete from `localStorage`) with warnings for in-use attributes. "Attributes" menu in sidebar is an accordion opening downwards.
+    *   Clients section shows mock client data with search, **filtering by status, sorting by columns, and pagination**. Simulated block/unblock.
+    *   Logs section shows simulated admin actions from `localStorage` with a clear function, and client-side **filtering/sorting**.
     *   Dashboard shows enhanced mock stats and recent simulated activity.
     *   Sales, Marketing, Reports, Finances pages have more structured placeholders.
     *   Mobile access is restricted (except login). Version info displayed.
@@ -135,7 +135,7 @@
 *   **Memory Bank system active.** `deployment_guide.md` created and updated.
 
 ## 4. Known Issues/Previous Errors Addressed (Recent)
-*   Admin panel `DropdownMenu` for "Attributes" corrected to `Accordion` for downward expansion.
+*   Admin panel `DropdownMenu` for "Attributes" corrected to `Accordion` for downward expansion, fixed order of items in sidebar.
 *   Addressed various `cn is not defined`, `SheetTrigger is not defined`, `FormProvider is not defined`, JSON parsing, and hydration errors.
 *   Corrected issue where "Articles" section was missing from admin navigation.
 *   Fixed issue where cart items would disappear on language change.
@@ -146,3 +146,8 @@
 *   Corrected parsing errors in admin attribute pages and `ru.json` dictionary.
 *   Admin header/footer visibility and positioning on mobile fixed.
 *   Missing `X` icon and `SheetTrigger` imports in admin layout fixed.
+*   Main site product category filter logic fixed to compare slugs.
+*   Admin product list table horizontal scroll issue addressed by adjusting column widths and padding.
+*   Admin "Clients" page enhanced with status filtering, sorting, and pagination.
+
+    
