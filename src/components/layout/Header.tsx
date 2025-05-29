@@ -52,6 +52,9 @@ export function Header({ locale, dictionary }: HeaderProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
+  // Ensure currentPathWithoutLocale is defined at the top level of the Header component
+  const currentPathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
+
   const isAdminPath = pathname.startsWith(`/${locale}/admin`) || pathname.startsWith('/admin');
   if (isAdminPath) {
     return null;
@@ -98,8 +101,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
   }
 
   const LanguageSwitcher = () => {
-    const currentPathWithoutLocale = pathname.replace(`/${locale}`, '') || '/';
-    
+    // currentPathWithoutLocale is available from the parent Header component scope
     const getLangName = (loc: Locale) => {
       if (loc === 'uz') return dictionary.langUz;
       if (loc === 'ru') return dictionary.langRu;
@@ -204,7 +206,7 @@ export function Header({ locale, dictionary }: HeaderProps) {
                    <Link href={`/${locale}/`} onClick={() => setIsMobileMenuOpen(false)}>
                       <Logo className="h-7 w-auto" />
                    </Link>
-                   <SheetTitle className="sr-only">{dictionary.mainMenuTitle}</SheetTitle>
+                   <SheetTitle className="sr-only">{dictionary.mainMenuTitle}</SheetTitle> {/* Added for accessibility */}
                    <SheetClose asChild>
                       <Button variant="ghost" size="icon">
                          <X className="h-6 w-6" />
@@ -233,13 +235,14 @@ export function Header({ locale, dictionary }: HeaderProps) {
                       </Link>
                     ))}
                   </nav>
+                  
                   <div className="pt-4 border-t md:hidden"> {/* Language switcher for mobile */}
                      <p className="text-sm text-muted-foreground mb-2">Language:</p>
                      <div className="flex flex-col space-y-2">
-                        {i18n.locales.map((loc) => (
+                        {i18n.locales.map((loc) => ( 
                           <Link
                             key={loc}
-                            href={`/${loc}${currentPathWithoutLocale}`}
+                            href={`/${loc}${currentPathWithoutLocale}`} // This line uses currentPathWithoutLocale
                             onClick={() => setIsMobileMenuOpen(false)}
                             className={cn(
                               "block p-2 rounded-md hover:bg-muted",
@@ -295,3 +298,5 @@ export function Header({ locale, dictionary }: HeaderProps) {
     </header>
   );
 }
+
+    
