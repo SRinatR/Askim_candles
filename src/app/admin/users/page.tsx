@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import { PlusCircle, AlertTriangle, UserCog, ShieldCheck, Mail, UserX, UserCheckIcon, Settings2, Edit2 } from "lucide-react";
+import { PlusCircle, AlertTriangle, UserCog, ShieldCheck, Mail, UserX, UserCheck, Settings2, Edit2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState, useMemo } from 'react';
@@ -57,14 +57,16 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     const combinedUsers: AdminUser[] = [
-      ...Object.values(predefinedUsers).map(u => ({ ...u, isPredefined: true })),
-      ...dynamicallyAddedManagers.map(u => ({ ...u, isPredefined: false }))
+      ...Object.values(predefinedUsers).map(u => ({ ...u, isPredefined: true })), // Ensure isPredefined is set
+      ...dynamicallyAddedManagers.map(u => ({ ...u, isPredefined: false })) // Ensure isPredefined is set
     ];
     setAllAdminUsers(combinedUsers);
   }, [predefinedUsers, dynamicallyAddedManagers]);
 
   const handleToggleBlock = async (email: string) => {
     await toggleBlockManagerStatus(email);
+    // Re-fetch or update allAdminUsers might be needed if AdminAuthContext doesn't trigger a re-render here
+    // For simplicity, we rely on AdminAuthContext to update dynamicallyAddedManagers, which triggers the above useEffect
   };
 
   const openRoleChangeModal = (user: AdminUser) => {
@@ -144,7 +146,8 @@ export default function AdminUsersPage() {
               <TableBody>
                 {allAdminUsers.map((user) => {
                   const isCurrentUserAdmin = currentAdminUser?.email === user.email && user.role === 'ADMIN';
-                  
+                  const canPerformActions = !user.isPredefined && !isCurrentUserAdmin;
+
                   return (
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">
@@ -160,7 +163,7 @@ export default function AdminUsersPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-center space-x-1">
-                        {!user.isPredefined && !isCurrentUserAdmin && (
+                        {canPerformActions && (
                           <>
                             <Button 
                               variant="outline" 
@@ -169,7 +172,7 @@ export default function AdminUsersPage() {
                               className="h-7 px-2 py-1 text-xs"
                               title={user.isBlocked ? dict.unblockUserAction : dict.blockUserAction}
                             >
-                              {user.isBlocked ? <UserCheckIcon className="mr-1 h-3 w-3" /> : <UserX className="mr-1 h-3 w-3" />}
+                              {user.isBlocked ? <UserCheck className="mr-1 h-3 w-3" /> : <UserX className="mr-1 h-3 w-3" />}
                               {user.isBlocked ? dict.unblockUserAction : dict.blockUserAction}
                             </Button>
                             <Button 
@@ -222,9 +225,9 @@ export default function AdminUsersPage() {
                                     <SelectValue placeholder={dict.selectRolePlaceholder} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="ADMIN" disabled={selectedUserForRoleChange.role === 'ADMIN' && !currentAdminUser?.email?.startsWith('superadmin@')}>{dict.roleAdmin}</SelectItem>
+                                    <SelectItem value="ADMIN" disabled>{dict.roleAdmin}</SelectItem> {/* Admin role cannot be assigned this way */}
                                     <SelectItem value="MANAGER">{dict.roleManager}</SelectItem>
-                                    {/* <SelectItem value="USER" disabled>User (Main Site)</SelectItem> */}
+                                    <SelectItem value="USER" disabled>{dict.roleUser}</SelectItem> {/* User role for main site, not assignable here */}
                                 </SelectContent>
                             </Select>
                         </div>
@@ -259,7 +262,6 @@ export default function AdminUsersPage() {
                 </DialogContent>
             </Dialog>
         )}
-
     </div>
   );
 }

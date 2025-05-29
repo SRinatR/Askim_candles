@@ -43,14 +43,14 @@ export interface SimulatedUser {
   phone?: string;
 }
 
-export type AdminRole = 'ADMIN' | 'MANAGER' | 'USER'; // Added USER for potential future use, though not assignable now
+export type AdminRole = 'ADMIN' | 'MANAGER' | 'USER';
 export interface AdminUser {
   id: string;
   email: string;
   name: string;
   role: AdminRole;
   password?: string;
-  isBlocked?: boolean;
+  isBlocked?: boolean; // Added for blocking status
   isPredefined?: boolean; // To distinguish hardcoded users
 }
 

@@ -34,18 +34,18 @@ const ADMIN_STORAGE_KEY = 'askimAdminUser';
 const DYNAMIC_MANAGERS_STORAGE_KEY = 'askimDynamicManagers';
 
 const initialPredefinedUsers: Record<string, AdminUser> = {
-  'admin@scentsational.com': {
+  'admin@askimcandles.com': { // Updated email
     id: 'admin001',
-    email: 'admin@scentsational.com',
+    email: 'admin@askimcandles.com',
     name: 'Store Administrator',
     role: 'ADMIN',
     password: 'adminpass',
     isBlocked: false,
     isPredefined: true,
   },
-  'manager@scentsational.com': {
+  'manager@askimcandles.com': { // Updated email
     id: 'manager001',
-    email: 'manager@scentsational.com',
+    email: 'manager@askimcandles.com',
     name: 'Store Manager',
     role: 'MANAGER',
     password: 'managerpass',
@@ -121,7 +121,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 300)); // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 300)); 
 
     const lowerEmail = email.toLowerCase();
     let userToLogin = predefinedUsers[lowerEmail];
@@ -132,7 +132,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (userToLogin && userToLogin.password === pass) {
       if (userToLogin.isBlocked) {
-        logAdminAction(email, "Admin Login Failed", { reason: "Account blocked" });
+        logAdminAction(email, authStrings.login?.loginErrorDescBlockedStatus || "Admin Login Failed - Account blocked", { reason: "Account blocked" });
         toast({
           title: authStrings.login?.loginErrorTitle || "Admin Login Failed",
           description: authStrings.contextToasts?.accountBlockedErrorDesc || "This account is blocked. Please contact an administrator.",
@@ -144,7 +144,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       }
       setCurrentAdminUser(userToLogin);
       localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(userToLogin));
-      logAdminAction(userToLogin.email, "Admin Login Success");
+      logAdminAction(userToLogin.email, authStrings.login?.loginSuccessTitle || "Admin Login Success");
       toast({
         title: authStrings.login?.loginSuccessTitle || "Admin Login Successful",
         description: (authStrings.login?.loginWelcomeMessage || "Welcome, {name}!").replace('{name}', userToLogin.name || 'Admin')
@@ -153,7 +153,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       router.push('/admin/dashboard');
       return true;
     } else {
-      logAdminAction(email, "Admin Login Failed", { reason: "Invalid credentials" });
+      logAdminAction(email, authStrings.login?.loginErrorDescInvalid || "Admin Login Failed - Invalid credentials", { reason: "Invalid credentials" });
       toast({
         title: authStrings.login?.loginErrorTitle || "Admin Login Failed",
         description: authStrings.login?.loginErrorDescInvalid || "Invalid email or password. Please check your credentials and try again.",
@@ -167,7 +167,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     if (currentAdminUser?.email) {
-      logAdminAction(currentAdminUser.email, "Admin Logout");
+      logAdminAction(currentAdminUser.email, authStrings.contextToasts?.logoutSuccessTitle || "Admin Logout");
     }
     setCurrentAdminUser(null);
     localStorage.removeItem(ADMIN_STORAGE_KEY);
@@ -198,8 +198,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password: pass,
         role: 'MANAGER',
-        isBlocked: false,
-        isPredefined: false,
+        isBlocked: false, // Initialize as not blocked
+        isPredefined: false, // Mark as not predefined
     };
     const updatedManagers = [...dynamicallyAddedManagers, newManager];
     setDynamicallyAddedManagers(updatedManagers);
@@ -224,17 +224,17 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
             return toggledManager;
         }
         return manager;
-    }).filter(m => m !== undefined) as AdminUser[]; // Ensure no undefined entries
+    }).filter(m => m !== undefined) as AdminUser[]; 
 
     setDynamicallyAddedManagers(updatedManagers);
     localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
 
     if (toggledManager && currentAdminUser) {
-        const action = toggledManager.isBlocked ? "Manager Blocked (Simulated)" : "Manager Unblocked (Simulated)";
-        logAdminAction(currentAdminUser.email, action, { managerEmail: toggledManager.email, managerName: toggledManager.name });
+        const actionMessage = toggledManager.isBlocked ? (authStrings.contextToasts?.managerBlockedToastTitle || "Manager Blocked") 
+                                                    : (authStrings.contextToasts?.managerUnblockedToastTitle || "Manager Unblocked");
+        logAdminAction(currentAdminUser.email, actionMessage + " (Simulated)", { managerEmail: toggledManager.email, managerName: toggledManager.name });
         toast({
-            title: toggledManager.isBlocked ? (authStrings.contextToasts?.managerBlockedToastTitle || "Manager Blocked") 
-                                     : (authStrings.contextToasts?.managerUnblockedToastTitle || "Manager Unblocked"),
+            title: actionMessage,
             description: (authStrings.contextToasts?.managerStatusUpdatedToastDesc || "{name} status updated to {status}.")
                             .replace('{name}', toggledManager.name)
                             .replace('{status}', toggledManager.isBlocked ? (authStrings.login?.loginErrorDescBlockedStatus || 'Blocked') : (authStrings.login?.loginSuccessDescActiveStatus || 'Active')),

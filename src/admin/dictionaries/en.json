@@ -304,7 +304,7 @@
     "deleteClientSuccessDesc": "Client '{name}' has been deleted locally."
   },
   "adminLogsPage": {
-    "title": "System & Audit Logs",
+    "title": "System &amp; Audit Logs",
     "description": "View admin actions. Logs are stored in browser localStorage (max 100 entries).",
     "clearAllButton": "Clear All Logs",
     "entriesTitle": "Log Entries",
@@ -326,7 +326,7 @@
     "clearFiltersButton": "Clear Filters"
   },
   "adminUsersPage": {
-    "title": "Manage Users & Managers",
+    "title": "Manage Users &amp; Managers",
     "description": "View users, assign roles, and manage manager accounts. (ADMIN Only)",
     "addNewManagerButton": "Add New Manager",
     "managerListTitle": "Manager List",
