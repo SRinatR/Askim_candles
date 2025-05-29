@@ -1,36 +1,50 @@
-# Active Context
+# Active Context: ScentSational Showcase
 
-## Date: 2024-08-01
+## Date: 2024-08-01 (Simulated Date of Update)
 
 ## 1. Current Focus
 
-*   The user has just introduced the "Memory Bank" system for me (App Prototyper / Cursor AI) to operate under.
-*   My immediate task is to initialize the core Memory Bank files based on the existing ScentSational Showcase app and the operational guidelines provided.
-*   I am preparing to respond to the user, acknowledging the new system and presenting these initialized Memory Bank files.
+*   **Updating Memory Bank:** The primary current task is to update all Memory Bank files to reflect the latest project state and decisions, as per user request.
+*   **Admin Panel Development:** The broader ongoing focus is the development of the Admin Panel. We have established the initial structure, simulated authentication, layout, and placeholder pages.
+*   Awaiting user direction on which specific section of the Admin Panel to develop next (e.g., fleshing out the Dashboard, Product Management, etc.).
 
 ## 2. Recent Changes (Leading to this state)
 
-*   User provided a detailed set of instructions defining the "Memory Bank" system, my persona ("Cursor"), and specific operational workflows (Plan Mode, Act Mode, Documentation Updates, `.cursorrules`).
-*   Prior to this, I assisted with:
-    *   Fixing a "useCart() from server" error in `ProductCard.tsx` by adding `"use client";`.
-    *   Fixing a "Module not found: @/components/ui/breadcrumb" error by creating `src/components/ui/breadcrumb.tsx`.
-    *   Fixing a "params.orderId accessed directly" error in `OrderDetailPage.tsx` using `React.use()`.
-    *   Creating an "About Us" page and adding it to the header.
-    *   Implementing a client-side simulated authentication system (login, register, logout) using `AuthContext` and `localStorage`.
-    *   Integrating NextAuth.js for Google Sign-In, creating an API route, auth options, and updating relevant UI components.
-    *   Creating a `providers.tsx` Client Component to group client-side context providers.
-    *   Fixing a `CardFooter` not defined error in `login/page.tsx`.
-    *   Adding UI elements for Telegram/Yandex sign-in and an "Account Linking" page.
-    *   Re-introducing client-side email/password auth alongside NextAuth, including a multi-step registration process.
+*   **Admin Panel Foundation:**
+    *   Created a separate login page for admin (`/admin/login`) with simulated auth for 'ADMIN' and 'MANAGER' roles (`AdminAuthContext`, `localStorage`).
+    *   Implemented an admin layout (`/admin/layout.tsx`) with:
+        *   Route protection based on simulated admin/manager login.
+        *   Collapsible sidebar navigation.
+        *   Role-based conditional rendering of navigation links (e.g., 'Users' and 'Settings' for ADMIN only).
+        *   Display of current admin user's role.
+        *   Logout functionality.
+    *   Created placeholder pages for Dashboard, Products, Orders, Users, Discounts, Content, Settings, Sales, Clients, Marketing, Reports, Finances.
+    *   Updated Admin Dashboard (`/admin/dashboard/page.tsx`) with UI stubs for various statistics (Sales, Payments, Products, etc.).
+    *   Updated Admin navigation menu to reflect user's desired structure.
+*   **UI & Bug Fixes:**
+    *   Corrected an issue where the main site header was appearing on admin pages.
+    *   Fixed "X is not defined" error in `admin/layout.tsx` by importing the icon.
+    *   Fixed "SheetTrigger is not defined" error in `admin/layout.tsx` by importing it.
+    *   Addressed accessibility warning for `DialogContent` (used by `Sheet`) by adding a `SheetTitle` in mobile menus for both main site header and admin layout.
+    *   Resolved an issue with duplicate close icons in the mobile sheet menu by modifying `src/components/ui/sheet.tsx`.
+*   **Auth Strategy Discussion:**
+    *   Clarified that `/admin` path is acceptable.
+    *   Confirmed using client-side simulation for admin auth in MVP, with Prisma/PostgreSQL as the target for future backend integration.
+    *   User indicated they would need instructions for deploying with Prisma/PostgreSQL on a VPS later.
+*   **Previous Work (Main Site):**
+    *   Hybrid authentication: NextAuth for Google, client-side simulation for email/password (multi-step registration with simulated confirmation).
+    *   Core e-commerce frontend: homepage, product listing/details, cart, checkout, user account area (profile, orders, addresses, account linking - mostly mock data).
 
 ## 3. Next Steps (Immediate for Me)
 
-1.  Generate the initial set of Memory Bank files (`projectbrief.md`, `productContext.md`, `techContext.md`, `systemPatterns.md`, `activeContext.md`, `progress.md`, and an initial `.cursorrules`).
-2.  Present these files to the user via the `<changes>` XML format.
-3.  Await further instructions from the user regarding the ScentSational Showcase app, now operating under the Memory Bank protocol.
+1.  **Complete Memory Bank Update:** Finish generating these updated Memory Bank files and present them to the user.
+2.  **Await User Direction:** Once the Memory Bank is updated, await the user's instruction on which part of the Admin Panel to develop next (e.g., implement product listing and forms, make the dashboard statistics more dynamic with mock data, etc.).
+3.  If "Planner Mode" is requested for the next feature, ask 4-6 clarifying questions.
 
 ## 4. Active Decisions & Considerations
 
-*   The Memory Bank files need to accurately reflect the current state of the ScentSational Showcase project as I understand it from previous interactions and my initial guidelines.
-*   The `.cursorrules` file will start minimal, possibly with a rule about my XML response format for code changes, and will be updated as I learn more project-specific patterns.
-*   I must remember to read *all* Memory Bank files at the start of every subsequent task from the user.
+*   **Admin Panel Auth:** Continue with client-side simulated authentication for admin roles (ADMIN/MANAGER) for MVP, with a clear path towards future integration with NextAuth Credentials provider and Prisma/PostgreSQL backend.
+*   **Data Source for Admin:** Admin panel will initially interact with `mock-data.ts` for viewing, and simulated updates will be client-side only until backend is built.
+*   **Progressive Development:** The admin panel will be built section by section, as per user's priorities.
+*   **Deployment:** Keep in mind the user's future need for deployment instructions, especially regarding Prisma/PostgreSQL on a VPS.
+*   **Memory Bank Maintenance:** Continue to update the Memory Bank as new features are added, decisions are made, or patterns are identified.

@@ -1,11 +1,10 @@
-# .cursorrules - Project Intelligence for ScentSational Showcase
+## Operational Rules for Cursor (App Prototyper)
 
-## Coding Guidelines & Preferences
-
-1.  **XML for Code Changes:** Always use the `<changes>` XML format when providing code modifications.
+1.  **Memory Bank Adherence:** I MUST read ALL memory bank files (`projectbrief.md`, `productContext.md`, `activeContext.md`, `systemPatterns.md`, `techContext.md`, `progress.md`, and this `.cursorrules` file) at the start of EVERY task. This is my primary source of truth.
+2.  **XML Response Format for Code Changes:** All code modifications must be provided within `<changes>` XML tags.
     ```xml
     <changes>
-      <description>[Concise summary of changes]</description>
+      <description>[Concise summary of overall changes]</description>
       <change>
         <file>[ABSOLUTE, FULL path to file]</file>
-        <content><![CDATA[ENTIRE, FINAL, intended content of the file. Properly escaped.
+        <content><![CDATA[ENTIRE, FINAL file content. Properly escaped.
