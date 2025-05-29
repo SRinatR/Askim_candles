@@ -1,12 +1,12 @@
 
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Eye, UserX, UserCheck, MoreVertical, ArrowUpDown, FilterX } from "lucide-react";
+import { Search, Eye, UserX, UserCheck, MoreVertical, ArrowUpDown, FilterX, Edit3, Trash2, Info } from "lucide-react"; // Added Edit3, Trash2, Info
 import React, { useState, useMemo, useEffect } from "react";
 import { mockAdminClients, type MockAdminClient } from "@/lib/mock-data";
 import { Badge } from "@/components/ui/badge";
@@ -18,16 +18,45 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import type { AdminLocale } from '@/admin/lib/i18n-config-admin';
 import { i18nAdmin } from '@/admin/lib/i18n-config-admin';
 import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
 import type enAdminMessages from '@/admin/dictionaries/en.json';
+import { useForm, FormProvider } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 type AdminClientsPageDict = typeof enAdminMessages.adminClientsPage;
 type SortableClientKeys = keyof Pick<MockAdminClient, 'name' | 'email'> | 'registrationDate' | 'totalOrders' | 'totalSpent';
 
-const ITEMS_PER_PAGE = 5; // Number of clients per page
+const ITEMS_PER_PAGE = 5;
+
+const clientEditSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  email: z.string().email({ message: "Invalid email address." }),
+});
+type ClientEditFormValues = z.infer<typeof clientEditSchema>;
 
 export default function AdminClientsPage() {
   const [clients, setClients] = useState<MockAdminClient[]>(mockAdminClients);
@@ -39,6 +68,16 @@ export default function AdminClientsPage() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'blocked'>('all');
   const [sortConfig, setSortConfig] = useState<{ key: SortableClientKeys; direction: 'ascending' | 'descending' }>({ key: 'name', direction: 'ascending' });
   const [currentPage, setCurrentPage] = useState(1);
+
+  const [selectedClient, setSelectedClient] = useState<MockAdminClient | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
+  
+  const editForm = useForm<ClientEditFormValues>({
+    resolver: zodResolver(clientEditSchema),
+    defaultValues: { name: "", email: "" },
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -100,7 +139,7 @@ export default function AdminClientsPage() {
       direction = 'descending';
     }
     setSortConfig({ key, direction });
-    setCurrentPage(1); // Reset to first page on sort
+    setCurrentPage(1);
   };
 
   const getSortIndicator = (columnKey: SortableClientKeys) => {
@@ -119,8 +158,8 @@ export default function AdminClientsPage() {
     );
     const client = clients.find(c => c.id === clientId);
     toast({
-      title: client?.isBlocked ? (dict.clientUnblockedToastTitle || "Client Unblocked (Simulated)") : (dict.clientBlockedToastTitle || "Client Blocked (Simulated)"),
-      description: `${client?.name} ${dict.clientStatusUpdatedToastDesc || "status has been updated locally."}`,
+      title: client?.isBlocked ? (dict.clientUnblockedToastTitle) : (dict.clientBlockedToastTitle),
+      description: `${client?.name} ${dict.clientStatusUpdatedToastDesc}`,
     });
   };
 
@@ -134,6 +173,46 @@ export default function AdminClientsPage() {
     setSearchTerm("");
     setFilterStatus("all");
     setCurrentPage(1);
+  };
+
+  const openViewModal = (client: MockAdminClient) => {
+    setSelectedClient(client);
+    setIsViewModalOpen(true);
+  };
+
+  const openEditModal = (client: MockAdminClient) => {
+    setSelectedClient(client);
+    editForm.reset({ name: client.name, email: client.email });
+    setIsEditModalOpen(true);
+  };
+
+  const openDeleteAlert = (client: MockAdminClient) => {
+    setSelectedClient(client);
+    setIsDeleteAlertOpen(true);
+  };
+
+  const handleEditSubmit = (data: ClientEditFormValues) => {
+    if (!selectedClient || !dict) return;
+    setClients(prevClients => 
+      prevClients.map(c => c.id === selectedClient.id ? { ...c, ...data } : c)
+    );
+    toast({
+      title: dict.editClientSuccessTitle,
+      description: dict.editClientSuccessDesc.replace('{name}', data.name),
+    });
+    setIsEditModalOpen(false);
+    setSelectedClient(null);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (!selectedClient || !dict) return;
+    setClients(prevClients => prevClients.filter(c => c.id !== selectedClient.id));
+    toast({
+      title: dict.deleteClientSuccessTitle,
+      description: dict.deleteClientSuccessDesc.replace('{name}', selectedClient.name),
+    });
+    setIsDeleteAlertOpen(false);
+    setSelectedClient(null);
   };
 
   if (!isClient || !dict) {
@@ -177,7 +256,7 @@ export default function AdminClientsPage() {
             </div>
             {(searchTerm || filterStatus !== 'all') && (
               <Button variant="ghost" onClick={clearAllFilters} size="sm" className="text-xs w-full sm:w-auto">
-                <FilterX className="mr-1 h-3 w-3" /> {dict.clearFiltersButton || "Clear Filters"}
+                <FilterX className="mr-1 h-3 w-3" /> {dict.clearFiltersButton}
               </Button>
             )}
           </div>
@@ -221,15 +300,14 @@ export default function AdminClientsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuLabel>{dict.actionsHeader}</DropdownMenuLabel>
-                              <DropdownMenuItem disabled>
-                                <Eye className="mr-2 h-4 w-4" />
+                              <DropdownMenuItem onClick={() => openViewModal(client)}>
+                                <Info className="mr-2 h-4 w-4" />
                                 {dict.viewDetailsAction}
                               </DropdownMenuItem>
-                               <DropdownMenuItem disabled>
-                                <UserX className="mr-2 h-4 w-4" /> {/* Using UserX for general edit action as well */}
+                               <DropdownMenuItem onClick={() => openEditModal(client)}>
+                                <Edit3 className="mr-2 h-4 w-4" />
                                 {dict.editClientAction}
                               </DropdownMenuItem>
-                              <DropdownMenuSeparator />
                               <DropdownMenuItem onClick={() => toggleBlockClient(client.id)}>
                                 {client.isBlocked ? (
                                   <UserCheck className="mr-2 h-4 w-4" />
@@ -237,6 +315,11 @@ export default function AdminClientsPage() {
                                   <UserX className="mr-2 h-4 w-4" />
                                 )}
                                 {client.isBlocked ? dict.unblockClientAction : dict.blockClientAction}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => openDeleteAlert(client)} className="text-destructive focus:text-destructive focus:bg-destructive/10">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                {dict.deleteClientAction}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -278,6 +361,92 @@ export default function AdminClientsPage() {
       <p className="text-sm text-muted-foreground text-center">
         {dict.simulationNote}
       </p>
+
+      {/* View Client Modal */}
+      {selectedClient && (
+        <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{dict.viewClientModalTitle.replace('{name}', selectedClient.name)}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-2 py-4 text-sm">
+              <p><strong>{dict.nameHeader}:</strong> {selectedClient.name}</p>
+              <p><strong>{dict.emailHeader}:</strong> {selectedClient.email}</p>
+              <p><strong>{dict.regDateHeader}:</strong> {new Date(selectedClient.registrationDate).toLocaleString()}</p>
+              <p><strong>{dict.totalOrdersHeader}:</strong> {selectedClient.totalOrders}</p>
+              <p><strong>{dict.totalSpentHeader}:</strong> {selectedClient.totalSpent.toLocaleString('en-US')} UZS</p>
+              <p><strong>{dict.statusHeader}:</strong> <Badge variant={selectedClient.isBlocked ? "destructive" : "secondary"}>{selectedClient.isBlocked ? dict.statusBlockedBadge : dict.statusActiveBadge}</Badge></p>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild><Button variant="outline">{dict.modalCloseButton}</Button></DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Edit Client Modal */}
+      {selectedClient && (
+        <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <DialogContent>
+            <FormProvider {...editForm}>
+              <form onSubmit={editForm.handleSubmit(handleEditSubmit)}>
+                <DialogHeader>
+                  <DialogTitle>{dict.editClientModalTitle.replace('{name}', selectedClient.name)}</DialogTitle>
+                  <DialogDescription>{dict.editClientModalDesc}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <FormField
+                    control={editForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{dict.nameLabel}</FormLabel>
+                        <FormControl><Input {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={editForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{dict.emailLabel}</FormLabel>
+                        <FormControl><Input type="email" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild><Button type="button" variant="outline">{dict.modalCancelButton}</Button></DialogClose>
+                  <Button type="submit" disabled={editForm.formState.isSubmitting}>{dict.modalSaveChangesButton}</Button>
+                </DialogFooter>
+              </form>
+            </FormProvider>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* Delete Client Alert */}
+      {selectedClient && (
+        <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{dict.deleteClientAlertTitle}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {dict.deleteClientAlertDesc.replace('{name}', selectedClient.name)}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>{dict.modalCancelButton}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDeleteConfirm} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                {dict.modalDeleteButton}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
     </div>
   );
 }
