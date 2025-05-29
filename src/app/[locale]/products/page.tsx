@@ -7,20 +7,20 @@ import { mockProducts, mockCategories } from '@/lib/mock-data';
 import type { Product } from '@/lib/types';
 import { useSearchParams, useParams } from 'next/navigation';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Slash, SlidersHorizontal, X } from 'lucide-react'; // Added X
+import { Slash, SlidersHorizontal, X } from 'lucide-react';
 import type { Locale } from '@/lib/i1n-config';
 import type { ProductCardDictionary } from '@/components/products/ProductCard';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area'; // Added ScrollArea
 import React, { useState, useMemo, useEffect } from 'react';
 
-// Importing main dictionaries
 import enMessages from '@/dictionaries/en.json';
 import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
-type FullDictionary = typeof enMessages; 
-const PRICE_DIVISOR = 1; 
+type FullDictionary = typeof enMessages;
+const PRICE_DIVISOR = 1;
 
 const dictionaries: Record<Locale, FullDictionary> = {
   en: enMessages,
@@ -63,7 +63,7 @@ const getCombinedDictionary = (locale: Locale) => {
       nameDescOption: "Name: Z to A",
       newestOption: "Newest Arrivals"
     },
-    productCard: dict.productCard || { 
+    productCard: dict.productCard || {
       addToCart: "Add to Cart (ProductsPage Fallback)",
       addedToCartTitle: "Added to cart (ProductsPage Fallback)",
       addedToCartDesc: "{productName} has been added (ProductsPage Fallback).",
@@ -84,17 +84,20 @@ export default function ProductsPage() {
   const productCardDictionaryForList = combinedDict.productCard as ProductCardDictionary;
 
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+  
+  const allActiveProducts = useMemo(() => mockProducts.filter(p => p.isActive), []);
+
 
   const { minProductPrice, maxProductPrice } = useMemo(() => {
-    if (!mockProducts || mockProducts.length === 0) {
-      return { minProductPrice: 0, maxProductPrice: 500000 }; 
+    if (!allActiveProducts || allActiveProducts.length === 0) {
+      return { minProductPrice: 0, maxProductPrice: 500000 };
     }
-    const prices = mockProducts.map(p => p.price / PRICE_DIVISOR);
+    const prices = allActiveProducts.map(p => p.price / PRICE_DIVISOR);
     return {
       minProductPrice: Math.floor(Math.min(...prices)),
       maxProductPrice: Math.ceil(Math.max(...prices)),
     };
-  }, []);
+  }, [allActiveProducts]);
 
 
   const [filteredAndSortedProducts, setFilteredAndSortedProducts] = useState<Product[]>([]);
@@ -111,7 +114,7 @@ export default function ProductsPage() {
     const minPrice = minPriceParam !== null ? Number(minPriceParam) : minProductPrice;
     const maxPrice = maxPriceParam !== null ? Number(maxPriceParam) : maxProductPrice;
 
-    let tempProducts = mockProducts.filter(product => {
+    let tempProducts = allActiveProducts.filter(product => { // Filter from active products
       const matchesSearch = searchTerm ? product.name.toLowerCase().includes(searchTerm) || product.description.toLowerCase().includes(searchTerm) : true;
       const productCategorySlug = product.category.toLowerCase().replace(/\s+/g, '-');
       const matchesCategory = categories.length > 0 ? categories.includes(productCategorySlug) : true;
@@ -136,15 +139,15 @@ export default function ProductsPage() {
            const idA = parseInt(a.id.replace (/[^0-9]/g, ""), 10);
            const idB = parseInt(b.id.replace (/[^0-9]/g, ""), 10);
            if (!isNaN(idA) && !isNaN(idB)) {
-             return idB - idA; 
+             return idB - idA;
            }
-           return b.id.localeCompare(a.id); 
+           return b.id.localeCompare(a.id);
         default:
           return 0;
       }
     });
     setFilteredAndSortedProducts(tempProducts);
-  }, [searchParams, minProductPrice, maxProductPrice]);
+  }, [searchParams, minProductPrice, maxProductPrice, allActiveProducts]);
 
 
   const searchTerm = searchParams.get('search')?.toLowerCase();
@@ -158,7 +161,7 @@ export default function ProductsPage() {
     productsCountText = (dictionary.productsFound_few).replace('{count}', String(productsCount));
   } else if (dictionary.productsFound_plural) {
      productsCountText = (dictionary.productsFound_plural).replace('{count}', String(productsCount));
-  } else if (dictionary.productsFound) { 
+  } else if (dictionary.productsFound) {
     productsCountText = dictionary.productsFound.replace('{count}', String(productsCount));
   }
 
@@ -201,10 +204,10 @@ export default function ProductsPage() {
                   </SheetClose>
                 </SheetHeader>
                 <ScrollArea className="flex-1 overflow-y-auto p-1">
-                  <ProductFilters 
-                    dictionary={filtersDictionary} 
+                  <ProductFilters
+                    dictionary={filtersDictionary}
                     categoriesData={mockCategories}
-                    allProducts={mockProducts}
+                    allProducts={allActiveProducts} // Pass only active products to filters
                     onApplyFilters={() => setIsMobileFiltersOpen(false)}
                   />
                 </ScrollArea>
@@ -217,10 +220,10 @@ export default function ProductsPage() {
 
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
         <div className="hidden lg:block lg:w-72 lg:sticky lg:top-24 self-start">
-          <ProductFilters 
-            dictionary={filtersDictionary} 
+          <ProductFilters
+            dictionary={filtersDictionary}
             categoriesData={mockCategories}
-            allProducts={mockProducts}
+            allProducts={allActiveProducts} // Pass only active products to filters
           />
         </div>
         <div className="flex-1">

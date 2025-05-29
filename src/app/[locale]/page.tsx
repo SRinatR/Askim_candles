@@ -2,21 +2,23 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ProductList } from '@/components/products/ProductList';
+import type { ProductCardDictionary } from '@/components/products/ProductCard';
 import { mockProducts, mockCategories } from '@/lib/mock-data';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { getDictionary } from '@/lib/getDictionary';
 import type { Locale } from '@/lib/i1n-config';
-import type { ProductCardDictionary } from '@/components/products/ProductCard';
 
 export default async function HomePage({ params: { locale } }: { params: { locale: Locale } }) {
   const dictionary = await getDictionary(locale);
-  const featuredProducts = mockProducts.slice(0, 4);
+  const activeProducts = mockProducts.filter(p => p.isActive);
+  const featuredProducts = activeProducts.slice(0, 4);
 
   const productCardStrings: ProductCardDictionary = dictionary.productCard || {
     addToCart: "Add to Cart (HomePage Fallback)",
     addedToCartTitle: "Added to cart (HomePage Fallback)",
-    addedToCartDesc: "{productName} has been added (HomePage Fallback)."
+    addedToCartDesc: "{productName} has been added (HomePage Fallback).",
+    outOfStock: "Out of Stock (HomePage Fallback)"
   };
 
   return (
@@ -89,4 +91,3 @@ export default async function HomePage({ params: { locale } }: { params: { local
     </div>
   );
 }
-    

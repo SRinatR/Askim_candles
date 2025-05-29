@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useForm, Controller, FormProvider } from "react-hook-form"; 
+import { Switch } from "@/components/ui/switch";
+import { useForm, Controller, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -21,16 +22,18 @@ import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
 
 const productSchema = z.object({
   name: z.string().min(3, { message: "Product name must be at least 3 characters." }),
+  sku: z.string().optional(),
   description: z.string().min(10, { message: "Description must be at least 10 characters." }),
   price: z.coerce.number().positive({ message: "Price must be a positive number (in UZS)." }),
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL."})).min(1, { message: "At least one image is required." }),
-  mainImageId: z.string().optional(), 
+  mainImageId: z.string().optional(), // This will store the ID/URL of the main image from the 'images' array
   scent: z.string().optional(),
   material: z.string().optional(),
   dimensions: z.string().optional(),
   burningTime: z.string().optional(),
+  isActive: z.boolean().default(true),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -54,20 +57,23 @@ export default function EditProductPage() {
     if (foundProduct) {
       setProductToEdit(foundProduct);
       const initialImageUrls = foundProduct.images || [];
-      const initialMainImageUrl = foundProduct.mainImage || (foundProduct.images && foundProduct.images.length > 0 ? foundProduct.images[0] : undefined);
+      // The mainImageId should correspond to one of the URLs in initialImageUrls
+      const initialMainImageUrl = foundProduct.mainImage || (initialImageUrls.length > 0 ? initialImageUrls[0] : undefined);
 
       reset({
         name: foundProduct.name,
+        sku: foundProduct.sku || "",
         description: foundProduct.description,
-        price: foundProduct.price, 
+        price: foundProduct.price,
         category: foundProduct.category,
         stock: foundProduct.stock,
-        images: initialImageUrls, 
-        mainImageId: initialMainImageUrl, 
+        images: initialImageUrls,
+        mainImageId: initialMainImageUrl,
         scent: foundProduct.scent || "",
         material: foundProduct.material || "",
         dimensions: foundProduct.dimensions || "",
         burningTime: foundProduct.burningTime || "",
+        isActive: foundProduct.isActive === undefined ? true : foundProduct.isActive,
       });
     } else {
       toast({ title: "Error", description: "Product not found.", variant: "destructive" });
@@ -77,7 +83,7 @@ export default function EditProductPage() {
 
 
   const onSubmit = (data: ProductFormValues) => {
-    console.log("Updated Product Data (Simulated):", data); 
+    console.log("Updated Product Data (Simulated):", { id: productId, ...data });
     toast({
       title: "Product Updated (Simulated)",
       description: `${data.name} has been 'updated'. This change is client-side only. Image data in console.`,
@@ -95,7 +101,7 @@ export default function EditProductPage() {
       <div className="flex items-center justify-between">
          <div>
             <h1 className="text-3xl font-bold tracking-tight">Edit Product</h1>
-            <p className="text-muted-foreground">Modify the details for product ID: {productId}.</p>
+            <p className="text-muted-foreground">Product ID: {productId}</p>
         </div>
         <Button variant="outline" asChild>
             <Link href="/admin/products">
@@ -113,10 +119,17 @@ export default function EditProductPage() {
                     <CardDescription>Update information for this product.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                    <Label htmlFor="name">Product Name</Label>
-                    <Input id="name" {...register("name")} />
-                    {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Product Name</Label>
+                        <Input id="name" {...register("name")} />
+                        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                      </div>
+                       <div className="space-y-2">
+                        <Label htmlFor="sku">SKU (Stock Keeping Unit)</Label>
+                        <Input id="sku" {...register("sku")} />
+                        {errors.sku && <p className="text-sm text-destructive">{errors.sku.message}</p>}
+                      </div>
                     </div>
 
                     <div className="space-y-2">
@@ -183,6 +196,25 @@ export default function EditProductPage() {
                             {errors.burningTime && <p className="text-sm text-destructive">{errors.burningTime.message}</p>}
                         </div>
                     </div>
+                    <div className="space-y-2 pt-2">
+                      <Label htmlFor="isActive" className="flex items-center">
+                        Product Status
+                        <Controller
+                          name="isActive"
+                          control={control}
+                          render={({ field }) => (
+                            <Switch
+                              id="isActive"
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              className="ml-3"
+                            />
+                          )}
+                        />
+                        <span className="ml-2 text-sm text-muted-foreground">({watch("isActive") ? "Active" : "Inactive"})</span>
+                      </Label>
+                       {errors.isActive && <p className="text-sm text-destructive">{errors.isActive.message}</p>}
+                    </div>
                 </CardContent>
                 </Card>
             </div>
@@ -194,26 +226,26 @@ export default function EditProductPage() {
                     </CardHeader>
                     <CardContent>
                          <Controller
-                            name="images" 
+                            name="images"
                             control={control}
                             render={({ field }) => (
                             <ImageUploadArea
-                                onImagesChange={(imagesData, mainImgIdFromUploadArea) => {
+                                onImagesChange={(imagesData, mainImgUrlFromUploadArea) => {
+                                    // imagesData contains { file: File, preview: string (Data URL), id: string }
+                                    // We need to store an array of URLs (which will be Data URLs for new uploads)
                                     const newImagePreviews = imagesData.map(img => img.preview);
                                     setValue("images", newImagePreviews, { shouldValidate: true });
-
-                                    const mainImgObject = imagesData.find(img => img.id === mainImgIdFromUploadArea);
-                                    const finalMainImagePreview = mainImgObject ? mainImgObject.preview : (newImagePreviews.length > 0 ? newImagePreviews[0] : undefined);
-                                    setValue("mainImageId", finalMainImagePreview);
+                                    // mainImageId in the form should now store the URL of the selected main image
+                                    setValue("mainImageId", mainImgUrlFromUploadArea);
                                 }}
                                 maxFiles={5}
-                                initialImageUrls={productToEdit.images} 
+                                initialImageUrls={productToEdit.images}
                                 initialMainImageUrl={watch("mainImageId") || productToEdit.mainImage || (productToEdit.images && productToEdit.images.length > 0 ? productToEdit.images[0] : undefined)}
                             />
                             )}
                         />
                         {errors.images && <p className="text-sm text-destructive mt-2">{errors.images.message}</p>}
-                         {errors.mainImageId && <p className="text-sm text-destructive mt-2">{/* errors.mainImageId.message */}</p>}
+                         {/* {errors.mainImageId && <p className="text-sm text-destructive mt-2">{errors.mainImageId.message}</p>} */}
                     </CardContent>
                 </Card>
             </div>

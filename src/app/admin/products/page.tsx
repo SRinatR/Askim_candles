@@ -4,16 +4,18 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { mockProducts } from "@/lib/mock-data";
 import type { Product } from "@/lib/types";
-import { PlusCircle, Edit3, Trash2, Search, Eye } from "lucide-react";
+import { PlusCircle, Edit3, Trash2, Search, Eye, ToggleLeft, ToggleRight } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import Image from "next/image";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
-import { logAdminAction } from '@/admin/lib/admin-logger'; // Assuming logger path
+import { logAdminAction } from '@/admin/lib/admin-logger';
 
 // TODO: Localize texts when admin i18n is fully implemented
 
@@ -23,14 +25,14 @@ export default function AdminProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const { currentAdminUser } = useAdminAuth();
 
-  // Client-side filtering
-  const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredProducts = useMemo(() => 
+    products.filter(product =>
+      (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (product.sku && product.sku.toLowerCase().includes(searchTerm.toLowerCase())))
+    ), [products, searchTerm]);
 
   const handleDeleteProduct = (productId: string, productName: string) => {
-    // Simulate deletion
     setProducts(prev => prev.filter(p => p.id !== productId));
     if (currentAdminUser?.email) {
       logAdminAction(currentAdminUser.email, "Product Deleted (Simulated)", { productId, productName });
@@ -40,6 +42,23 @@ export default function AdminProductsPage() {
       description: `Product "${productName}" (ID: ${productId}) has been 'deleted'. This change is client-side only.`,
     });
   };
+
+  const toggleProductStatus = (productId: string) => {
+    setProducts(prevProducts =>
+      prevProducts.map(product =>
+        product.id === productId ? { ...product, isActive: !product.isActive } : product
+      )
+    );
+    const product = products.find(p => p.id === productId);
+    if (product && currentAdminUser?.email) {
+      logAdminAction(currentAdminUser.email, `Product ${product.isActive ? "Deactivated" : "Activated"} (Simulated)`, { productId: product.id, productName: product.name });
+    }
+    toast({
+      title: `Product Status Changed (Simulated)`,
+      description: `Product "${product?.name}" is now ${product?.isActive ? "Inactive" : "Active"}. Client-side only.`,
+    });
+  };
+
 
   return (
     <div className="space-y-6">
@@ -65,9 +84,9 @@ export default function AdminProductsPage() {
           </CardDescription>
            <div className="relative mt-2">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input 
-              placeholder="Search products by name or category..." 
-              className="pl-10" 
+            <Input
+              placeholder="Search by name, category, or SKU..."
+              className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -78,11 +97,14 @@ export default function AdminProductsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[80px]">Image</TableHead>
+                  <TableHead className="w-[60px]">Image</TableHead>
+                  <TableHead className="w-[80px]">ID</TableHead>
+                  <TableHead className="w-[120px]">SKU</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead className="text-right">Price (UZS)</TableHead>
                   <TableHead className="text-center">Stock</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -90,31 +112,46 @@ export default function AdminProductsPage() {
                 {filteredProducts.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
-                      <div className="relative h-12 w-12 rounded-md overflow-hidden border">
-                        <Image 
-                          src={product.images[0] || "https://placehold.co/100x100.png?text=No+Image"} 
-                          alt={product.name} 
+                      <div className="relative h-10 w-10 rounded-md overflow-hidden border">
+                        <Image
+                          src={product.images[0] || "https://placehold.co/100x100.png?text=No+Image"}
+                          alt={product.name}
                           fill
-                          sizes="48px"
+                          sizes="40px"
                           className="object-cover"
                           data-ai-hint="product thumbnail"
                         />
                       </div>
                     </TableCell>
+                    <TableCell className="text-xs">{product.id}</TableCell>
+                    <TableCell className="text-xs">{product.sku || '-'}</TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.category}</TableCell>
-                    <TableCell className="text-right">{product.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">{product.price.toLocaleString('en-US')}</TableCell>
                     <TableCell className="text-center">{product.stock}</TableCell>
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center space-x-2">
+                        <Switch
+                          id={`status-${product.id}`}
+                          checked={product.isActive}
+                          onCheckedChange={() => toggleProductStatus(product.id)}
+                          aria-label={product.isActive ? "Deactivate product" : "Activate product"}
+                        />
+                        <Badge variant={product.isActive ? "secondary" : "outline"}>
+                          {product.isActive ? "Active" : "Inactive"}
+                        </Badge>
+                      </div>
+                    </TableCell>
                     <TableCell className="text-center space-x-1">
                       <Button variant="outline" size="sm" asChild title={`Edit ${product.name}`}>
                         <Link href={`/admin/products/edit/${product.id}`}>
                           <Edit3 className="mr-1 h-3 w-3" /> Edit
                         </Link>
                       </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive" 
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-destructive border-destructive hover:bg-destructive/10 hover:text-destructive"
                         onClick={() => handleDeleteProduct(product.id, product.name)}
                         title={`Delete ${product.name}`}
                       >

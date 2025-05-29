@@ -1,6 +1,7 @@
 
 export interface Product {
   id: string;
+  sku?: string; // Stock Keeping Unit
   name: string;
   description: string;
   price: number; // Represents the price in the smallest currency unit (e.g., tiyin for UZS)
@@ -13,6 +14,7 @@ export interface Product {
   burningTime?: string; // e.g., "Approx. 40 hours"
   stock: number; // Available stock
   attributes?: { key: string; value: string }[]; // For other attributes like color, size
+  isActive: boolean; // New field to control visibility on the main site
 }
 
 export interface CartItem extends Product {
@@ -36,7 +38,7 @@ export interface SimulatedUser {
   password?: string; // Only for form handling/mock storage, not secure
   isRegistered?: boolean;
   isConfirmed?: boolean;
-  phone?: string; // Added from previous request
+  phone?: string; 
 }
 
 // User type for client-side ADMIN PANEL auth simulation
@@ -67,4 +69,14 @@ export interface Order {
   status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
   totalAmount: number; // Represents the total amount in the smallest currency unit
   items: CartItem[]; // Simplified, ideally OrderItem with price snapshot
+}
+
+export interface MockAdminClient {
+  id: string;
+  name: string;
+  email: string;
+  registrationDate: string;
+  totalOrders: number;
+  totalSpent: number; // in UZS
+  isBlocked: boolean;
 }
