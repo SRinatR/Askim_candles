@@ -9,10 +9,10 @@
 *   **Corporate Color Palette:** Applied to `globals.css` for main site and admin panel.
 *   **Main Site Internationalization (i18n - UZ default, RU, EN):**
     *   Path-based routing (`/[locale]/...`). Dictionary files and getters in place.
-    *   All key e-commerce pages (`HomePage`, `About`, `Cart`, `Checkout`, `Login`, `Register`, `Account` section, `ProductDetail`, `ProductList`) are localized for static text.
-    *   Functional language switcher in Header (desktop dropdown, compact mobile horizontal list).
+    *   Key e-commerce pages (`HomePage`, `About`, `Cart`, `Checkout`, `Login`, `Register`, `Account` section, `ProductDetail`, `ProductList`) are localized for static text. New "Useful Info" pages (`/info`, `/info/soy-wax`, `/info/aroma-sachet`) created and localized.
+    *   Functional language switcher in Header (desktop dropdown, compact mobile horizontal list). "Полезное" link in header now leads to `/info` page.
     *   Middleware (`middleware.ts`) for locale handling and redirection.
-*   **Styling:** Tailwind CSS, ShadCN UI. Custom theme (new palette applied). Main site header/footer hidden on admin pages. Global CSS applied to admin panel.
+*   **Styling:** Tailwind CSS, ShadCN UI. Custom theme (new corporate palette applied). Main site header/footer hidden on admin pages. Global CSS applied to admin panel. Homepage category display improved.
 *   **Main Site User Authentication (Hybrid & Localized):**
     *   NextAuth.js with Google Provider: Functional.
     *   Client-Simulated Email/Password (`AuthContext`): Multi-step registration with simulated confirmation, login, logout. All locale-aware.
@@ -31,6 +31,8 @@
     *   `Product` type and `mock-data.ts` updated with `sku`, `isActive`, `scent`, `material`, `dimensions`, `burningTime`.
     *   Admin product forms updated to include these fields.
     *   Product Detail page updated to display these attributes.
+*   **Product Categories:**
+    *   `mock-data.ts` and dictionaries updated with new categories: Корпоративные наборы, Свадебные комплименты, Аромасвечи, Вкусный дом, Гипсовый рай.
 *   **Product Deactivation:**
     *   Admin product list allows toggling `isActive` status (simulated).
     *   Admin product forms include `isActive` switch.
@@ -61,7 +63,7 @@
         *   UI for listing mock clients with client-side search and simulated block/unblock functionality.
     *   **Logs Section (`/admin/logs` - Admin Only):**
         *   UI for displaying simulated logs from `localStorage`.
-        *   **Functionality to clear all logs.** Client-side filtering and sorting by timestamp, email, and action text.
+        *   **Functionality to clear all logs.** Client-side filtering (user email, action text) and sorting (timestamp, email, action) implemented.
         *   Logging for admin login/logout, product "delete", product status toggle, manager "add".
     *   **Dashboard (`/admin/dashboard`):**
         *   UI stubs for various statistics (revenue, payments, products, clients etc.). More detailed placeholders added.
@@ -76,13 +78,14 @@
     *   Advanced table features (pagination, server-side sort/filter where applicable) for Products, Orders, Users, Clients.
     *   Complete translation of all admin panel pages/components into EN/RU.
     *   UI for managing flexible key-value product attributes in admin forms (currently basic text inputs).
+    *   **Implement admin CRUD for product attributes (Categories, Materials, Scents) with localStorage simulation and update product forms to use select inputs.** (Current Task)
 *   **Backend Integration (Prisma/PostgreSQL - Next Major Phase):**
     *   Define full Prisma schema (initial schema outlined in `deployment_guide.md`).
     *   Implement all API routes or Server Actions for data CUD for all admin sections.
     *   Migrate main site user authentication (email/password) to use the database via NextAuth Credentials.
     *   Implement real NextAuth Credentials provider for admin login using the database.
     *   Implement real logging to the database.
-    *   Implement real client management.
+    *   Implement real client management and attribute management.
 *   **Full Content Localization (Main Site & Admin):**
     *   Translate all remaining text strings in all dictionary files (main site & admin).
     *   Localize dynamic content from `mock-data.ts` (or future DB).
@@ -97,22 +100,19 @@
 
 ## 3. Current Status
 
-*   **Main Site:** MVP with core e-commerce UI flows implemented and largely localized (UZ/RU/EN). Authentication is hybrid (NextAuth Google + Simulated Email/Pass). Product data is mocked, prices in UZS. Product filters are dynamic for categories/scent/material, with dynamic price range, and filter only active products. Sorting verified. Inactive products hidden from lists. New corporate color palette applied.
+*   **Main Site:** MVP with core e-commerce UI flows implemented and largely localized (UZ/RU/EN). Authentication is hybrid (NextAuth Google + Simulated Email/Pass). Product data is mocked, prices in UZS. Product filters are dynamic, with dynamic price range, and filter only active products. Sorting verified. Inactive products hidden from lists. New corporate color palette applied. Homepage category display improved. "Useful Info" section in header links to `/info` page with article stubs.
 *   **Admin Panel:** UI shell created with simulated authentication (ADMIN/MANAGER roles), collapsible sidebar, role-based navigation, dark/light theme, and EN/RU i18n. New corporate color palette applied.
     *   Product management includes image display in list, ID, SKU, Active status. Forms with drag-and-drop image upload (simulated), and expanded attribute fields (SKU, Scent, Material, Dimensions, Burning Time, Active status).
     *   User (Manager) management includes adding new managers (simulated via `localStorage`).
     *   Clients section shows mock client data with search/simulated block.
     *   Logs section shows simulated admin actions from `localStorage` with a clear function, and client-side filtering/sorting.
     *   Dashboard shows enhanced mock stats and recent simulated activity.
-    *   Sales, Marketing, Reports pages have more structured placeholders.
+    *   Sales, Marketing, Reports, Finances pages have more structured placeholders.
     *   Mobile access is restricted. Version info displayed.
     *   Password visibility toggles added to admin login and new manager forms.
 *   **Memory Bank system active.** `deployment_guide.md` created and updated.
 
 ## 4. Known Issues/Previous Errors Addressed (Recent)
-*   Admin panel styling missing (fixed by importing globals.css).
-*   Admin panel header/footer issues (fixed).
-*   "cn is not defined", "currentPathWithoutLocale is not defined" in Header (fixed).
 *   `ProductCard` dictionary issues (fixed by adding fallbacks and ensuring prop drilling).
-*   Mobile menu language switcher made more compact.
-*   Admin login dictionary issues in context (fixed).
+*   Admin panel `currentPathWithoutLocale` and `cn` errors in Header (fixed).
+

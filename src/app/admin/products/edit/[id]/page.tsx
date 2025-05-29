@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,7 +28,7 @@ const productSchema = z.object({
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL."})).min(1, { message: "At least one image is required." }),
-  mainImageId: z.string().optional(), // This will store the ID/URL of the main image from the 'images' array
+  mainImageId: z.string().optional(), // Will store the URL of the main image from the 'images' array
   scent: z.string().optional(),
   material: z.string().optional(),
   dimensions: z.string().optional(),
@@ -38,6 +38,10 @@ const productSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
+const LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES = "askimAdminCustomCategories";
+const LOCAL_STORAGE_KEY_CUSTOM_MATERIALS = "askimAdminCustomMaterials";
+const LOCAL_STORAGE_KEY_CUSTOM_SCENTS = "askimAdminCustomScents";
+
 export default function EditProductPage() {
   const { toast } = useToast();
   const router = useRouter();
@@ -45,6 +49,10 @@ export default function EditProductPage() {
   const productId = params.id as string;
 
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
+  
+  const [availableCategories, setAvailableCategories] = useState<{ id: string; name: string; slug: string }[]>(mockCategories);
+  const [availableMaterials, setAvailableMaterials] = useState<string[]>([]);
+  const [availableScents, setAvailableScents] = useState<string[]>([]);
 
   const formMethods = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -57,7 +65,6 @@ export default function EditProductPage() {
     if (foundProduct) {
       setProductToEdit(foundProduct);
       const initialImageUrls = foundProduct.images || [];
-      // The mainImageId should correspond to one of the URLs in initialImageUrls
       const initialMainImageUrl = foundProduct.mainImage || (initialImageUrls.length > 0 ? initialImageUrls[0] : undefined);
 
       reset({
@@ -67,8 +74,8 @@ export default function EditProductPage() {
         price: foundProduct.price,
         category: foundProduct.category,
         stock: foundProduct.stock,
-        images: initialImageUrls,
-        mainImageId: initialMainImageUrl,
+        images: initialImageUrls, // These are existing URLs
+        mainImageId: initialMainImageUrl, // This is an existing URL
         scent: foundProduct.scent || "",
         material: foundProduct.material || "",
         dimensions: foundProduct.dimensions || "",
@@ -79,11 +86,44 @@ export default function EditProductPage() {
       toast({ title: "Error", description: "Product not found.", variant: "destructive" });
       router.push("/admin/products");
     }
-  }, [productId, reset, router, toast]);
+
+    // Load custom attributes for select dropdowns
+    const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
+    const customCats = storedCustomCategories ? JSON.parse(storedCustomCategories) : [];
+    const combinedCategories = [
+      ...mockCategories,
+      ...customCats.map((catName: string) => ({ id: catName.toLowerCase().replace(/\s+/g, '-'), name: catName, slug: catName.toLowerCase().replace(/\s+/g, '-') }))
+    ];
+    const uniqueCombinedCategories = combinedCategories.filter((category, index, self) =>
+        index === self.findIndex((c) => c.name === category.name)
+    );
+    setAvailableCategories(uniqueCombinedCategories);
+    
+    const storedCustomMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
+    const customMats = storedCustomMaterials ? JSON.parse(storedCustomMaterials) : [];
+    const initialMaterialsFromProducts = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m)));
+    const combinedMaterials = Array.from(new Set([...initialMaterialsFromProducts, ...customMats])).sort();
+    setAvailableMaterials(combinedMaterials);
+
+    const storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
+    const customScnts = storedCustomScents ? JSON.parse(storedCustomScents) : [];
+    const initialScentsFromProducts = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s)));
+    const combinedScents = Array.from(new Set([...initialScentsFromProducts, ...customScnts])).sort();
+    setAvailableScents(combinedScents);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [productId, reset, router, toast]); // `productToEdit` removed from deps to avoid re-fetch loop on form change
 
 
   const onSubmit = (data: ProductFormValues) => {
-    console.log("Updated Product Data (Simulated):", { id: productId, ...data });
+    // The `data.images` will contain a mix of original URLs and new Data URLs if any were added.
+    // `data.mainImageId` will be the URL (original or Data URL) of the selected main image.
+    const updatedProductData = { 
+      id: productId, 
+      ...data,
+      mainImage: data.mainImageId, // Ensure the mainImage field in the data is set correctly
+    };
+    console.log("Updated Product Data (Simulated):", updatedProductData);
     toast({
       title: "Product Updated (Simulated)",
       description: `${data.name} has been 'updated'. This change is client-side only. Image data in console.`,
@@ -162,8 +202,8 @@ export default function EditProductPage() {
                             <SelectValue placeholder="Select a category" />
                             </SelectTrigger>
                             <SelectContent>
-                            {mockCategories.map(cat => (
-                                <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                            {availableCategories.map(cat => (
+                                <SelectItem key={cat.slug} value={cat.name}>{cat.name}</SelectItem>
                             ))}
                             </SelectContent>
                         </Select>
@@ -175,12 +215,44 @@ export default function EditProductPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="scent">Scent</Label>
-                            <Input id="scent" {...register("scent")} />
+                            <Controller
+                                name="scent"
+                                control={control}
+                                render={({ field }) => (
+                                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                                    <SelectTrigger id="scent">
+                                        <SelectValue placeholder="Select a scent" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">None</SelectItem>
+                                        {availableScents.map(scent => (
+                                        <SelectItem key={scent} value={scent}>{scent}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                    </Select>
+                                )}
+                            />
                             {errors.scent && <p className="text-sm text-destructive">{errors.scent.message}</p>}
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="material">Material</Label>
-                            <Input id="material" {...register("material")} />
+                            <Controller
+                                name="material"
+                                control={control}
+                                render={({ field }) => (
+                                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                                    <SelectTrigger id="material">
+                                        <SelectValue placeholder="Select a material" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">None</SelectItem>
+                                        {availableMaterials.map(material => (
+                                        <SelectItem key={material} value={material}>{material}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                    </Select>
+                                )}
+                            />
                             {errors.material && <p className="text-sm text-destructive">{errors.material.message}</p>}
                         </div>
                     </div>
@@ -226,26 +298,22 @@ export default function EditProductPage() {
                     </CardHeader>
                     <CardContent>
                          <Controller
-                            name="images"
+                            name="images" // This is the array of all image URLs (original or new DataURLs)
                             control={control}
-                            render={({ field }) => (
+                            render={({ field }) => ( // field.value here is the array of image URLs
                             <ImageUploadArea
-                                onImagesChange={(imagesData, mainImgUrlFromUploadArea) => {
-                                    // imagesData contains { file: File, preview: string (Data URL), id: string }
-                                    // We need to store an array of URLs (which will be Data URLs for new uploads)
-                                    const newImagePreviews = imagesData.map(img => img.preview);
-                                    setValue("images", newImagePreviews, { shouldValidate: true });
-                                    // mainImageId in the form should now store the URL of the selected main image
-                                    setValue("mainImageId", mainImgUrlFromUploadArea);
+                                onImagesChange={(newImageDataUrls, newMainImageUrl) => {
+                                    setValue("images", newImageDataUrls, { shouldValidate: true });
+                                    setValue("mainImageId", newMainImageUrl); 
                                 }}
                                 maxFiles={5}
-                                initialImageUrls={productToEdit.images}
-                                initialMainImageUrl={watch("mainImageId") || productToEdit.mainImage || (productToEdit.images && productToEdit.images.length > 0 ? productToEdit.images[0] : undefined)}
+                                initialImageUrls={watch("images")} // Pass current form state for images
+                                initialMainImageUrl={watch("mainImageId")} // Pass current form state for main image ID
                             />
                             )}
                         />
                         {errors.images && <p className="text-sm text-destructive mt-2">{errors.images.message}</p>}
-                         {/* {errors.mainImageId && <p className="text-sm text-destructive mt-2">{errors.mainImageId.message}</p>} */}
+                         {errors.mainImageId && <p className="text-sm text-destructive mt-2">{errors.mainImageId.message}</p>}
                     </CardContent>
                 </Card>
             </div>

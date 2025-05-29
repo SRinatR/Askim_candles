@@ -15,9 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save } from "lucide-react";
-import { mockCategories } from "@/lib/mock-data";
+import { mockCategories, mockProducts } from "@/lib/mock-data";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
-import React from "react";
+import React, { useEffect, useState, useMemo } from "react"; // Added useEffect, useState, useMemo
 
 const productSchema = z.object({
   name: z.string().min(3, { message: "Product name must be at least 3 characters." }),
@@ -27,7 +27,7 @@ const productSchema = z.object({
   category: z.string().min(1, { message: "Please select a category." }),
   stock: z.coerce.number().int().nonnegative({ message: "Stock must be a non-negative integer." }),
   images: z.array(z.string().url({message: "Each image must be a valid URL (Data URL in this case)."})).min(1, { message: "At least one image is required." }),
-  mainImageId: z.string().optional(),
+  mainImageId: z.string().optional(), // This will store the Data URL of the main image
   scent: z.string().optional(),
   material: z.string().optional(),
   dimensions: z.string().optional(),
@@ -37,9 +37,50 @@ const productSchema = z.object({
 
 type ProductFormValues = z.infer<typeof productSchema>;
 
+const LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES = "askimAdminCustomCategories";
+const LOCAL_STORAGE_KEY_CUSTOM_MATERIALS = "askimAdminCustomMaterials";
+const LOCAL_STORAGE_KEY_CUSTOM_SCENTS = "askimAdminCustomScents";
+
+
 export default function NewProductPage() {
   const { toast } = useToast();
   const router = useRouter();
+
+  const [availableCategories, setAvailableCategories] = useState<{ id: string; name: string; slug: string }[]>(mockCategories);
+  const [availableMaterials, setAvailableMaterials] = useState<string[]>([]);
+  const [availableScents, setAvailableScents] = useState<string[]>([]);
+
+
+  useEffect(() => {
+    // Load custom categories
+    const storedCustomCategories = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_CATEGORIES);
+    const customCats = storedCustomCategories ? JSON.parse(storedCustomCategories) : [];
+    const combinedCategories = [
+      ...mockCategories,
+      ...customCats.map((catName: string) => ({ id: catName.toLowerCase().replace(/\s+/g, '-'), name: catName, slug: catName.toLowerCase().replace(/\s+/g, '-') }))
+    ];
+    // Filter out duplicates by name (preferring mockCategories if names clash)
+    const uniqueCombinedCategories = combinedCategories.filter((category, index, self) =>
+        index === self.findIndex((c) => c.name === category.name)
+    );
+    setAvailableCategories(uniqueCombinedCategories);
+    
+    // Load custom materials and combine with unique materials from mockProducts
+    const storedCustomMaterials = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_MATERIALS);
+    const customMats = storedCustomMaterials ? JSON.parse(storedCustomMaterials) : [];
+    const initialMaterialsFromProducts = Array.from(new Set(mockProducts.map(p => p.material).filter((m): m is string => !!m)));
+    const combinedMaterials = Array.from(new Set([...initialMaterialsFromProducts, ...customMats])).sort();
+    setAvailableMaterials(combinedMaterials);
+
+    // Load custom scents and combine with unique scents from mockProducts
+    const storedCustomScents = localStorage.getItem(LOCAL_STORAGE_KEY_CUSTOM_SCENTS);
+    const customScnts = storedCustomScents ? JSON.parse(storedCustomScents) : [];
+    const initialScentsFromProducts = Array.from(new Set(mockProducts.map(p => p.scent).filter((s): s is string => !!s)));
+    const combinedScents = Array.from(new Set([...initialScentsFromProducts, ...customScnts])).sort();
+    setAvailableScents(combinedScents);
+
+  }, []);
+
 
   const formMethods = useForm<ProductFormValues>({
     resolver: zodResolver(productSchema),
@@ -64,12 +105,12 @@ export default function NewProductPage() {
   const { errors, isSubmitting } = formState;
 
   const onSubmit = (data: ProductFormValues) => {
-    const newProduct = {
-      id: `prod-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`, // Simulate ID generation
+    const newProductData = {
+      id: `prod-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
       ...data,
-      // mainImage will be determined by mainImageId or first image in a real backend
+      mainImage: data.mainImageId, // Assign mainImageId (which is a URL) to mainImage
     };
-    console.log("New Product Data (Simulated):", newProduct);
+    console.log("New Product Data (Simulated):", newProductData);
     toast({
       title: "Product Added (Simulated)",
       description: `${data.name} has been 'added'. This change is client-side only. Image data URLs are in console.`,
@@ -144,8 +185,8 @@ export default function NewProductPage() {
                             <SelectValue placeholder="Select a category" />
                           </SelectTrigger>
                           <SelectContent>
-                            {mockCategories.map(cat => (
-                              <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>
+                            {availableCategories.map(cat => (
+                              <SelectItem key={cat.slug} value={cat.name}>{cat.name}</SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -157,12 +198,42 @@ export default function NewProductPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="scent">Scent</Label>
-                        <Input id="scent" {...register("scent")} placeholder="e.g., Lavender, Vanilla Bean" />
+                         <Controller
+                            name="scent"
+                            control={control}
+                            render={({ field }) => (
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger id="scent">
+                                    <SelectValue placeholder="Select a scent" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableScents.map(scent => (
+                                    <SelectItem key={scent} value={scent}>{scent}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                                </Select>
+                            )}
+                        />
                         {errors.scent && <p className="text-sm text-destructive">{errors.scent.message}</p>}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="material">Material</Label>
-                        <Input id="material" {...register("material")} placeholder="e.g., Soy Wax, Beeswax Blend" />
+                        <Controller
+                            name="material"
+                            control={control}
+                            render={({ field }) => (
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <SelectTrigger id="material">
+                                    <SelectValue placeholder="Select a material" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableMaterials.map(material => (
+                                    <SelectItem key={material} value={material}>{material}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                                </Select>
+                            )}
+                        />
                         {errors.material && <p className="text-sm text-destructive">{errors.material.message}</p>}
                     </div>
                   </div>
@@ -208,24 +279,20 @@ export default function NewProductPage() {
                 </CardHeader>
                 <CardContent>
                    <Controller
-                    name="images"
+                    name="images" // This name must match the Zod schema
                     control={control}
                     render={({ field }) => (
                       <ImageUploadArea
-                        onImagesChange={(imagesData, mainImgIdFromUpload) => {
-                          const newImagePreviews = imagesData.map(img => img.preview);
-                          setValue("images", newImagePreviews, { shouldValidate: true });
-
-                          const mainImgObject = imagesData.find(img => img.id === mainImgIdFromUpload);
-                          const finalMainImagePreview = mainImgObject ? mainImgObject.preview : (newImagePreviews.length > 0 ? newImagePreviews[0] : undefined);
-                          setValue("mainImageId", finalMainImagePreview);
+                        onImagesChange={(imageDataUrls, mainImageDataUrl) => {
+                           setValue("images", imageDataUrls, { shouldValidate: true });
+                           setValue("mainImageId", mainImageDataUrl); // mainImageId is the URL of the main image
                         }}
                         maxFiles={5}
                       />
                     )}
                   />
                   {errors.images && <p className="text-sm text-destructive mt-2">{errors.images.message}</p>}
-                  {/* {errors.mainImageId && <p className="text-sm text-destructive mt-2">{errors.mainImageId.message}</p>} */}
+                  {errors.mainImageId && <p className="text-sm text-destructive mt-2">{errors.mainImageId.message}</p>}
                 </CardContent>
               </Card>
             </div>

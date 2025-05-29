@@ -11,6 +11,9 @@ interface FooterProps {
     rightsReserved: string;
     privacyPolicy: string;
     termsOfService: string;
+    contactPagePath: string;
+    termsPagePath: string;
+    privacyPagePath: string;
   };
 }
 
@@ -18,8 +21,6 @@ export function Footer({ locale, dictionary }: FooterProps) {
   const pathname = usePathname();
   const currentYear = new Date().getFullYear();
 
-  // Check if the current path starts with the admin path, irrespective of locale
-  // e.g., /admin, /uz/admin, /en/admin
   const isAdminPath = pathname.split('/').includes('admin');
 
   if (isAdminPath) {
@@ -27,12 +28,17 @@ export function Footer({ locale, dictionary }: FooterProps) {
   }
   
   return (
-    <footer className="border-t border-border/40 bg-background">
+    <footer className="border-t border-border/40 bg-background mt-12">
       <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
-        <p>&copy; {currentYear} ScentSational Showcase. {dictionary.rightsReserved}</p>
+        <div className="flex flex-col sm:flex-row items-center gap-x-4 gap-y-2">
+            <p>&copy; {currentYear} Askim candles. {dictionary.rightsReserved}</p>
+            <p className="text-xs">
+              v0.1.0 (Simulated) - Last Updated: {new Date().toLocaleDateString()} (Simulated)
+            </p>
+        </div>
         <div className="flex space-x-4">
-          <Link href={`/${locale}/privacy`} className="hover:text-foreground">{dictionary.privacyPolicy}</Link> {/* TODO: Create /privacy page */}
-          <Link href={`/${locale}/terms`} className="hover:text-foreground">{dictionary.termsOfService}</Link> {/* TODO: Create /terms page */}
+          <Link href={`/${locale}${dictionary.privacyPagePath || '/info/privacy'}`} className="hover:text-foreground">{dictionary.privacyPolicy}</Link>
+          <Link href={`/${locale}${dictionary.termsPagePath || '/info/terms'}`} className="hover:text-foreground">{dictionary.termsOfService}</Link>
         </div>
       </div>
     </footer>

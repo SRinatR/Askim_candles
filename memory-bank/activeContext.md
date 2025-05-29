@@ -4,36 +4,30 @@
 ## Date: 2024-07-29 (Simulated Date of Update)
 
 ## 1. Current Focus
-*   **Update Product Categories:** Implement new category list: Корпоративные наборы, Свадебные комплименты, Аромасвечи, Вкусный дом, Гипсовый рай.
-*   **Add "Полезное" (Useful Info) Header Section:** Create dropdown in header with links to placeholder info pages (Soy Wax, Aroma Sachet).
-*   **Reflect Corporate Client Focus:** Note this in documentation. "Корпоративные наборы" category is the main code manifestation.
+*   **Admin Panel - CRUD for Product Attributes (Categories, Materials, Scents):** Implement UI and client-side logic (localStorage) for managing these attributes. Update product forms to use `Select` inputs populated with these attributes.
+*   **Version/Date Display in Main Site Footer:** Add simulated version and last update date to the main site's footer.
 
 ## 2. Recent Changes (Leading to this state)
-*   **Admin Panel Placeholders & Log Enhancements:**
-    *   Sales, Marketing, Reports pages in admin updated with more structured placeholders.
-    *   Logs section (`/admin/logs`) now has client-side filtering (by user email, action text) and sorting (by timestamp, email, action).
-*   **Corporate Color Palette Applied:** Updated `src/app/globals.css` with new HSL theme variables for both light and dark modes.
-*   **Product Deactivation & SKU/ID:** Implemented `isActive` flag for products, SKU field. Admin panel UI updated for these. Main site filters active products.
-*   **Password Visibility Toggles & Enhanced Toast Feedback:** Implemented for all relevant login/registration forms.
+*   **Category & Header "Полезное" Update:** Product categories updated as per user request. "Полезное" section in header now links to a new `/info` page listing articles. Homepage category display improved.
+*   **Corporate Color Palette Applied:** Updated `src/app/globals.css` for the entire application.
+*   **Admin Panel Log Filtering & Sorting:** Implemented client-side filtering and sorting for logs.
+*   **Admin Panel Placeholders & Log Enhancements:** Sales, Marketing, Reports pages in admin updated. Logs section enhanced.
 
 ## 3. Next Steps (Immediate for Me - based on user's latest request)
-1.  **Update Product Categories:**
-    *   Modify `/src/lib/mock-data.ts` (`mockCategories` and `mockProducts` category fields).
-    *   Update `/src/dictionaries/*.json` category translations.
-    *   Verify display on `/src/app/[locale]/page.tsx` and `/src/components/products/ProductFilters.tsx`.
-2.  **Add "Полезное" Header Section:**
-    *   Add "Полезное" and article titles to `/src/dictionaries/*.json` (`navigation` and new page sections).
-    *   Modify `/src/components/layout/Header.tsx` to add the dropdown menu and links.
-    *   Create placeholder pages: `/src/app/[locale]/info/soy-wax/page.tsx` and `/src/app/[locale]/info/aroma-sachet/page.tsx` with basic structure and dictionary use.
-3.  **Update Memory Bank:** Reflect these new features and the corporate client focus.
+1.  **Implement Version Display in Main Site Footer:**
+    *   Modify `src/components/layout/Footer.tsx`.
+2.  **Implement Admin CRUD for Product Attributes (Categories, Materials, Scents):**
+    *   Create pages: `/admin/attributes/categories/page.tsx`, `/admin/attributes/materials/page.tsx`, `/admin/attributes/scents/page.tsx`.
+    *   Implement UI for adding/listing/deleting (custom) attributes, using `localStorage`.
+    *   Update admin navigation in `/admin/layout.tsx`.
+    *   Update admin dictionaries for new labels.
+    *   Modify product forms (`/admin/products/new`, `/admin/products/edit/[id]`) to use `Select` components for Category, Material, Scent, populated from `mock-data` and `localStorage`.
+3.  **Update Memory Bank:** Reflect these new features.
 
 ## 4. Active Decisions & Considerations
-*   **"Вкусный дом" Category Translation:** For English, will use "Home Fragrances" (slug: `home-fragrances`). RU/UZ will use their native names.
-*   **Admin Panel Styling:** New corporate color palette applies. Usability remains key.
-*   **Client-Side Operations (Admin):** Log filtering/sorting is client-side. Product/manager changes are simulated.
-*   **Full i18n:** Ongoing for main site. Admin panel has basic EN/RU setup.
-*   **Backend Plan:** Prisma/PostgreSQL integration is documented, currently client-side data. Corporate client focus might imply future B2B features.
-*   **Info Pages:** Will be simple static content pages for now.
+*   **Attribute Management Scope:** "Dimensions" and "Burning Time" remain free-text inputs in product forms. Management as selectable lists is for Category, Material, and Scent.
+*   **Data Storage for Attributes:** Custom attributes created in admin will be stored in `localStorage` for simulation.
+*   **Admin Panel i18n & Theme:** Corporate color palette applies. Basic EN/RU i18n setup for admin.
+*   **Main Site i18n:** Path-based (UZ/RU/EN). Corporate client focus noted.
+*   **Backend Plan:** Prisma/PostgreSQL, documented in `deployment_guide.md`.
 
-
-    

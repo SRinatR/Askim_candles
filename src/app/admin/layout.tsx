@@ -9,17 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import {
   LayoutDashboard, Package, ShoppingCart, Users as ClientsIcon, Megaphone, FileOutput, Landmark, Percent,
-  FileText as ContentIcon, Settings, LogOut, Menu, ShieldCheck, Briefcase as UserManagementIcon,
-  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History
+  FileText as ContentIcon, Settings, LogOut, Menu, ShieldCheck, UserCog as UserManagementIcon,
+  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Tags, Beaker, Wind
 } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuPortal, DropdownMenuSubContent, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { i18nAdmin, type AdminLocale } from '@/admin/lib/i18n-config-admin';
 import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
 import type enAdminMessages from '@/admin/dictionaries/en.json';
-import '../globals.css'; // Ensure global styles are applied
+import { useIsMobile } from '@/hooks/use-mobile';
+import '../globals.css';
 
 type AdminDictionary = typeof enAdminMessages;
 type AdminLayoutStrings = AdminDictionary['adminLayout'];
@@ -30,12 +31,20 @@ interface NavItem {
   icon: React.ElementType;
   adminOnly?: boolean;
   managerOrAdmin?: boolean;
+  subItems?: NavItem[];
 }
 
-// Define navigation items with refined access control
 const navItems: NavItem[] = [
   { href: '/admin/dashboard', labelKey: 'dashboard', icon: LayoutDashboard, managerOrAdmin: true },
   { href: '/admin/products', labelKey: 'products', icon: Package, managerOrAdmin: true },
+  {
+    href: '#', labelKey: 'attributes', icon: Tags, managerOrAdmin: true,
+    subItems: [
+      { href: '/admin/attributes/categories', labelKey: 'categories', icon: Tags, managerOrAdmin: true },
+      { href: '/admin/attributes/materials', labelKey: 'materials', icon: Beaker, managerOrAdmin: true },
+      { href: '/admin/attributes/scents', labelKey: 'scents', icon: Wind, managerOrAdmin: true },
+    ]
+  },
   { href: '/admin/sales', labelKey: 'sales', icon: ShoppingCart, managerOrAdmin: true },
   { href: '/admin/clients', labelKey: 'clients', icon: ClientsIcon, managerOrAdmin: true },
   { href: '/admin/marketing', labelKey: 'marketing', icon: Megaphone, managerOrAdmin: true },
@@ -58,6 +67,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   const [dictionary, setDictionary] = useState<AdminLayoutStrings | null>(null);
   const [currentLocale, setCurrentLocale] = useState<AdminLocale>(i18nAdmin.defaultLocale);
   const [darkMode, setDarkMode] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
@@ -96,6 +106,24 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return <div className="flex h-screen items-center justify-center bg-muted"><p>Loading Admin Panel...</p></div>;
   }
 
+  if (pathname !== '/admin/login' && isMobile) {
+    return (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-8 text-center">
+            <ShieldCheck className="h-16 w-16 text-primary mb-6" />
+            <h2 className="text-2xl font-semibold mb-3">Admin Panel Access</h2>
+            <p className="text-muted-foreground mb-6 max-w-md">
+                For the best experience and full functionality, please access the Askim candles Admin Panel on a desktop or laptop computer.
+            </p>
+            <Button onClick={() => router.push('/')} variant="outline">Go to Main Site</Button>
+            <p className="text-xs text-muted-foreground mt-8">
+                If you need to log in, you can still do so, but management features are optimized for larger screens.
+                <Link href="/admin/login" className="text-primary hover:underline ml-1">Admin Login</Link>
+            </p>
+        </div>
+    );
+  }
+
+
   if (!currentAdminUser && pathname !== '/admin/login') {
     if (typeof window !== 'undefined') router.replace('/admin/login');
     return <div className="flex h-screen items-center justify-center bg-muted"><p>Redirecting to login...</p></div>;
@@ -105,12 +133,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   
-  if (!currentAdminUser) return null; // Should not happen if above check works
+  if (!currentAdminUser) return null;
 
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) return isAdmin;
     if (item.managerOrAdmin) return isManager || isAdmin;
-    return true; // Should not happen with current navItems, but good for future-proofing
+    return true;
   });
 
   const AdminLanguageSwitcher = () => (
@@ -130,32 +158,71 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     </DropdownMenu>
   );
 
+  const renderNavItem = (item: NavItem, isMobile: boolean, isSidebarCollapsed: boolean) => {
+    const label = dictionary[item.labelKey] || item.labelKey;
+    const isActive = pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href));
+
+    if (item.subItems) {
+      return (
+        <DropdownMenuSub key={item.href}>
+          <DropdownMenuSubTrigger 
+            className={cn(
+              "w-full text-sm h-9 flex items-center justify-between px-2 py-1.5 rounded-md hover:bg-secondary focus:bg-secondary focus:outline-none",
+              isSidebarCollapsed && !isMobile ? "justify-center px-2" : "justify-start",
+              isActive && "bg-secondary font-semibold"
+            )}
+             title={isSidebarCollapsed && !isMobile ? label : undefined}
+          >
+            <item.icon className={cn("h-5 w-5", isSidebarCollapsed && !isMobile ? "" : "mr-3")} />
+            {(!isSidebarCollapsed || isMobile) && <span className="truncate">{label}</span>}
+          </DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent sideOffset={isMobile ? 0 : 8} alignOffset={-5}>
+              {item.subItems.filter(subItem => subItem.adminOnly ? isAdmin : (subItem.managerOrAdmin ? (isManager || isAdmin) : true)).map(subItem => {
+                 const subLabel = dictionary[subItem.labelKey] || subItem.labelKey;
+                 return (
+                    <DropdownMenuItem key={subItem.href} asChild>
+                      <Link href={subItem.href} onClick={() => isMobile && setIsMobileMenuOpen(false)}
+                        className={cn(pathname === subItem.href && "bg-muted text-foreground font-semibold")}
+                      >
+                        <subItem.icon className="mr-2 h-4 w-4" />
+                        {subLabel}
+                      </Link>
+                    </DropdownMenuItem>
+                 )
+              })}
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+      );
+    }
+
+    return (
+      <TooltipProvider key={item.href} delayDuration={isMobile || !isSidebarCollapsed ? 999999 : 0}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href={item.href} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
+              <Button
+                variant={isActive ? 'secondary' : 'ghost'}
+                className={cn("w-full text-sm h-9", isSidebarCollapsed && !isMobile ? "justify-center px-2" : "justify-start")}
+                title={isSidebarCollapsed && !isMobile ? label : undefined}
+              >
+                <item.icon className={cn("h-5 w-5", isSidebarCollapsed && !isMobile ? "" : "mr-3")} />
+                {(!isSidebarCollapsed || isMobile) && <span className="truncate">{label}</span>}
+              </Button>
+            </Link>
+          </TooltipTrigger>
+          {(isSidebarCollapsed && !isMobile) && (
+            <TooltipContent side="right" className="bg-foreground text-background ml-2">{label}</TooltipContent>
+          )}
+        </Tooltip>
+      </TooltipProvider>
+    );
+  };
+
   const SidebarNav = ({isMobile = false, isCollapsed = false} : {isMobile?: boolean, isCollapsed?: boolean}) => (
     <nav className={cn("flex flex-col space-y-1 py-4", isCollapsed && !isMobile ? "px-2 items-center" : "px-2")}>
-      {filteredNavItems.map((item) => {
-        const label = dictionary[item.labelKey] || item.labelKey;
-        return (
-          <TooltipProvider key={item.href} delayDuration={isMobile || !isCollapsed ? 999999 : 0}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link href={item.href} onClick={() => isMobile && setIsMobileMenuOpen(false)}>
-                  <Button
-                    variant={pathname === item.href || (item.href !== '/admin/dashboard' && pathname.startsWith(item.href)) ? 'secondary' : 'ghost'}
-                    className={cn("w-full text-sm h-9", isCollapsed && !isMobile ? "justify-center px-2" : "justify-start")}
-                    title={isCollapsed && !isMobile ? label : undefined}
-                  >
-                    <item.icon className={cn("h-5 w-5", isCollapsed && !isMobile ? "" : "mr-3")} />
-                    {(!isCollapsed || isMobile) && <span className="truncate">{label}</span>}
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              {(isCollapsed && !isMobile) && (
-                <TooltipContent side="right" className="bg-foreground text-background ml-2">{label}</TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-        );
-      })}
+      {filteredNavItems.map((item) => renderNavItem(item, isMobile, isCollapsed))}
     </nav>
   );
   
@@ -217,56 +284,55 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
               {isSidebarCollapsed ? <PanelRightOpen className="h-6 w-6" /> : <PanelLeftOpen className="h-6 w-6" />}
               <span className="sr-only">Toggle sidebar</span>
             </Button>
-            <Link href="/admin/dashboard" className="md:hidden" aria-label={dictionary.adminPanelTitle}>
-              <Logo className="h-7"/>
-            </Link>
+             <div className="md:hidden flex items-center"> {/* Container for Logo and Mobile Menu Trigger */}
+                <Link href="/admin/dashboard" className="mr-2" aria-label={dictionary.adminPanelTitle}>
+                    <Logo className="h-7"/>
+                </Link>
+                <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+                    <SheetTrigger asChild>
+                        <Button variant="outline" size="icon">
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Open navigation menu</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="flex flex-col p-0 w-3/4 max-w-xs text-foreground">
+                        <SheetHeader className="flex flex-row justify-between items-center border-b p-4 shrink-0">
+                            <Link href="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} aria-label={dictionary.adminPanelTitle}>
+                                <Logo />
+                            </Link>
+                            <SheetTitle className="sr-only">{dictionary.mobileMenuTitle}</SheetTitle>
+                            <SheetClose asChild>
+                                <Button variant="ghost" size="icon">
+                                    <X className="h-6 w-6" />
+                                    <span className="sr-only">Close menu</span>
+                                </Button>
+                            </SheetClose>
+                        </SheetHeader>
+                        <div className="flex-1 overflow-y-auto">
+                            <SidebarNav isMobile={true} />
+                        </div>
+                        <div className="p-4 border-t shrink-0 space-y-3">
+                            <div className="flex justify-around items-center">
+                                <AdminLanguageSwitcher />
+                                <Button variant="ghost" size="icon" onClick={toggleDarkMode} title={darkMode ? dictionary.themeToggleLight : dictionary.themeToggleDark}>
+                                    {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                                </Button>
+                            </div>
+                            <div className="text-sm leading-tight text-center border-t pt-3 mt-2">
+                                <p className="font-semibold truncate">{currentAdminUser?.name}</p>
+                                <p className="text-xs text-muted-foreground flex items-center justify-center">
+                                    <ShieldCheck className="h-3 w-3 mr-1 text-primary"/> {userRoleDisplay}
+                                </p>
+                            </div>
+                            <Button variant="outline" size="sm" className="w-full" onClick={() => { logout(); setIsMobileMenuOpen(false);}} title={dictionary.logout}>
+                                <LogOut className="mr-2 h-4 w-4" /> {dictionary.logout}
+                            </Button>
+                        </div>
+                    </SheetContent>
+                </Sheet>
+             </div>
           </div>
           
-          <div className="flex items-center md:hidden ml-auto">
-            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="h-6 w-6" />
-                  <span className="sr-only">Open navigation menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="flex flex-col p-0 w-3/4 max-w-xs text-foreground">
-                <SheetHeader className="flex flex-row justify-between items-center border-b p-6 shrink-0">
-                   <Link href="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} aria-label={dictionary.adminPanelTitle}>
-                    <Logo />
-                   </Link>
-                   <SheetTitle className="sr-only">{dictionary.mobileMenuTitle}</SheetTitle>
-                   <SheetClose asChild>
-                      <Button variant="ghost" size="icon">
-                         <X className="h-6 w-6" />
-                         <span className="sr-only">Close menu</span>
-                      </Button>
-                   </SheetClose>
-                </SheetHeader>
-                <div className="flex-1 overflow-y-auto">
-                  <SidebarNav isMobile={true} />
-                </div>
-                <div className="p-4 border-t shrink-0 space-y-3">
-                    <div className="flex justify-around items-center">
-                         <AdminLanguageSwitcher />
-                         <Button variant="ghost" size="icon" onClick={toggleDarkMode} title={darkMode ? dictionary.themeToggleLight : dictionary.themeToggleDark}>
-                            {darkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                         </Button>
-                    </div>
-                  <div className="text-sm leading-tight text-center border-t pt-3 mt-2">
-                      <p className="font-semibold truncate">{currentAdminUser?.name}</p>
-                      <p className="text-xs text-muted-foreground flex items-center justify-center">
-                          <ShieldCheck className="h-3 w-3 mr-1 text-primary"/> {userRoleDisplay}
-                      </p>
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full" onClick={() => { logout(); setIsMobileMenuOpen(false);}} title={dictionary.logout}>
-                      <LogOut className="mr-2 h-4 w-4" /> {dictionary.logout}
-                  </Button>
-                </div>
-              </SheetContent>
-            </Sheet>
-          </div>
-
           <div className="hidden md:flex items-center space-x-2 ml-auto">
             <AdminLanguageSwitcher />
             <Button variant="ghost" size="icon" onClick={toggleDarkMode} title={darkMode ? dictionary.themeToggleLight : dictionary.themeToggleDark}>
@@ -274,10 +340,15 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </Button>
           </div>
         </header>
-
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            {children}
-        </main>
+        
+        <div className="flex flex-col flex-1">
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+                {children}
+            </main>
+            <footer className="border-t bg-background/50 text-muted-foreground text-xs text-center p-3 shrink-0">
+                Askim candles Admin Panel v0.1.0 (Simulated) - Last Updated: {new Date().toLocaleDateString()} (Simulated)
+            </footer>
+        </div>
       </div>
     </div>
   );
@@ -285,12 +356,10 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // For login page, wrap with provider but don't render full layout
   if (pathname === '/admin/login') { 
     return <AdminAuthProvider>{children}</AdminAuthProvider>;
   }
 
-  // For all other admin pages, render full layout with provider
   return (
     <AdminAuthProvider>
       <AdminLayoutContent>{children}</AdminLayoutContent>
