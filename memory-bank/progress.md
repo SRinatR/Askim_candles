@@ -10,84 +10,76 @@
 *   **Internationalization (i18n - Main Site):**
     *   Path-based routing `/[locale]/...` for UZ (default), RU, EN.
     *   Dictionary files (`src/dictionaries/*.json`) for translations.
-    *   `getDictionary.ts` for loading translations in Server Components.
+    *   `getDictionary.ts` for loading translations in Server Components. Client components use local getters importing main dictionaries.
     *   Middleware (`middleware.ts`) for locale detection and redirection.
     *   Language switcher in Header (desktop dropdown, compact mobile list).
-    *   Localized pages: Homepage, About, Cart, Checkout, Login, Register, Product Detail, Account section (Layout, Profile, Addresses, Orders, Order Detail, Linking). ProductCard and ProductList accept localized props.
-*   **Styling:** Tailwind CSS, ShadCN UI. Custom theme in `globals.css` (includes dark mode variables).
+    *   Localized pages: Homepage, About, Cart, Checkout, Login, Register, Product Detail, Product List, Account section (Layout, Profile, Addresses, Orders, Order Detail, Linking). ProductCard localized.
+*   **Styling:** Tailwind CSS, ShadCN UI. Custom theme in `globals.css` (includes dark mode variables). Main site header/footer hidden on admin pages. Global CSS applied to admin panel.
 *   **Main Site Pages (Localized):**
     *   Homepage (`/[locale]/`): Hero, category links, featured products, CTA.
-    *   Product Listing (`/[locale]/products`): Displays products, client-side filtering/sorting (now locale-aware in URL updates), search.
+    *   Product Listing (`/[locale]/products`): Displays products, client-side filtering/sorting (locale-aware), search.
     *   Product Details (`/[locale]/products/[id]`): Image gallery, details, add to cart, related products.
     *   Shopping Cart (`/[locale]/cart`): Displays items, quantity updates, removal, total, proceed to checkout.
     *   Checkout (`/[locale]/checkout`): Order summary, form for contact/shipping/mock payment.
     *   About Us (`/[locale]/about`): Static content page.
 *   **Frontend User Authentication (Main Site - Hybrid & Localized):**
-    *   **NextAuth.js with Google Provider:** Functional for Google sign-in/sign-out. Callbacks updated for locale.
-    *   **Client-Simulated Email/Password (`AuthContext`):**
-        *   Multi-step registration (`/[locale]/register`) with simulated confirmation.
-        *   Login page (`/[locale]/login`) with email/password form.
-        *   Logout functionality.
-        *   All redirects and links are locale-aware.
-    *   Placeholders for Telegram & Yandex social login buttons on login page.
-*   **Frontend User Account Area (`/[locale]/account/*` - Main Site - Localized):**
-    *   Protected: Requires login.
-    *   Layout with sidebar navigation.
-    *   All sub-pages (Profile, Addresses, Order History, Order Detail, Linking) are localized.
+    *   **NextAuth.js with Google Provider:** Functional.
+    *   **Client-Simulated Email/Password (`AuthContext`):** Multi-step registration, login, logout. All locale-aware.
+*   **Frontend User Account Area (`/[locale]/account/*` - Main Site - Localized):** Protected, layout with sidebar, all sub-pages localized.
 *   **Admin Panel Foundation (`/admin`):**
-    *   **Simulated Authentication (`AdminAuthContext`):**
-        *   Login page (`/admin/login`) for 'ADMIN' and 'MANAGER' roles.
-        *   Logout functionality.
+    *   **Simulated Authentication (`AdminAuthContext`):** Login page (`/admin/login`) for 'ADMIN' and 'MANAGER' roles. Logout functionality. Dynamically added managers (via UI by Admin) are stored in `localStorage` and checked by `AdminAuthContext`.
     *   **Protected Routes:** All routes under `/admin` require admin/manager login.
     *   **Admin Layout (`src/app/admin/layout.tsx`):**
         *   Collapsible sidebar navigation.
-        *   Header with sidebar toggle (desktop), mobile menu trigger, theme toggle (Dark/Light), and language switcher (EN/RU - client-side).
+        *   Header with sidebar toggle, mobile menu trigger, theme toggle (Dark/Light), and language switcher (EN/RU - client-side).
         *   Role display and role-based navigation item visibility.
         *   Dark/Light theme implemented, preference stored in `localStorage`.
-        *   Client-side i18n for EN/RU implemented (dictionaries in `src/admin/dictionaries`).
+        *   Client-side i18n for EN/RU implemented (admin dictionaries).
     *   **Page Stubs (Admin):**
-        *   Dashboard (`/admin/dashboard`): UI stubs for various statistics, now uses admin dictionary.
-        *   Products (`/admin/products`), Sales (`/admin/sales`), Clients, Marketing, Reports, Finances, Discounts, Content, Settings (Admin only), Management (Users - Admin only).
-*   **UI Components:** Extensive use of ShadCN UI, custom `Logo` component.
-*   **Context Providers:** `SessionProvider`, `SimulatedAuthProvider`, `CartProvider`, `AdminAuthProvider`, `Toaster` grouped appropriately.
-*   **Error Handling & Fixes:** Addressed various runtime errors (missing imports, `cn` issues, hydration errors, accessibility warnings). Main site header/footer hidden on admin pages.
+        *   Dashboard (`/admin/dashboard`): UI stubs for various statistics, uses admin dictionary.
+        *   Products (`/admin/products`): **UI for listing products (mock data), links to New/Edit (simulated).**
+        *   Products - New/Edit (`/admin/products/new`, `/admin/products/edit/[id]`): **Forms for product CRUD (simulated).**
+        *   Users (`/admin/users`): **UI for listing managers (predefined + localStorage), link to Add Manager (simulated).**
+        *   Users - New Manager (`/admin/users/new-manager`): **Form for adding managers (simulated, saves to localStorage).**
+        *   Sales, Clients, Marketing, Reports, Finances, Discounts, Content, Settings (Admin only): Placeholder pages created/updated.
+        *   Logs (`/admin/logs`): **Placeholder page created.**
 
 ## 2. What's Left to Build (Key Areas)
 
-*   **Full Admin Panel Functionality (using Admin i18n):**
-    *   CRUD operations for Products, with real data interaction (Prisma).
-    *   Order management (viewing, status updates) with real data.
-    *   User management (role assignment, blocking) with real data (Admin only).
-    *   Discount/promo code creation and management.
-    *   Content management system for banners, static pages.
-    *   Store settings configuration.
-    *   File manager (optional).
-    *   Dashboard with real data visualization.
+*   **Full Admin Panel Functionality (Backend Integration - Prisma/PostgreSQL):**
+    *   Real CRUD operations for Products, Orders, Users, Discounts, Content, Settings.
+    *   Real data visualization on Dashboard.
+    *   Real session management for Admins/Managers.
+    *   Real log recording and display.
 *   **Backend Integration (Prisma/PostgreSQL):**
-    *   Define Prisma schema for all necessary models.
-    *   Implement API routes or Server Actions.
+    *   Define full Prisma schema.
+    *   Implement all API routes or Server Actions.
     *   Migrate main site user authentication (email/password) to use the database.
     *   Implement real NextAuth Credentials provider for admin login.
 *   **Full Content Localization (Main Site & Admin):**
     *   Translate all remaining text strings in all dictionary files.
     *   Localize dynamic content from `mock-data.ts` (or future DB).
-    *   Localize Zod validation messages for forms.
+    *   Localize Zod validation messages.
 *   **Payment Processing:** Stripe integration.
 *   **Genkit AI Features.**
-*   **Image Handling:** Replace placeholders with actual image uploads.
-*   **Search/Filtering/Sorting:** Server-side implementation.
+*   **Image Handling:** Replace placeholders with actual image uploads, implement File Manager.
+*   **Search/Filtering/Sorting:** Server-side implementation for main site. Enhanced admin table features.
 *   **Testing, Deployment, Email Notifications.**
 
 ## 3. Current Status
 
-*   **Main Site:** MVP with core e-commerce UI flows implemented and localized (UZ/RU/EN structure). Authentication is hybrid. Most data is mocked.
-*   **Admin Panel:** UI shell created with simulated authentication, navigation, dark/light theme toggle, and client-side EN/RU i18n. Pages are stubs or have basic translated UI from admin dictionaries. No backend interaction.
-*   **Memory Bank system active.** Updated to reflect "Askim candles" and recent admin panel enhancements.
+*   **Main Site:** MVP with core e-commerce UI flows implemented and localized (UZ/RU/EN). Authentication is hybrid. Most data is mocked.
+*   **Admin Panel:** UI shell created with simulated authentication, navigation, dark/light theme toggle, and client-side EN/RU i18n.
+    *   Product management section has UI for listing, adding, and editing (all client-side simulated).
+    *   User management section (for Admins) has UI for listing managers and form for adding new managers (client-side simulated via localStorage).
+    *   Other sections are mostly stubs or have basic translated UI.
+*   **Memory Bank system active.** `deployment_guide.md` created.
 
 ## 4. Known Issues/Previous Errors Addressed (Recent)
-*   `currentPathWithoutLocale` not defined in Header (fixed by proper scoping).
-*   `cn` not defined in Header (fixed by ensuring import).
-*   Admin panel missing global styles (fixed by importing `globals.css` in admin layout).
-*   Main site footer appearing on admin pages (fixed).
-*   Logout button visibility/usability in admin panel (improved).
-*   Original brand name "ScentSational Showcase" replaced with "Askim candles".
+*   "Cannot read properties of undefined (reading 'addToCart')" in ProductCard (addressed with dictionary fallbacks and prop passing checks).
+*   `currentPathWithoutLocale` not defined in Header (addressed by correct scoping).
+*   Admin panel styling issues (addressed).
+*   Main site header/footer appearing on admin pages (fixed).
+*   Admin logout button visibility/usability (improved).
+*   Admin sidebar collapsibility implemented.
+*   Brand name updated to "Askim candles".

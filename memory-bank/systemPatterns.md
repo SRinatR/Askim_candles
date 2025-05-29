@@ -10,17 +10,18 @@
     *   Client-side state managed with React hooks (`useState`, `useEffect`).
     *   Shared client-side state for Cart via `CartContext`.
     *   Shared client-side state for main site user email/password authentication via `AuthContext`.
-    *   Shared client-side state for admin panel authentication via `AdminAuthContext`.
+    *   Shared client-side state for admin panel authentication via `AdminAuthContext` (simulates ADMIN/MANAGER roles, stores dynamically added managers in `localStorage`).
     *   Session state for social logins (Google) managed by NextAuth.js (`useSession`, `SessionProvider`).
     *   Admin panel theme (Dark/Light) managed client-side in `AdminLayout` using `localStorage`.
     *   Admin panel language (EN/RU) preference managed client-side in `AdminLayout` using `localStorage`.
 *   **Data Fetching/Mutation (Current):**
     *   Relies on mock data (`src/lib/mock-data.ts`) for products, orders, categories.
-    *   User data for email/password auth is simulated in `localStorage` via respective contexts.
+    *   User data for main site email/password auth is simulated in `localStorage` via `AuthContext`.
+    *   Admin product CRUD operations are simulated client-side, interacting with in-memory data or showing toasts.
 *   **Data Fetching/Mutation (Planned Backend - Prisma/PostgreSQL):**
     *   Server Actions or Next.js Route Handlers will be used for form submissions and data mutations, interacting with Prisma.
 *   **Internationalization (i18n):**
-    *   **Main Site:** Path-based localization (`/[locale]/...`) for UZ (default), RU, EN. Dictionaries are in `src/dictionaries/`. `getDictionary.ts` for loading.
+    *   **Main Site:** Path-based localization (`/[locale]/...`) for UZ (default), RU, EN. Dictionaries are in `src/dictionaries/`. `getDictionary.ts` for loading. Client components use local getters that import main dictionaries.
     *   **Admin Panel:** Client-side language preference (EN default, RU). Dictionaries in `src/admin/dictionaries/`. `getAdminDictionary.ts` for loading.
 *   **AI Integration (Planned/Genkit):**
     *   Genkit flows (`ai.defineFlow`) to wrap prompts (`ai.definePrompt`).
@@ -35,14 +36,16 @@
     *   NextAuth.js for Google Sign-In.
     *   Client-side simulated email/password system (`AuthContext`).
 *   **Admin Panel Authentication (Client-Side Simulated):**
-    *   Separate client-side simulated email/password system (`AdminAuthContext`) for ADMIN/MANAGER roles.
-*   **Future Backend:** Intention to use Prisma as ORM with PostgreSQL database.
+    *   Separate client-side simulated email/password system (`AdminAuthContext`) for ADMIN/MANAGER roles. Dynamically added managers are also stored in `localStorage`.
+*   **Future Backend:** Intention to use Prisma as ORM with PostgreSQL database. A `deployment_guide.md` outlines the transition.
 *   **Atomic Design Principles (Implicit):** Focus on creating small, reusable UI components composed into larger structures.
 *   **Placeholder Content:** `https://placehold.co` for images, with `data-ai-hint`.
 *   **Admin Panel Structure:**
     *   Located at `/admin`.
     *   Separate layout (`src/app/admin/layout.tsx`) with role-based navigation, protection, theme toggle, and language switcher.
     *   Collapsible sidebar.
+    *   CRUD operations for products and manager creation are currently simulated client-side.
+    *   Logs and Sessions pages are placeholders for future backend integration.
 
 ## 3. Component Relationships (High-Level)
 
@@ -54,12 +57,12 @@
 *   **Admin Panel:**
     *   `AdminLayout` (`src/app/admin/layout.tsx`) wraps all `/admin/*` pages. It includes `AdminAuthProvider`, theme management, and client-side i18n handling for admin content.
     *   Admin layout contains a header (for sidebar toggle, mobile menu, theme/lang toggles) and a collapsible sidebar.
-    *   Admin pages are rendered within this layout.
+    *   Admin pages (Dashboard, Products, Users, etc.) are rendered within this layout. Product and User management pages contain forms and tables for (simulated) CRUD.
 *   Page components are built by composing various UI and domain-specific components.
 
 ## 4. Error Handling
 
-*   Next.js `error.js` files for route segment error boundaries.
+*   Next.js `error.js` files for route segment error boundaries (to be implemented as needed).
 *   Client-side error notifications via `useToast`.
 
 ## 5. Theme Management (Admin Panel)

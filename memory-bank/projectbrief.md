@@ -14,54 +14,31 @@
 ## 2. Core App Features (from PRD & User Requests):
 
 *   **Main Site (i18n: UZ (default), RU, EN):**
-    *   Product Catalog: Browse products with details, images, and pricing.
-    *   Product Filtering & Sorting.
-    *   Product Details Page.
-    *   Shopping Cart.
-    *   Checkout.
-    *   User Accounts (Frontend - Hybrid Auth):
-        *   Registration (multi-step with simulated confirmation - email/password).
-        *   Login (email/password - simulated; Google - NextAuth).
-        *   Profile management.
-        *   Order history (mock).
-        *   Address management (mock).
-        *   Account linking page.
-    *   About Us page.
-    *   Language switcher.
-*   **Admin Panel (`/admin` - i18n: EN (default), RU - Dark Theme):**
-    *   Role-based access (ADMIN, MANAGER - simulated via AdminAuthContext).
-    *   Dashboard with statistics (UI stubs implemented).
-    *   Management sections: Products, Sales, Clients, Marketing, Reports, Finances, Discounts, Content, Settings (admin-only), Management (Users - admin-only) (UI stubs implemented).
-    *   Collapsible sidebar navigation.
-    *   Theme (Dark/Light) and Language (EN/RU) switchers.
+    *   Product Catalog (browse, details, filter, sort).
+    *   Shopping Cart & Checkout.
+    *   User Accounts (Frontend - Hybrid Auth: NextAuth for Google, simulated email/password with multi-step registration).
+    *   Localized content for key pages.
+*   **Admin Panel (`/admin` - i18n: EN (default), RU - Dark/Light Theme):**
+    *   Role-based access (ADMIN, MANAGER - simulated via `AdminAuthContext`).
+    *   Dashboard with statistics (UI stubs with mock values).
+    *   **Product Management:** UI for listing, adding, editing products (client-side simulated).
+    *   **User/Manager Management (Admin Only):** UI for listing managers and form for adding new managers (client-side simulated).
+    *   Orders, Discounts, Content, Settings sections (mostly stubs).
+    *   **Logs:** Placeholder page for system/session logs.
+    *   Collapsible sidebar, theme/language toggles.
 *   Payment Processing: Stripe integration (future goal).
+*   **Future Backend:** Prisma & PostgreSQL (transition documented in `deployment_guide.md`).
 
 ## 3. Style Guidelines (from PRD):
 
-*   **Main Site:**
-    *   Primary color: Soft, muted lavender (#D0BFFF)
-    *   Background color: Light, desaturated beige (#F5F5DC)
-    *   Accent color: Pale gold (#E6BE8A)
-    *   Fonts: Clean, elegant sans-serif.
-    *   Icons: Simple, line-based (`lucide-react`).
-    *   Design: Minimalist, white space, focus on product imagery.
-*   **Admin Panel:**
-    *   Modern design in the style of Turo and MoscowDreamCars.
-    *   Minimalistic hierarchy, high readability.
-    *   Use ShadCN UI components and TailwindCSS.
-    *   Responsive.
-    *   Dark/light theme implemented with toggle.
+*   **Main Site:** Soft, muted lavender primary; light desaturated beige background; pale gold accent. Minimalist, elegant sans-serif fonts.
+*   **Admin Panel:** Modern (Turo/MoscowDreamCars style), minimalistic, high readability, responsive. Dark/light theme.
 
 ## 4. My Operational Guidelines:
 
-*   **Conversational Interaction:** Engage naturally, ask clarifying questions, explain reasoning concisely.
-*   **Batch File Editing:** Use specific XML format for code changes.
-*   **Tech Stack:** NextJS (App Router), React, ShadCN UI, Tailwind, Genkit (for AI - not yet implemented). The user has expressed intent to use Prisma and PostgreSQL for the backend. Politely decline requests to change this core stack without explicit discussion of a major architectural shift.
-*   **Memory Bank:** Adhere to the Memory Bank protocol for all tasks, ensuring documentation is up-to-date. Read ALL Memory Bank files at the start of EVERY task.
-*   **Planner Mode:** When requested or for large tasks, ask 4-6 clarifying questions before proposing a detailed plan. Implement approved plans step-by-step, reporting progress.
-*   **Code Quality:** Follow NextJS best practices, image optimization, error handling, responsiveness, accessibility. Avoid hydration errors. Use functional components and modern React.
-*   **Genkit Usage:** Follow specific guidelines for Genkit v1.x API, flows, data passing, Handlebars, image generation, and tool use.
-*   **Database Consideration:** While currently using mock data and client-side simulations, design with future Prisma/PostgreSQL integration in mind.
-*   **i18n:**
-    *   Main site: UZ (default), RU, EN using `/[locale]/` path prefix and `next-intl`-like dictionary structure.
-    *   Admin panel: EN (default), RU. Current implementation is client-side preference, with dictionary files in `src/admin/dictionaries`.
+*   **Memory Bank Protocol:** Adhere strictly. Read ALL Memory Bank files at the start of EVERY task. Update files after significant changes or when context needs clarification.
+*   **Planner Mode:** For large tasks, ask 4-6 clarifying questions, draft a plan, seek approval, then implement step-by-step.
+*   **Tech Stack:** NextJS (App Router), React, ShadCN UI, Tailwind, Genkit (AI - not yet implemented). Prisma/PostgreSQL planned for backend.
+*   **Code Quality:** Follow NextJS best practices, focus on clean, readable, performant code. Avoid hydration errors.
+*   **i18n:** Main site (UZ/RU/EN path-based). Admin panel (EN/RU client-side preference).
+*   **Deployment:** A `deployment_guide.md` has been started to track steps for production.

@@ -1,13 +1,13 @@
 
 "use client";
 
-import type { AdminUser } from '@/lib/types';
+import type { AdminUser, AdminRole } from '@/lib/types';
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter, usePathname, useParams } from 'next/navigation'; // Added useParams
-import type { Locale } from '@/lib/i1n-config'; // For potential future localization of admin panel
+import { useRouter, usePathname } from 'next/navigation';
 
-type AdminRole = 'ADMIN' | 'MANAGER';
+// TODO: Localize toast messages if admin panel i18n is extended to context
+// For now, using English for internal AdminAuthContext toasts
 
 interface AdminAuthContextType {
   currentAdminUser: AdminUser | null;
@@ -17,13 +17,17 @@ interface AdminAuthContextType {
   isAdmin: boolean;
   isManager: boolean;
   role: AdminRole | null;
+  predefinedUsers: Record<string, AdminUser>; // Expose for user listing
+  dynamicallyAddedManagers: AdminUser[]; // Expose for user listing
+  addManager: (name: string, email: string, pass: string) => Promise<boolean>; // For admin to add managers
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 const ADMIN_STORAGE_KEY = 'scentSationalAdminUser';
+const DYNAMIC_MANAGERS_STORAGE_KEY = 'scentSationalDynamicManagers';
 
-const predefinedUsers: Record<string, AdminUser> = {
+const initialPredefinedUsers: Record<string, AdminUser> = {
   'admin@scentsational.com': {
     id: 'admin001',
     email: 'admin@scentsational.com',
@@ -46,10 +50,13 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
-  // const params = useParams(); // For potential future localization of admin
-  // const locale = params.locale as Locale || 'uz';
+  
+  const [predefinedUsers, setPredefinedUsers] = useState<Record<string, AdminUser>>(initialPredefinedUsers);
+  const [dynamicallyAddedManagers, setDynamicallyAddedManagers] = useState<AdminUser[]>([]);
+
 
   useEffect(() => {
+    // Load current logged-in admin user
     const storedUser = localStorage.getItem(ADMIN_STORAGE_KEY);
     if (storedUser) {
       try {
@@ -64,21 +71,40 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.removeItem(ADMIN_STORAGE_KEY);
       }
     }
+
+    // Load dynamically added managers
+    const storedDynamicManagers = localStorage.getItem(DYNAMIC_MANAGERS_STORAGE_KEY);
+    if (storedDynamicManagers) {
+        try {
+            const parsedManagers: AdminUser[] = JSON.parse(storedDynamicManagers);
+            if (Array.isArray(parsedManagers)) {
+                setDynamicallyAddedManagers(parsedManagers);
+            }
+        } catch (error) {
+            console.error("Failed to parse dynamic managers from localStorage", error);
+            localStorage.removeItem(DYNAMIC_MANAGERS_STORAGE_KEY);
+        }
+    }
     setIsLoading(false);
   }, []);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setIsLoading(true);
-    await new Promise(resolve => setTimeout(resolve, 500)); 
+    await new Promise(resolve => setTimeout(resolve, 300)); 
 
-    const userToLogin = predefinedUsers[email.toLowerCase()];
+    const lowerEmail = email.toLowerCase();
+    let userToLogin = predefinedUsers[lowerEmail];
+
+    if (!userToLogin) { // Check dynamically added managers if not in predefined
+        userToLogin = dynamicallyAddedManagers.find(manager => manager.email.toLowerCase() === lowerEmail);
+    }
 
     if (userToLogin && userToLogin.password === pass) {
       setCurrentAdminUser(userToLogin);
       localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(userToLogin));
       toast({ title: "Admin Login Successful", description: `Welcome, ${userToLogin.name}!` });
       setIsLoading(false);
-      router.push('/admin/dashboard'); // Admin panel is not localized yet
+      router.push('/admin/dashboard');
       return true;
     } else {
       toast({ title: "Admin Login Failed", description: "Invalid email or password.", variant: "destructive" });
@@ -91,7 +117,26 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     setCurrentAdminUser(null);
     localStorage.removeItem(ADMIN_STORAGE_KEY);
     toast({ title: "Logged Out", description: "You have been successfully logged out from the admin panel." });
-    router.push('/admin/login'); // Admin panel login is not localized yet
+    router.push('/admin/login'); 
+  };
+
+  const addManager = async (name: string, email: string, pass: string): Promise<boolean> => {
+    const lowerEmail = email.toLowerCase();
+    if (predefinedUsers[lowerEmail] || dynamicallyAddedManagers.some(m => m.email.toLowerCase() === lowerEmail)) {
+        toast({ title: "Failed to Add Manager", description: "Email already exists.", variant: "destructive" });
+        return false;
+    }
+    const newManager: AdminUser = {
+        id: `manager-${Date.now()}`,
+        name,
+        email,
+        password: pass, // In real app, password would be hashed
+        role: 'MANAGER',
+    };
+    const updatedManagers = [...dynamicallyAddedManagers, newManager];
+    setDynamicallyAddedManagers(updatedManagers);
+    localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
+    return true;
   };
   
   const role = currentAdminUser?.role || null;
@@ -99,7 +144,6 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const isManager = role === 'MANAGER' || role === 'ADMIN'; 
 
   useEffect(() => {
-    // Admin routes are not localized for now, so direct path check is fine
     if (!isLoading && !currentAdminUser && pathname.startsWith('/admin') && pathname !== '/admin/login') {
       router.replace('/admin/login');
     }
@@ -107,7 +151,18 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <AdminAuthContext.Provider value={{ currentAdminUser, login, logout, isLoading, isAdmin, isManager, role }}>
+    <AdminAuthContext.Provider value={{ 
+        currentAdminUser, 
+        login, 
+        logout, 
+        isLoading, 
+        isAdmin, 
+        isManager, 
+        role,
+        predefinedUsers, // Provide for listing
+        dynamicallyAddedManagers, // Provide for listing
+        addManager 
+    }}>
       {children}
     </AdminAuthContext.Provider>
   );
