@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useForm, Controller, FormProvider } from "react-hook-form"; // Added FormProvider here
+import { useForm, Controller, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +17,7 @@ import { ArrowLeft, Save } from "lucide-react";
 import { mockCategories } from "@/lib/mock-data";
 import { ImageUploadArea } from '@/components/admin/ImageUploadArea';
 import type { UploadedImage } from '@/components/admin/ImageUploadArea';
-import React, { useEffect } from "react"; // Ensure React is imported
+import React, { useEffect } from "react";
 
 // Updated Zod schema for products
 const productSchema = z.object({
@@ -49,20 +49,11 @@ export default function NewProductPage() {
     },
   });
 
-  const { register, handleSubmit, control, formState: { errors }, setValue, watch, getValues } = formMethods;
+  const { register, handleSubmit, control, formState, setValue, watch } = formMethods; // Destructure formState here
+  const { errors, isSubmitting } = formState; // Now you can get errors and isSubmitting from formState
   
   const watchedImages = watch("images");
   const watchedMainImageId = watch("mainImageId");
-
-  // This useEffect was intended to set a default main image if none was selected
-  // but images were present. The logic inside ImageUploadArea itself should handle
-  // defaulting the main image if necessary upon initial image upload.
-  // The form's mainImageId should primarily be set by the onImagesChange callback.
-  // useEffect(() => {
-  //   if (watchedImages && watchedImages.length > 0 && !watchedMainImageId) {
-  //     // This might be redundant if ImageUploadArea handles it
-  //   }
-  // }, [watchedImages, watchedMainImageId, setValue]);
 
 
   const onSubmit = (data: ProductFormValues) => {
@@ -112,8 +103,8 @@ export default function NewProductPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="price">Price ($)</Label>
-                      <Input id="price" type="number" step="0.01" {...register("price")} placeholder="0.00" />
+                      <Label htmlFor="price">Price (UZS)</Label>
+                      <Input id="price" type="number" step="1" {...register("price")} placeholder="0" />
                       {errors.price && <p className="text-sm text-destructive">{errors.price.message}</p>}
                     </div>
                     <div className="space-y-2">
@@ -156,15 +147,12 @@ export default function NewProductPage() {
                    <Controller
                     name="images" 
                     control={control}
-                    render={({ field }) => (
+                    render={({ field }) => ( // field here represents the 'images' field array
                       <ImageUploadArea 
                         onImagesChange={(imagesData, mainImgIdFromUpload) => {
-                          // imagesData is UploadedImage[] where preview is Data URL
-                          // mainImgIdFromUpload is the ID (string) of the main image from ImageUploadArea
                           const newImagePreviews = imagesData.map(img => img.preview);
                           setValue("images", newImagePreviews, { shouldValidate: true });
                           
-                          // Find the Data URL corresponding to mainImgIdFromUpload
                           const mainImgObject = imagesData.find(img => img.id === mainImgIdFromUpload);
                           const finalMainImagePreview = mainImgObject ? mainImgObject.preview : (newImagePreviews.length > 0 ? newImagePreviews[0] : undefined);
                           setValue("mainImageId", finalMainImagePreview);
@@ -180,9 +168,9 @@ export default function NewProductPage() {
             </div>
           </div>
           <div className="mt-6 flex justify-end">
-            <Button type="submit" disabled={formState.isSubmitting}>
+            <Button type="submit" disabled={isSubmitting}>
               <Save className="mr-2 h-4 w-4" /> 
-              {formState.isSubmitting ? "Saving..." : "Save Product (Simulated)"}
+              {isSubmitting ? "Saving..." : "Save Product (Simulated)"}
             </Button>
           </div>
         </form>
