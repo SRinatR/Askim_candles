@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ProductList } from '@/components/products/ProductList';
@@ -9,7 +8,8 @@ import { ArrowRight } from 'lucide-react';
 import { getDictionary } from '@/lib/getDictionary';
 import type { Locale } from '@/lib/i1n-config';
 
-export default async function HomePage({ params: { locale } }: { params: { locale: Locale } }) {
+export default async function HomePage({ params }: { params: { locale: Locale } }) {
+  const locale = params.locale;
   const dictionary = await getDictionary(locale);
   const activeProducts = mockProducts.filter(p => p.isActive);
   const featuredProducts = activeProducts.slice(0, 4);
@@ -95,5 +95,3 @@ export default async function HomePage({ params: { locale } }: { params: { local
     </div>
   );
 }
-
-    

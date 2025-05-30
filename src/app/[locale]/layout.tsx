@@ -1,10 +1,9 @@
-
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
-import '../globals.css'; // Adjusted path
+import '../globals.css';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
-import { Providers } from '../providers'; // Adjusted path
+import { Providers } from '../providers';
 import { getDictionary } from '@/lib/getDictionary';
 import type { Locale } from '@/lib/i1n-config';
 
@@ -19,10 +18,11 @@ const geistMono = Geist_Mono({
 });
 
 export async function generateMetadata({
-  params: { locale },
+  params,
 }: {
   params: { locale: Locale };
 }): Promise<Metadata> {
+  const locale = params.locale;
   const dictionary = await getDictionary(locale);
   return {
     title: dictionary.metadata.title,
@@ -32,11 +32,12 @@ export async function generateMetadata({
 
 export default async function LocaleLayout({
   children,
-  params: { locale },
+  params,
 }: Readonly<{
   children: React.ReactNode;
   params: { locale: Locale };
 }>) {
+  const locale = params.locale;
   const dictionary = await getDictionary(locale);
   return (
     <html lang={locale} suppressHydrationWarning>
