@@ -26,19 +26,57 @@ export default function AdminSessionsPage() {
     const localeToLoad = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
     
     async function loadDictionary() {
-      const fullDict = await getAdminDictionary(localeToLoad);
-      setDict(fullDict.adminSessionsPage);
+      try {
+        const fullDict = await getAdminDictionary(localeToLoad);
+        if (fullDict && fullDict.adminSessionsPage) {
+          setDict(fullDict.adminSessionsPage);
+        } else {
+          console.error("Failed to load adminSessionsPage dictionary or section is missing");
+          // Fallback to a minimal default if dictionary loading fails or section is missing
+          setDict({
+            title: "Session Management",
+            description: "Manage active sessions. Full cross-device session management requires backend integration.",
+            currentSessionTitle: "Current Session (This Device)",
+            nameLabel: "Name:",
+            emailLabel: "Email:",
+            roleLabel: "Role:",
+            logoutThisDeviceButton: "Log Out From This Device",
+            otherSessionsTitle: "Other Active Sessions",
+            otherSessionsInfo: "Viewing and managing sessions across all devices (e.g., 'Log out everywhere') is a feature that requires backend database integration to track active sessions centrally. This functionality will be implemented once the backend is in place.",
+            logoutOtherDevicesButton: "Log Out From All Other Devices (Requires Backend)",
+            accessDeniedTitle: "Access Denied",
+            accessDeniedDesc: "You do not have permission to view this page."
+          });
+        }
+      } catch (error) {
+        console.error("Error loading admin dictionary for sessions page:", error);
+        // Fallback to a minimal default in case of error
+        setDict({
+          title: "Session Management",
+          description: "Manage active sessions. Full cross-device session management requires backend integration.",
+          currentSessionTitle: "Current Session (This Device)",
+          nameLabel: "Name:",
+          emailLabel: "Email:",
+          roleLabel: "Role:",
+          logoutThisDeviceButton: "Log Out From This Device",
+          otherSessionsTitle: "Other Active Sessions",
+          otherSessionsInfo: "Viewing and managing sessions across all devices (e.g., 'Log out everywhere') is a feature that requires backend database integration to track active sessions centrally. This functionality will be implemented once the backend is in place.",
+          logoutOtherDevicesButton: "Log Out From All Other Devices (Requires Backend)",
+          accessDeniedTitle: "Access Denied",
+          accessDeniedDesc: "You do not have permission to view this page."
+        });
+      }
     }
     loadDictionary();
-  }, []);
+  }, []); // Runs once on mount
 
   useEffect(() => {
-    if (!isLoading && !isAdmin) {
+    if (isClient && !isLoading && !isAdmin) {
       router.replace('/admin/dashboard');
     }
-  }, [isAdmin, router, isLoading]);
+  }, [isAdmin, router, isLoading, isClient]);
 
-  if (isLoading || !isClient || !dict) {
+  if (!isClient || isLoading || !dict) {
     return <div className="flex h-full items-center justify-center"><p>Loading Session Management...</p></div>;
   }
 
@@ -47,10 +85,10 @@ export default function AdminSessionsPage() {
          <Card className="border-destructive">
             <CardHeader className="flex flex-row items-center space-x-2">
                 <ShieldAlert className="h-6 w-6 text-destructive"/>
-                <CardTitle className="text-destructive">{dict.accessDeniedTitle || "Access Denied"}</CardTitle>
+                <CardTitle className="text-destructive">{dict.accessDeniedTitle}</CardTitle>
             </CardHeader>
             <CardContent>
-                <p>{dict.accessDeniedDesc || "You do not have permission to view this page."}</p>
+                <p>{dict.accessDeniedDesc}</p>
             </CardContent>
          </Card>
     );
@@ -60,23 +98,23 @@ export default function AdminSessionsPage() {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{dict.title || "Session Management"}</CardTitle>
-          <CardDescription>{dict.description || "Manage active sessions. Full cross-device session management requires backend integration."}</CardDescription>
+          <CardTitle>{dict.title}</CardTitle>
+          <CardDescription>{dict.description}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {currentAdminUser && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">{dict.currentSessionTitle || "Current Session (This Device)"}</CardTitle>
+                <CardTitle className="text-lg">{dict.currentSessionTitle}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-1 text-sm">
-                <p><strong>{dict.nameLabel || "Name:"}</strong> {currentAdminUser.name}</p>
-                <p><strong>{dict.emailLabel || "Email:"}</strong> {currentAdminUser.email}</p>
-                <p><strong>{dict.roleLabel || "Role:"}</strong> {currentAdminUser.role}</p>
+                <p><strong>{dict.nameLabel}</strong> {currentAdminUser.name}</p>
+                <p><strong>{dict.emailLabel}</strong> {currentAdminUser.email}</p>
+                <p><strong>{dict.roleLabel}</strong> {currentAdminUser.role}</p>
               </CardContent>
               <CardContent>
                  <Button onClick={logout} variant="outline">
-                    <LogOut className="mr-2 h-4 w-4" /> {dict.logoutThisDeviceButton || "Log Out From This Device"}
+                    <LogOut className="mr-2 h-4 w-4" /> {dict.logoutThisDeviceButton}
                 </Button>
               </CardContent>
             </Card>
@@ -84,15 +122,22 @@ export default function AdminSessionsPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">{dict.otherSessionsTitle || "Other Active Sessions"}</CardTitle>
+              <CardTitle className="text-lg">{dict.otherSessionsTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-start p-3 bg-muted/50 rounded-md border border-dashed">
                 <Info className="h-5 w-5 text-primary mr-3 mt-1 shrink-0" />
                 <p className="text-sm text-muted-foreground">
-                  {dict.otherSessionsInfo || "Viewing and managing sessions across all devices (e.g., 'Log out everywhere') is a feature that requires backend database integration to track active sessions centrally. This functionality will be implemented once the backend is in place."}
+                  {dict.otherSessionsInfo}
                 </p>
               </div>
               <Button variant="outline" disabled>
-                {dict.logoutOtherDevicesButton || "Log Out From All Other Devices (Requires Backend)"}
+                {dict.logoutOtherDevicesButton}
               </Button>
+            </CardContent>
+          </Card>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
