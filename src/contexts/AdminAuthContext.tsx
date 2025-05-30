@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { AdminUser, AdminRole } from '@/lib/types';
@@ -18,7 +19,7 @@ interface AuthStrings {
   contextToasts: AdminContextToastStrings | null;
 }
 
-const fallbackLoginStrings: AdminLoginStrings = { title: "Admin Panel", description: "Please sign in to manage Askim candles.", emailLabel: "Email Address", emailPlaceholder: "admin@example.com", passwordLabel: "Password", passwordPlaceholder: "••••••••", signInButton: "Sign In", signingInButton: "Signing In...", restrictedAccess: "Access to this panel is restricted to authorized personnel only.", loading: "Loading admin panel...", loginSuccessTitle: "Admin Login Successful", loginWelcomeMessage: "Welcome, {name}!", loginErrorTitle: "Admin Login Failed", loginErrorDescRequired: "Email and password are required.", loginErrorDescInvalid: "Invalid email or password.", loginErrorDescBlockedStatus: "Blocked", loginSuccessDescActiveStatus: "Active" };
+const fallbackLoginStrings: AdminLoginStrings = { title: "Admin Panel", description: "Please sign in to manage Askim candles.", emailLabel: "Email Address", emailPlaceholder: "admin@example.com", passwordLabel: "Password", passwordPlaceholder: "••••••••", signInButton: "Sign In", signingInButton: "Signing In...", restrictedAccess: "Access to this panel is restricted to authorized personnel only.", loading: "Loading admin panel...", loginSuccessTitle: "Admin Login Successful", loginWelcomeMessage: "Welcome, {name}!", loginErrorTitle: "Admin Login Failed", loginErrorDescRequired: "Email and password are required.", loginErrorDescInvalid: "Invalid email or password. Please check your credentials and try again.", loginErrorDescBlockedStatus: "Blocked", loginSuccessDescActiveStatus: "Active" };
 const fallbackContextToastStrings: AdminContextToastStrings = { logoutSuccessTitle: "Logged Out", logoutSuccessDesc: "You have been successfully logged out from the admin panel.", addManagerSuccessTitle: "Manager Added (Simulated)", addManagerSuccessDesc: "{name} ({email}) has been 'added' as a manager. This change is client-side (localStorage).", addManagerErrorEmailExistsTitle: "Failed to Add Manager", addManagerErrorEmailExistsDesc: "An account with this email address already exists. Please use a different email.", managerBlockedToastTitle: "Manager Blocked", managerUnblockedToastTitle: "Manager Unblocked", managerStatusUpdatedToastDesc: "{name} status updated to {status}.", accountBlockedErrorDesc: "This account is blocked. Please contact an administrator.", managerDetailsUpdatedTitle: "Manager Updated (Simulated)", managerDetailsUpdatedDesc: "Details for {name} have been updated locally.", managerDeletedTitle: "Manager Deleted (Simulated)", managerDeletedDesc: "{name} has been deleted locally."};
 
 interface AdminAuthContextType {
@@ -155,116 +156,110 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [currentAdminLocale, isLoading]);
 
- const login = async (email: string, pass: string): Promise<boolean> => {
+  const login = async (email: string, pass: string): Promise<boolean> => {
     setIsLoading(true);
     const lowerEmail = email.toLowerCase().trim();
     const loginStrings = authStrings.login || fallbackLoginStrings;
     const contextToastStrings = authStrings.contextToasts || fallbackContextToastStrings;
 
     if (!lowerEmail || !pass) {
-        toast({
-            title: loginStrings.loginErrorTitle,
-            description: loginStrings.loginErrorDescRequired,
-            variant: "destructive",
-        });
-        setIsLoading(false);
-        return false;
+      toast({
+        title: loginStrings.loginErrorTitle,
+        description: loginStrings.loginErrorDescRequired,
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return false;
     }
 
-    await new Promise(resolve => setTimeout(resolve, 300)); 
-    
-    let userToLogin = predefinedUsers[lowerEmail];
-    let isDynamicUser = false;
-    
-    if (userToLogin) { // Check predefined users
-        if (userToLogin.password === pass) {
-            setCurrentAdminUser(userToLogin);
-            localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(userToLogin));
-            
-            const startTime = new Date().toISOString();
-            const userAgent = typeof window !== 'undefined' ? navigator.userAgent : 'Unknown';
-            localStorage.setItem(ADMIN_SESSION_START_TIME_KEY, startTime);
-            localStorage.setItem(ADMIN_SESSION_USER_AGENT_KEY, userAgent);
-            setSessionStartTime(startTime);
-            setSessionUserAgent(userAgent);
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-            logAdminAction(userToLogin.email, loginStrings.loginSuccessTitle);
-            toast({
-                title: loginStrings.loginSuccessTitle,
-                description: (loginStrings.loginWelcomeMessage).replace('{name}', userToLogin.name || 'Admin')
-            });
-            router.push('/admin/dashboard');
-            setIsLoading(false);
-            return true;
-        }
-        // If predefined user found but password mismatch, it will fall through to the final error toast.
-    } else { // If not in predefined, check dynamic managers
-        let dynamicManagersForLogin: AdminUser[] = [];
-        try {
-            const storedDynamicManagersRaw = localStorage.getItem(DYNAMIC_MANAGERS_STORAGE_KEY);
-            if (storedDynamicManagersRaw) {
-                const parsed = JSON.parse(storedDynamicManagersRaw);
-                if (Array.isArray(parsed)) {
-                    dynamicManagersForLogin = parsed;
-                }
-            }
-        } catch(e) {
-            console.error("Error parsing dynamic managers during login:", e);
-        }
-        userToLogin = dynamicManagersForLogin.find(manager => manager.email.toLowerCase() === lowerEmail);
-        if (userToLogin) isDynamicUser = true;
-    }
-
-    if (userToLogin && userToLogin.password === pass) { // Check dynamic user password or if predefined user fell through (though unlikely for predefined here)
-        if (isDynamicUser && userToLogin.isBlocked) {
-            logAdminAction(lowerEmail, loginStrings.loginErrorDescBlockedStatus, { reason: "Account blocked" });
-            toast({
-                title: loginStrings.loginErrorTitle,
-                description: contextToastStrings.accountBlockedErrorDesc,
-                variant: "destructive",
-                duration: 5000
-            });
-            setIsLoading(false);
-            return false;
-        }
-        
-        setCurrentAdminUser(userToLogin);
-        localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(userToLogin));
-
+    // Check predefined users first
+    const predefinedUser = predefinedUsers[lowerEmail];
+    if (predefinedUser) {
+      if (predefinedUser.password === pass) {
+        setCurrentAdminUser(predefinedUser);
+        localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(predefinedUser));
         const startTime = new Date().toISOString();
         const userAgent = typeof window !== 'undefined' ? navigator.userAgent : 'Unknown';
         localStorage.setItem(ADMIN_SESSION_START_TIME_KEY, startTime);
         localStorage.setItem(ADMIN_SESSION_USER_AGENT_KEY, userAgent);
         setSessionStartTime(startTime);
         setSessionUserAgent(userAgent);
-        
-        logAdminAction(userToLogin.email, loginStrings.loginSuccessTitle);
+        logAdminAction(predefinedUser.email, loginStrings.loginSuccessTitle || "Admin Login Successful");
         toast({
-            title: loginStrings.loginSuccessTitle,
-            description: (loginStrings.loginWelcomeMessage).replace('{name}', userToLogin.name || 'Admin')
+          title: loginStrings.loginSuccessTitle || "Admin Login Successful",
+          description: (loginStrings.loginWelcomeMessage || "Welcome, {name}!").replace('{name}', predefinedUser.name || 'Admin')
         });
         router.push('/admin/dashboard');
         setIsLoading(false);
         return true;
+      }
     }
-    
-    // If user not found or password incorrect
-    logAdminAction(lowerEmail, loginStrings.loginErrorDescInvalid, { reason: userToLogin ? "Invalid password" : "User not found" });
+
+    // If not a predefined user, check dynamically added managers
+    let dynamicManagersForLogin: AdminUser[] = [];
+    try {
+      const storedDynamicManagersRaw = localStorage.getItem(DYNAMIC_MANAGERS_STORAGE_KEY);
+      if (storedDynamicManagersRaw) {
+        const parsed = JSON.parse(storedDynamicManagersRaw);
+        if (Array.isArray(parsed)) {
+          dynamicManagersForLogin = parsed;
+        }
+      }
+    } catch (e) {
+      console.error("Error parsing dynamic managers during login:", e);
+    }
+    const dynamicManager = dynamicManagersForLogin.find(manager => manager.email.toLowerCase() === lowerEmail);
+
+    if (dynamicManager) {
+      if (dynamicManager.password === pass) {
+        if (dynamicManager.isBlocked) {
+          logAdminAction(lowerEmail, loginStrings.loginErrorDescBlockedStatus || "Blocked", { reason: "Account blocked" });
+          toast({
+            title: loginStrings.loginErrorTitle || "Admin Login Failed",
+            description: contextToastStrings.accountBlockedErrorDesc || "This account is blocked. Please contact an administrator.",
+            variant: "destructive",
+            duration: 5000
+          });
+          setIsLoading(false);
+          return false;
+        }
+        setCurrentAdminUser(dynamicManager);
+        localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(dynamicManager));
+        const startTime = new Date().toISOString();
+        const userAgent = typeof window !== 'undefined' ? navigator.userAgent : 'Unknown';
+        localStorage.setItem(ADMIN_SESSION_START_TIME_KEY, startTime);
+        localStorage.setItem(ADMIN_SESSION_USER_AGENT_KEY, userAgent);
+        setSessionStartTime(startTime);
+        setSessionUserAgent(userAgent);
+        logAdminAction(dynamicManager.email, loginStrings.loginSuccessTitle || "Admin Login Successful");
+        toast({
+          title: loginStrings.loginSuccessTitle || "Admin Login Successful",
+          description: (loginStrings.loginWelcomeMessage || "Welcome, {name}!").replace('{name}', dynamicManager.name || 'Admin')
+        });
+        router.push('/admin/dashboard');
+        setIsLoading(false);
+        return true;
+      }
+    }
+
+    // If user not found or password incorrect after checking both sources
+    logAdminAction(lowerEmail, loginStrings.loginErrorDescInvalid || "Invalid credentials", { reason: "User not found or invalid password" });
     toast({
-        title: loginStrings.loginErrorTitle,
-        description: loginStrings.loginErrorDescInvalid,
-        variant: "destructive",
-        duration: 5000
+      title: loginStrings.loginErrorTitle || "Admin Login Failed",
+      description: loginStrings.loginErrorDescInvalid || "Invalid email or password. Please check your credentials and try again.",
+      variant: "destructive",
+      duration: 5000
     });
     setIsLoading(false);
     return false;
   };
 
   const logout = () => {
-    const loginStrings = authStrings.login || fallbackLoginStrings;
     const contextToastStrings = authStrings.contextToasts || fallbackContextToastStrings;
     const userEmailForLog = currentAdminUser?.email || "Unknown user";
-    logAdminAction(userEmailForLog, contextToastStrings.logoutSuccessTitle);
+    logAdminAction(userEmailForLog, contextToastStrings.logoutSuccessTitle || "Logged Out");
     
     setCurrentAdminUser(null);
     setSessionStartTime(null);
@@ -274,8 +269,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.removeItem(ADMIN_SESSION_USER_AGENT_KEY);
 
     toast({
-        title: contextToastStrings.logoutSuccessTitle,
-        description: contextToastStrings.logoutSuccessDesc
+        title: contextToastStrings.logoutSuccessTitle || "Logged Out",
+        description: contextToastStrings.logoutSuccessDesc || "You have been successfully logged out from the admin panel."
     });
     router.push('/admin/login');
   };
@@ -290,8 +285,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (allCurrentEmails.includes(lowerEmail)) {
         toast({
-          title: contextToastStrings.addManagerErrorEmailExistsTitle,
-          description: contextToastStrings.addManagerErrorEmailExistsDesc,
+          title: contextToastStrings.addManagerErrorEmailExistsTitle || "Failed to Add Manager",
+          description: contextToastStrings.addManagerErrorEmailExistsDesc || "An account with this email address already exists. Please use a different email.",
           variant: "destructive",
           duration: 5000
         });
@@ -313,13 +308,13 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     setDynamicallyAddedManagers(updatedManagers);
     localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
     toast({
-        title: contextToastStrings.addManagerSuccessTitle,
-        description: (contextToastStrings.addManagerSuccessDesc)
+        title: contextToastStrings.addManagerSuccessTitle || "Manager Added (Simulated)",
+        description: (contextToastStrings.addManagerSuccessDesc || "{name} ({email}) has been 'added' as a manager. This change is client-side (localStorage).")
                         .replace('{name}', name)
                         .replace('{email}', email),
     });
     if (currentAdminUser?.email) {
-      logAdminAction(currentAdminUser.email, contextToastStrings.addManagerSuccessTitle, { managerEmail: email, managerName: name });
+      logAdminAction(currentAdminUser.email, contextToastStrings.addManagerSuccessTitle || "Manager Added (Simulated)", { managerEmail: email, managerName: name });
     }
     return true;
   };
@@ -341,16 +336,16 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
     if (toggledManager && currentAdminUser) {
         const actionMessage = toggledManager.isBlocked 
-                                ? contextToastStrings.managerBlockedToastTitle
-                                : contextToastStrings.managerUnblockedToastTitle;
+                                ? (contextToastStrings.managerBlockedToastTitle || "Manager Blocked")
+                                : (contextToastStrings.managerUnblockedToastTitle || "Manager Unblocked");
         logAdminAction(currentAdminUser.email, actionMessage + " (Simulated)", { managerEmail: toggledManager.email, managerName: toggledManager.name });
         toast({
             title: actionMessage,
-            description: (contextToastStrings.managerStatusUpdatedToastDesc)
+            description: (contextToastStrings.managerStatusUpdatedToastDesc || "{name} status updated to {status}.")
                             .replace('{name}', toggledManager.name)
                             .replace('{status}', toggledManager.isBlocked 
-                                                ? loginStrings.loginErrorDescBlockedStatus 
-                                                : loginStrings.loginSuccessDescActiveStatus),
+                                                ? (loginStrings.loginErrorDescBlockedStatus || "Blocked")
+                                                : (loginStrings.loginSuccessDescActiveStatus || "Active")),
         });
     }
   };
@@ -363,8 +358,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     if (lowerNewEmail !== lowerOriginalEmail && 
         (predefinedUsers[lowerNewEmail] || dynamicallyAddedManagers.some(m => m.email.toLowerCase() === lowerNewEmail && m.email.toLowerCase() !== lowerOriginalEmail))) {
       toast({
-        title: contextToastStrings.addManagerErrorEmailExistsTitle,
-        description: contextToastStrings.addManagerErrorEmailExistsDesc,
+        title: contextToastStrings.addManagerErrorEmailExistsTitle || "Failed to Add Manager",
+        description: contextToastStrings.addManagerErrorEmailExistsDesc || "An account with this email address already exists. Please use a different email.",
         variant: "destructive",
       });
       return false;
@@ -383,11 +378,11 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       setDynamicallyAddedManagers(updatedManagers);
       localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
       toast({
-        title: contextToastStrings.managerDetailsUpdatedTitle,
-        description: (contextToastStrings.managerDetailsUpdatedDesc).replace('{name}', newName),
+        title: contextToastStrings.managerDetailsUpdatedTitle || "Manager Updated (Simulated)",
+        description: (contextToastStrings.managerDetailsUpdatedDesc || "Details for {name} have been updated locally.").replace('{name}', newName),
       });
        if (currentAdminUser?.email) {
-        logAdminAction(currentAdminUser.email, contextToastStrings.managerDetailsUpdatedTitle, { oldEmail: originalEmail, newEmail, newName });
+        logAdminAction(currentAdminUser.email, contextToastStrings.managerDetailsUpdatedTitle || "Manager Updated (Simulated)", { oldEmail: originalEmail, newEmail, newName });
       }
       return true;
     }
@@ -413,11 +408,11 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       setDynamicallyAddedManagers(updatedManagers);
       localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
       toast({
-        title: contextToastStrings.managerDeletedTitle,
-        description: (contextToastStrings.managerDeletedDesc).replace('{name}', managerName),
+        title: contextToastStrings.managerDeletedTitle || "Manager Deleted (Simulated)",
+        description: (contextToastStrings.managerDeletedDesc || "{name} has been deleted locally.").replace('{name}', managerName),
       });
        if (currentAdminUser?.email) {
-        logAdminAction(currentAdminUser.email, contextToastStrings.managerDeletedTitle, { deletedManagerEmail: emailToDelete, deletedManagerName: managerName });
+        logAdminAction(currentAdminUser.email, contextToastStrings.managerDeletedTitle || "Manager Deleted (Simulated)", { deletedManagerEmail: emailToDelete, deletedManagerName: managerName });
       }
       return true;
     }
@@ -458,6 +453,5 @@ export const useAdminAuth = () => {
   }
   return context;
 };
-    
 
     
