@@ -13,6 +13,7 @@ import type enAdminMessages from '@/admin/dictionaries/en.json';
 
 type AdminLoginStrings = typeof enAdminMessages.adminLoginPage;
 type AdminContextToastStrings = typeof enAdminMessages.adminContextToasts;
+type AdminUsersPageStrings = typeof enAdminMessages.adminUsersPage;
 
 interface AdminAuthContextType {
   currentAdminUser: AdminUser | null;
@@ -25,7 +26,9 @@ interface AdminAuthContextType {
   predefinedUsers: Record<string, AdminUser>;
   dynamicallyAddedManagers: AdminUser[];
   addManager: (name: string, email: string, pass: string) => Promise<boolean>;
-  toggleBlockManagerStatus: (email: string) => Promise<void>;
+  toggleBlockManagerStatus: (emailToToggle: string) => Promise<void>;
+  updateManagerDetails: (originalEmail: string, newName: string, newEmail: string) => Promise<boolean>;
+  deleteManager: (emailToDelete: string) => Promise<boolean>;
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
@@ -34,23 +37,23 @@ const ADMIN_STORAGE_KEY = 'askimAdminUser';
 const DYNAMIC_MANAGERS_STORAGE_KEY = 'askimDynamicManagers';
 
 const initialPredefinedUsers: Record<string, AdminUser> = {
-  'admin@askimcandles.com': { // Updated email
+  'admin@askimcandles.com': {
     id: 'admin001',
     email: 'admin@askimcandles.com',
     name: 'Store Administrator',
     role: 'ADMIN',
     password: 'adminpass',
-    isBlocked: false,
     isPredefined: true,
+    isBlocked: false,
   },
-  'manager@askimcandles.com': { // Updated email
+  'manager@askimcandles.com': {
     id: 'manager001',
     email: 'manager@askimcandles.com',
     name: 'Store Manager',
     role: 'MANAGER',
     password: 'managerpass',
-    isBlocked: false,
     isPredefined: true,
+    isBlocked: false,
   },
 };
 
@@ -64,7 +67,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [predefinedUsers] = useState<Record<string, AdminUser>>(initialPredefinedUsers);
   const [dynamicallyAddedManagers, setDynamicallyAddedManagers] = useState<AdminUser[]>([]);
   const [currentAdminLocale, setCurrentAdminLocale] = useState<AdminLocale>(i18nAdmin.defaultLocale);
-  const [authStrings, setAuthStrings] = useState<{ login: AdminLoginStrings | null, contextToasts: AdminContextToastStrings | null }>({ login: null, contextToasts: null });
+  const [authStrings, setAuthStrings] = useState<{ login: AdminLoginStrings | null, contextToasts: AdminContextToastStrings | null, usersPage: AdminUsersPageStrings | null }>({ login: null, contextToasts: null, usersPage: null });
 
   useEffect(() => {
     const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
@@ -72,8 +75,22 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     setCurrentAdminLocale(localeToLoad);
 
     async function loadTranslations() {
-      const dict = await getAdminDictionary(localeToLoad);
-      setAuthStrings({ login: dict.adminLoginPage, contextToasts: dict.adminContextToasts });
+      try {
+        const dict = await getAdminDictionary(localeToLoad);
+        setAuthStrings({ 
+          login: dict.adminLoginPage, 
+          contextToasts: dict.adminContextToasts,
+          usersPage: dict.adminUsersPage
+        });
+      } catch (error) {
+        console.error("Failed to load admin translations for context:", error);
+        // Set default/fallback strings if loading fails
+        setAuthStrings({
+          login: { /* English fallbacks */ title: "Admin Panel", description: "Please sign in.", emailLabel: "Email Address", emailPlaceholder: "admin@example.com", passwordLabel: "Password", passwordPlaceholder: "••••••••", signInButton: "Sign In", signingInButton: "Signing In...", restrictedAccess: "Access to this panel is restricted.", loading: "Loading admin panel...", loginSuccessTitle: "Admin Login Successful", loginWelcomeMessage: "Welcome, {name}!", loginErrorTitle: "Admin Login Failed", loginErrorDescRequired: "Email and password are required.", loginErrorDescInvalid: "Invalid email or password.", loginErrorDescBlockedStatus: "Blocked", loginSuccessDescActiveStatus: "Active" },
+          contextToasts: { /* English fallbacks */ logoutSuccessTitle: "Logged Out", logoutSuccessDesc: "You have been successfully logged out.", addManagerSuccessTitle: "Manager Added (Simulated)", addManagerSuccessDesc: "{name} ({email}) has been 'added' as a manager.", addManagerErrorEmailExistsTitle: "Failed to Add Manager", addManagerErrorEmailExistsDesc: "An account with this email already exists.", managerBlockedToastTitle: "Manager Blocked", managerUnblockedToastTitle: "Manager Unblocked", managerStatusUpdatedToastDesc: "{name} status updated to {status}.", accountBlockedErrorDesc: "This account is blocked.", managerDetailsUpdatedTitle: "Manager Updated (Simulated)", managerDetailsUpdatedDesc: "Details for {name} have been updated locally.", managerDeletedTitle: "Manager Deleted (Simulated)", managerDeletedDesc: "{name} has been deleted locally." },
+          usersPage: { /* English fallbacks */ title:"Manage Users & Managers", description:"View users, assign roles, and manage manager accounts. (ADMIN Only)", addNewManagerButton:"Add New Manager", managerListTitle:"Manager List", managerListDesc:"Displaying {count} managers. Manager data is simulated.", nameHeader:"Name", emailHeader:"Email", roleHeader:"Role", statusHeader:"Status", actionsHeader:"Actions", statusActive:"Active", statusBlocked:"Blocked", blockUserAction:"Block", unblockUserAction:"Unblock", changeRoleButton:"Change Role", changeRoleModalTitle:"Change Role for {name}", changeRoleModalDesc:"Select a new role for this user. This is a simulated action.", currentRoleLabel:"Current Role:", newRoleLabel:"New Role:", selectRolePlaceholder:"Select a role", roleAdmin:"Administrator", roleManager:"Manager", roleUser:"User (Main Site)", saveRoleButton:"Save Role (Simulated)", cancelButton:"Cancel", closeButton:"Close", permissionsButton:"Permissions", permissionsButtonTitle:"Manage Permissions (Coming Soon)", permissionsModalTitle:"Permissions for {name}", permissionsModalDesc:"Granular permission management is a future feature.", permissionsFeatureComingSoon:"Full permission management requires backend integration.", manageProductsPermission:"Manage Products", manageOrdersPermission:"Manage Orders", manageDiscountsPermission:"Manage Discounts", predefinedUserBadge:"Predefined", currentUserAdminBadge:"Current Admin", noManagersFound:"No managers found.", mainSiteUserManagementNote:"Main site user management will require database integration.", simulationNote:"Note: Manager additions and status changes are simulated via localStorage.", loadingPage:"Loading User Management...", accessDeniedTitle:"Access Denied", accessDeniedDesc:"You do not have permission to view this page.", roleChangeSimulatedTitle:"Role Change (Simulated)", roleChangeSimulatedDesc:"Role for {name} 'changed' to {role}.", viewProfileAction: "View Profile", editManagerAction: "Edit Manager", deleteManagerAction: "Delete Manager", viewProfileModalTitle: "User Profile: {name}", nameLabel: "Name:", emailLabel: "Email:", statusLabel: "Status:", editManagerModalTitle: "Edit Manager: {name}", editManagerModalDesc: "Modify the manager's information below.", saveChangesButton: "Save Changes", editManagerSuccessTitle: "Manager Updated (Simulated)", editManagerSuccessDesc: "Details for {name} have been updated.", deleteManagerConfirmTitle: "Confirm Manager Deletion", deleteManagerConfirmDesc: "Are you sure you want to delete manager {name}? This action is simulated and cannot be undone for this session.", deleteConfirmButton: "Delete", deleteManagerSuccessTitle: "Manager Deleted (Simulated)", deleteManagerSuccessDesc: "Manager {name} has been 'deleted'." }
+        });
+      }
     }
     loadTranslations();
 
@@ -109,12 +126,21 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    async function loadTranslations() {
-      const dict = await getAdminDictionary(currentAdminLocale);
-      setAuthStrings({ login: dict.adminLoginPage, contextToasts: dict.adminContextToasts });
+    async function loadTranslationsOnLocaleChange() {
+      try {
+        const dict = await getAdminDictionary(currentAdminLocale);
+        setAuthStrings({ 
+            login: dict.adminLoginPage, 
+            contextToasts: dict.adminContextToasts,
+            usersPage: dict.adminUsersPage
+        });
+      } catch (error) {
+         console.error("Failed to load admin translations on locale change:", error);
+         // Potentially set fallbacks again or handle error
+      }
     }
     if (!isLoading) { 
-      loadTranslations();
+      loadTranslationsOnLocaleChange();
     }
   }, [currentAdminLocale, isLoading]);
 
@@ -198,8 +224,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password: pass,
         role: 'MANAGER',
-        isBlocked: false, // Initialize as not blocked
-        isPredefined: false, // Mark as not predefined
+        isBlocked: false,
+        isPredefined: false,
     };
     const updatedManagers = [...dynamicallyAddedManagers, newManager];
     setDynamicallyAddedManagers(updatedManagers);
@@ -230,16 +256,87 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
 
     if (toggledManager && currentAdminUser) {
-        const actionMessage = toggledManager.isBlocked ? (authStrings.contextToasts?.managerBlockedToastTitle || "Manager Blocked") 
-                                                    : (authStrings.contextToasts?.managerUnblockedToastTitle || "Manager Unblocked");
+        const actionMessage = toggledManager.isBlocked 
+                                ? (authStrings.contextToasts?.managerBlockedToastTitle || "Manager Blocked") 
+                                : (authStrings.contextToasts?.managerUnblockedToastTitle || "Manager Unblocked");
         logAdminAction(currentAdminUser.email, actionMessage + " (Simulated)", { managerEmail: toggledManager.email, managerName: toggledManager.name });
         toast({
             title: actionMessage,
             description: (authStrings.contextToasts?.managerStatusUpdatedToastDesc || "{name} status updated to {status}.")
                             .replace('{name}', toggledManager.name)
-                            .replace('{status}', toggledManager.isBlocked ? (authStrings.login?.loginErrorDescBlockedStatus || 'Blocked') : (authStrings.login?.loginSuccessDescActiveStatus || 'Active')),
+                            .replace('{status}', toggledManager.isBlocked 
+                                                ? (authStrings.login?.loginErrorDescBlockedStatus || 'Blocked') 
+                                                : (authStrings.login?.loginSuccessDescActiveStatus || 'Active')),
         });
     }
+  };
+
+  const updateManagerDetails = async (originalEmail: string, newName: string, newEmail: string): Promise<boolean> => {
+    const lowerOriginalEmail = originalEmail.toLowerCase();
+    const lowerNewEmail = newEmail.toLowerCase();
+    
+    // Check if the new email already exists (excluding the current manager being edited)
+    if (lowerNewEmail !== lowerOriginalEmail && 
+        (predefinedUsers[lowerNewEmail] || dynamicallyAddedManagers.some(m => m.email.toLowerCase() === lowerNewEmail))) {
+      toast({
+        title: authStrings.contextToasts?.addManagerErrorEmailExistsTitle || "Failed to Update Manager",
+        description: authStrings.contextToasts?.addManagerErrorEmailExistsDesc || "An account with the new email address already exists.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    let managerUpdated = false;
+    const updatedManagers = dynamicallyAddedManagers.map(manager => {
+      if (manager.email.toLowerCase() === lowerOriginalEmail) {
+        managerUpdated = true;
+        return { ...manager, name: newName, email: newEmail };
+      }
+      return manager;
+    });
+
+    if (managerUpdated) {
+      setDynamicallyAddedManagers(updatedManagers);
+      localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
+      toast({
+        title: authStrings.contextToasts?.managerDetailsUpdatedTitle || "Manager Updated (Simulated)",
+        description: (authStrings.contextToasts?.managerDetailsUpdatedDesc || "Details for {name} have been updated locally.").replace('{name}', newName),
+      });
+       if (currentAdminUser?.email) {
+        logAdminAction(currentAdminUser.email, "Manager Details Updated (Simulated)", { oldEmail: originalEmail, newEmail, newName });
+      }
+      return true;
+    }
+    return false; 
+  };
+
+  const deleteManager = async (emailToDelete: string): Promise<boolean> => {
+    const lowerEmailToDelete = emailToDelete.toLowerCase();
+    let managerFoundAndDeleted = false;
+    let managerName = "Unknown";
+
+    const updatedManagers = dynamicallyAddedManagers.filter(manager => {
+      if (manager.email.toLowerCase() === lowerEmailToDelete) {
+        managerName = manager.name;
+        managerFoundAndDeleted = true;
+        return false; // Exclude this manager
+      }
+      return true;
+    });
+
+    if (managerFoundAndDeleted) {
+      setDynamicallyAddedManagers(updatedManagers);
+      localStorage.setItem(DYNAMIC_MANAGERS_STORAGE_KEY, JSON.stringify(updatedManagers));
+      toast({
+        title: authStrings.contextToasts?.managerDeletedTitle || "Manager Deleted (Simulated)",
+        description: (authStrings.contextToasts?.managerDeletedDesc || "{name} has been deleted locally.").replace('{name}', managerName),
+      });
+       if (currentAdminUser?.email) {
+        logAdminAction(currentAdminUser.email, "Manager Deleted (Simulated)", { deletedManagerEmail: emailToDelete, deletedManagerName: managerName });
+      }
+      return true;
+    }
+    return false;
   };
 
   const role = currentAdminUser?.role || null;
@@ -265,7 +362,9 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         predefinedUsers,
         dynamicallyAddedManagers,
         addManager,
-        toggleBlockManagerStatus
+        toggleBlockManagerStatus,
+        updateManagerDetails,
+        deleteManager
     }}>
       {children}
     </AdminAuthContext.Provider>
@@ -279,3 +378,4 @@ export const useAdminAuth = () => {
   }
   return context;
 };
+
