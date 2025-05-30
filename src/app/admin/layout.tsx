@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { AdminAuthProvider, useAdminAuth } from '@/contexts/AdminAuthContext';
@@ -8,9 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose, SheetTrigger } from '@/components/ui/sheet';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
-  LayoutDashboard, Package, ShoppingCart, Users as ClientsIcon, Megaphone, FileOutput, Landmark, Percent,
+  LayoutDashboard, Package, FileText as ArticlesIcon, Tags, ShoppingCart, Users as ClientsIcon, Megaphone, FileOutput, Landmark, Percent,
   FileText as ContentIcon, Settings, LogOut, Menu, ShieldCheck, UserCog as UserManagementIcon,
-  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Tags, ChevronDown, FileText as ArticlesIcon, Beaker, Wind, Users // Added Users for Sessions
+  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Users, ChevronDown, Beaker, Wind
 } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
@@ -20,7 +20,7 @@ import { i18nAdmin, type AdminLocale } from '@/admin/lib/i18n-config-admin';
 import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
 import type enAdminMessages from '@/admin/dictionaries/en.json';
 import { useIsMobile } from '@/hooks/use-mobile';
-import '../globals.css';
+import '../globals.css'; // Ensure admin panel also gets global styles
 
 type AdminDictionary = typeof enAdminMessages;
 type AdminLayoutStrings = AdminDictionary['adminLayout'];
@@ -55,7 +55,7 @@ const navItems: NavItem[] = [
   { href: '/admin/discounts', labelKey: 'discounts', icon: Percent, managerOrAdmin: true },
   { href: '/admin/content', labelKey: 'content', icon: ContentIcon, managerOrAdmin: true },
   { href: '/admin/logs', labelKey: 'logs', icon: History, adminOnly: true },
-  { href: '/admin/sessions', labelKey: 'sessions', icon: Users, adminOnly: true }, // New Sessions Link
+  { href: '/admin/sessions', labelKey: 'sessions', icon: Users, adminOnly: true },
   { href: '/admin/settings', labelKey: 'settings', icon: Settings, adminOnly: true },
   { href: '/admin/users', labelKey: 'management', icon: UserManagementIcon, adminOnly: true },
 ];
@@ -122,11 +122,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [isLoadingAuth, currentAdminUser, pathname, router]);
 
-  if (isLoadingAuth || !dictionary) {
-    return <div className="flex h-screen items-center justify-center bg-muted"><p>Loading Admin Panel...</p></div>;
+  if (isLoadingAuth || !dictionary || !isClient) {
+    return <div className="flex h-screen items-center justify-center bg-muted"><p>{dictionary?.loading || "Loading Admin Panel..."}</p></div>;
   }
   
-  if (pathname !== '/admin/login' && isClient && isMobile && currentAdminUser) {
+  // Mobile restriction: If on mobile AND not on the login page, show the restriction message.
+  if (isMobile && pathname !== '/admin/login') {
     return (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-8 text-center">
             <ShieldCheck className="h-16 w-16 text-primary mb-6" />
@@ -147,7 +148,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     return <>{children}</>;
   }
   
-  if (!currentAdminUser) return null; 
+  if (!currentAdminUser) {
+      // This case should ideally be handled by the redirect in useEffect.
+      // Showing loading or null is safer than trying to render admin UI.
+      return <div className="flex h-screen items-center justify-center bg-muted"><p>Redirecting to login...</p></div>;
+  }
 
   const filteredNavItems = navItems.filter(item => {
     if (item.adminOnly) return isAdmin;
@@ -172,24 +177,28 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     </DropdownMenu>
   );
 
-  const renderNavItem = (item: NavItem, isMobileContext: boolean, isSidebarActuallyCollapsed: boolean) => {
+  const renderNavItem = (item: NavItem, isMobileNav: boolean, isCollapsedNav: boolean) => {
     const label = dictionary[item.labelKey] || item.labelKey;
     const isActive = pathname === item.href || (item.href !== '/admin/dashboard' && item.href !== '#!' && pathname.startsWith(item.href));
     const isParentOfActive = item.subItems?.some(subItem => pathname.startsWith(subItem.href));
-    const isDesktopExpanded = !isMobileContext && !isSidebarActuallyCollapsed;
 
-    if (item.isAccordion && isDesktopExpanded) {
+    const commonButtonClasses = "w-full text-sm h-9 flex items-center group hover:bg-muted/80 focus:bg-muted/80 rounded-md transition-colors duration-100 ease-in-out justify-between";
+    const commonIconClasses = "h-5 w-5 shrink-0";
+    const textSpanClasses = "truncate flex-1 text-left";
+
+    if (item.isAccordion && !isMobileNav && !isCollapsedNav) {
       return (
         <AccordionItem value={item.labelKey} key={item.labelKey} className="border-b-0">
           <AccordionTrigger
             className={cn(
-              "w-full text-sm h-9 flex items-center group hover:bg-muted/80 focus:bg-muted/80 rounded-md transition-colors duration-100 ease-in-out justify-between px-2 py-1.5",
-              (isParentOfActive || isActive) && "bg-muted font-semibold" 
+              commonButtonClasses,
+              "px-2 py-1.5",
+              (isParentOfActive || isActive) && "bg-muted font-semibold"
             )}
           >
             <div className="flex items-center">
-              <item.icon className="h-5 w-5 shrink-0 mr-3" />
-              <span className="truncate flex-1 text-left">{label}</span>
+              <item.icon className={cn(commonIconClasses, "mr-3")} />
+              <span className={textSpanClasses}>{label}</span>
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-0 pb-0 pl-2">
@@ -218,44 +227,44 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       );
     }
     
-    if (item.subItems && (isMobileContext || (isSidebarActuallyCollapsed && !item.isAccordion) )) {
+    if (item.subItems && (isMobileNav || (isCollapsedNav && !item.isAccordion) )) {
        return (
-        <DropdownMenu key={item.href}>
-          <TooltipProvider delayDuration={isMobileContext || !isSidebarActuallyCollapsed ? 999999 : 0}>
+        <DropdownMenu key={item.labelKey}>
+          <TooltipProvider delayDuration={isMobileNav || !isCollapsedNav ? 999999 : 0}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant={isActive || isParentOfActive ? 'secondary' : 'ghost'}
                     className={cn(
-                      "w-full text-sm h-9 flex items-center group hover:bg-muted/80",
-                      isSidebarActuallyCollapsed && !isMobileContext ? "justify-center px-2" : "justify-start px-2",
+                      commonButtonClasses, "py-1.5",
+                      isCollapsedNav && !isMobileNav ? "justify-center px-2" : "justify-start px-2",
                       (isActive || isParentOfActive) && "font-semibold"
                     )}
-                    title={isSidebarActuallyCollapsed && !isMobileContext ? label : undefined}
+                    title={isCollapsedNav && !isMobileNav ? label : undefined}
                   >
-                    <item.icon className={cn("h-5 w-5 shrink-0", isSidebarActuallyCollapsed && !isMobileContext ? "" : "mr-3")} />
-                    {(!isSidebarActuallyCollapsed || isMobileContext) && <span className="truncate flex-1 text-left">{label}</span>}
-                    {(!isSidebarActuallyCollapsed || isMobileContext) && <ChevronDown className="h-4 w-4 ml-auto shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform" />}
+                    <item.icon className={cn(commonIconClasses, isCollapsedNav && !isMobileNav ? "" : "mr-3")} />
+                    {(!isCollapsedNav || isMobileNav) && <span className={textSpanClasses}>{label}</span>}
+                    {(!isCollapsedNav || isMobileNav) && <ChevronDown className="h-4 w-4 ml-auto shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform" />}
                   </Button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>
-              {(isSidebarActuallyCollapsed && !isMobileContext) && (
+              {(isCollapsedNav && !isMobileNav) && (
                 <TooltipContent side="right" className="bg-foreground text-background ml-2">{label}</TooltipContent>
               )}
             </Tooltip>
           </TooltipProvider>
           <DropdownMenuContent 
-            side={isMobileContext ? "bottom" : "right"} 
-            align={isMobileContext ? "center" : "start"} 
-            sideOffset={isMobileContext ? 4 : (isSidebarActuallyCollapsed ? (isMobile ? 4 : 2) : 8)}
-            className={cn("z-50", isMobileContext ? "w-[calc(100vw-4rem)]" : "min-w-[180px]")}
+            side={isMobileNav ? "bottom" : "right"} 
+            align={isMobileNav ? "center" : "start"} 
+            sideOffset={isMobileNav ? 4 : (isCollapsedNav ? (isMobile ? 4 : 2) : 8)}
+            className={cn("z-50", isMobileNav ? "w-[calc(100vw-4rem)]" : "min-w-[180px]")}
           >
             {item.subItems?.filter(subItem => subItem.adminOnly ? isAdmin : (subItem.managerOrAdmin ? (isManager || isAdmin) : true)).map(subItem => {
               const subLabel = dictionary[subItem.labelKey] || subItem.labelKey;
               return (
                 <DropdownMenuItem key={subItem.href} asChild>
-                  <Link href={subItem.href} onClick={() => isMobileContext && setIsMobileMenuOpen(false)}
+                  <Link href={subItem.href} onClick={() => isMobileNav && setIsMobileMenuOpen(false)}
                     className={cn("flex items-center gap-2", pathname === subItem.href && "bg-muted text-foreground font-semibold")}
                   >
                     <subItem.icon className="h-4 w-4" />
@@ -271,21 +280,21 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
     // Regular Link
     return (
-      <TooltipProvider key={item.href} delayDuration={isMobileContext || !isSidebarActuallyCollapsed ? 999999 : 0}>
+      <TooltipProvider key={item.labelKey} delayDuration={isMobileNav || !isCollapsedNav ? 999999 : 0}>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Link href={item.href} onClick={() => isMobileContext && setIsMobileMenuOpen(false)}>
+            <Link href={item.href} onClick={() => isMobileNav && setIsMobileMenuOpen(false)}>
               <Button
                 variant={isActive ? 'secondary' : 'ghost'}
-                className={cn("w-full text-sm h-9 hover:bg-muted/80", isSidebarActuallyCollapsed && !isMobileContext ? "justify-center px-2" : "justify-start px-2")}
-                title={isSidebarActuallyCollapsed && !isMobileContext ? label : undefined}
+                className={cn(commonButtonClasses, "px-2 py-1.5", isCollapsedNav && !isMobileNav ? "justify-center px-2" : "justify-start px-2")}
+                title={isCollapsedNav && !isMobileNav ? label : undefined}
               >
-                <item.icon className={cn("h-5 w-5 shrink-0", isSidebarActuallyCollapsed && !isMobileContext ? "" : "mr-3")} />
-                {(!isSidebarActuallyCollapsed || isMobileContext) && <span className="truncate">{label}</span>}
+                <item.icon className={cn(commonIconClasses, isCollapsedNav && !isMobileNav ? "" : "mr-3")} />
+                {(!isCollapsedNav || isMobileNav) && <span className={textSpanClasses}>{label}</span>}
               </Button>
             </Link>
           </TooltipTrigger>
-          {(isSidebarActuallyCollapsed && !isMobileContext) && (
+          {(isCollapsedNav && !isMobileNav) && (
             <TooltipContent side="right" className="bg-foreground text-background ml-2">{label}</TooltipContent>
           )}
         </Tooltip>
@@ -294,24 +303,24 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   };
 
   const SidebarNav = ({ isMobileNav = false, isCollapsedNav = false }: { isMobileNav?: boolean, isCollapsedNav?: boolean }) => {
-    const isDesktopExpanded = !isMobileNav && !isCollapsedNav;
+    const isDesktopExpandedAccordionContext = !isMobileNav && !isCollapsedNav;
 
-    if (isDesktopExpanded) {
+    if (isDesktopExpandedAccordionContext) {
       return (
         <Accordion type="multiple" className="w-full px-2 py-4 space-y-0.5">
-          {filteredNavItems.map((item) => renderNavItem(item, false, false))}
+          {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav))}
         </Accordion>
       );
-    } else {
-      return (
-        <nav className={cn("flex flex-col space-y-1 py-4", isCollapsedNav ? "px-2 items-center" : "px-2")}>
-          {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav))}
-        </nav>
-      );
     }
+    // For mobile or collapsed desktop, render items directly without outer Accordion wrapper
+    return (
+      <nav className={cn("flex flex-col space-y-1 py-4", isCollapsedNav ? "px-2 items-center" : "px-2")}>
+        {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav))}
+      </nav>
+    );
   };
   
-  const userRoleDisplay = currentAdminUser?.role ? dictionary.role.replace('{role}', currentAdminUser.role) : '';
+  const userRoleDisplay = currentAdminUser?.role ? (dictionary.role.replace('{role}', currentAdminUser.role) || currentAdminUser.role) : '';
 
   return (
     <div className="flex min-h-screen bg-muted/40 text-foreground">
@@ -333,7 +342,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           <SidebarNav isCollapsedNav={isSidebarCollapsed} />
         </div>
         <div className={cn("border-t shrink-0 px-2 py-3 mt-auto", isSidebarCollapsed ? "px-2 py-3" : "px-6 py-4")}>
-            <div className={cn("leading-tight mb-2", isSidebarCollapsed ? "hidden" : "")}>
+            <div className={cn("leading-tight mb-3", isSidebarCollapsed ? "hidden" : "")}>
                 <p className="font-semibold truncate text-sm">{currentAdminUser?.name}</p>
                 <p className="text-xs text-muted-foreground flex items-center">
                     <ShieldCheck className="h-3 w-3 mr-1 text-primary"/> {userRoleDisplay}
@@ -380,8 +389,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                     <SheetContent side="left" className="flex flex-col p-0 w-3/4 max-w-xs text-foreground bg-background">
                        <SheetHeader className="flex flex-row justify-between items-center border-b p-4 shrink-0">
                            <Link href="/admin/dashboard" onClick={() => setIsMobileMenuOpen(false)} aria-label={dictionary.adminPanelTitle}>
-                               <Logo />
+                               <Logo className="h-7"/>
                            </Link>
+                           <SheetTitle className="sr-only">{dictionary.mobileMenuTitle}</SheetTitle>
                            <SheetClose asChild>
                               <Button variant="ghost" size="icon">
                                  <X className="h-6 w-6" />
@@ -425,11 +435,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         
-        <div className="flex flex-col flex-1">
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <div className="flex flex-col flex-1"> {/* Flex container for main and footer */}
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto"> {/* Main content takes available space */}
                 {children}
             </main>
             <footer className="border-t mt-auto bg-background/50 text-muted-foreground text-xs text-center p-3 shrink-0">
+                {/* TODO: Replace with dynamic version from package.json and actual build/deploy date */}
                 Askim candles Admin Panel v0.1.0 (Simulated) - Last Updated: {new Date().toLocaleDateString()} (Simulated)
             </footer>
         </div>
@@ -440,8 +451,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  // AdminAuthProvider should wrap content that needs admin auth, excluding the login page itself.
   if (pathname === '/admin/login') { 
-    return <AdminAuthProvider>{children}</AdminAuthProvider>;
+    return <AdminAuthProvider>{children}</AdminAuthProvider>; // Login page needs context for login function
   }
   return (
     <AdminAuthProvider>
@@ -449,3 +461,5 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
     </AdminAuthProvider>
   );
 }
+
+    
