@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -75,18 +76,18 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     setIsClient(true);
-    const storedCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
-    setIsSidebarCollapsed(storedCollapsed);
+    if (typeof window !== 'undefined') {
+      const storedCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+      setIsSidebarCollapsed(storedCollapsed);
 
-    const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
-    const initialLocale = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
-    setCurrentLocale(initialLocale);
+      const storedLocale = localStorage.getItem('admin-lang') as AdminLocale | null;
+      const initialLocale = storedLocale && i18nAdmin.locales.includes(storedLocale) ? storedLocale : i18nAdmin.defaultLocale;
+      setCurrentLocale(initialLocale);
 
-    const isDark = localStorage.getItem('admin-theme') === 'dark' ||
-                   (!('admin-theme' in localStorage) && typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    setDarkMode(isDark);
-    if (typeof document !== 'undefined') {
-        document.documentElement.classList.toggle('dark', isDark);
+      const isDark = localStorage.getItem('admin-theme') === 'dark' ||
+                     (!('admin-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      setDarkMode(isDark);
+      document.documentElement.classList.toggle('dark', isDark);
     }
   }, []);
 
@@ -117,19 +118,19 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    if (!isLoadingAuth && !currentAdminUser && pathname !== '/admin/login') {
+    if (isClient && !isLoadingAuth && !currentAdminUser && pathname !== '/admin/login') {
       router.replace('/admin/login');
     }
-  }, [isLoadingAuth, currentAdminUser, pathname, router]);
+  }, [isLoadingAuth, currentAdminUser, pathname, router, isClient]);
 
-  if (isLoadingAuth || !dictionary || !isClient) {
+  if (!isClient || isLoadingAuth || !dictionary) {
     return <div className="flex h-screen items-center justify-center bg-muted"><p>{dictionary?.loading || "Loading Admin Panel..."}</p></div>;
   }
   
   // Mobile restriction: If on mobile AND not on the login page, show the restriction message.
   if (isMobile && pathname !== '/admin/login') {
     return (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-background p-8 text-center">
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background p-8 text-center text-foreground">
             <ShieldCheck className="h-16 w-16 text-primary mb-6" />
             <h2 className="text-2xl font-semibold mb-3">Admin Panel Access</h2>
             <p className="text-muted-foreground mb-6 max-w-md">
@@ -149,8 +150,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
   }
   
   if (!currentAdminUser) {
-      // This case should ideally be handled by the redirect in useEffect.
-      // Showing loading or null is safer than trying to render admin UI.
       return <div className="flex h-screen items-center justify-center bg-muted"><p>Redirecting to login...</p></div>;
   }
 
@@ -185,7 +184,8 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     const commonButtonClasses = "w-full text-sm h-9 flex items-center group hover:bg-muted/80 focus:bg-muted/80 rounded-md transition-colors duration-100 ease-in-out justify-between";
     const commonIconClasses = "h-5 w-5 shrink-0";
     const textSpanClasses = "truncate flex-1 text-left";
-
+    
+    // Accordion for desktop expanded sidebar
     if (item.isAccordion && !isMobileNav && !isCollapsedNav) {
       return (
         <AccordionItem value={item.labelKey} key={item.labelKey} className="border-b-0">
@@ -227,6 +227,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       );
     }
     
+    // Dropdown for mobile or collapsed desktop sidebar if subItems exist
     if (item.subItems && (isMobileNav || (isCollapsedNav && !item.isAccordion) )) {
        return (
         <DropdownMenu key={item.labelKey}>
@@ -255,9 +256,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </Tooltip>
           </TooltipProvider>
           <DropdownMenuContent 
-            side={isMobileNav ? "bottom" : "right"} 
-            align={isMobileNav ? "center" : "start"} 
-            sideOffset={isMobileNav ? 4 : (isCollapsedNav ? (isMobile ? 4 : 2) : 8)}
+            side={isMobileNav ? "bottom" : (isCollapsedNav ? "right" : "bottom")} 
+            align={isMobileNav ? "center" : (isCollapsedNav ? "start" : "start")} 
+            sideOffset={isMobileNav ? 4 : (isCollapsedNav ? 2 : 8)}
             className={cn("z-50", isMobileNav ? "w-[calc(100vw-4rem)]" : "min-w-[180px]")}
           >
             {item.subItems?.filter(subItem => subItem.adminOnly ? isAdmin : (subItem.managerOrAdmin ? (isManager || isAdmin) : true)).map(subItem => {
@@ -312,7 +313,6 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         </Accordion>
       );
     }
-    // For mobile or collapsed desktop, render items directly without outer Accordion wrapper
     return (
       <nav className={cn("flex flex-col space-y-1 py-4", isCollapsedNav ? "px-2 items-center" : "px-2")}>
         {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav))}
@@ -341,7 +341,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         <div className="flex-1 overflow-y-auto">
           <SidebarNav isCollapsedNav={isSidebarCollapsed} />
         </div>
-        <div className={cn("border-t shrink-0 px-2 py-3 mt-auto", isSidebarCollapsed ? "px-2 py-3" : "px-6 py-4")}>
+        <div className={cn("border-t shrink-0 mt-auto", isSidebarCollapsed ? "px-2 py-3" : "px-6 py-4")}>
             <div className={cn("leading-tight mb-3", isSidebarCollapsed ? "hidden" : "")}>
                 <p className="font-semibold truncate text-sm">{currentAdminUser?.name}</p>
                 <p className="text-xs text-muted-foreground flex items-center">
@@ -435,12 +435,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         
-        <div className="flex flex-col flex-1"> {/* Flex container for main and footer */}
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto"> {/* Main content takes available space */}
+        <div className="flex flex-col flex-1">
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                 {children}
             </main>
             <footer className="border-t mt-auto bg-background/50 text-muted-foreground text-xs text-center p-3 shrink-0">
-                {/* TODO: Replace with dynamic version from package.json and actual build/deploy date */}
                 Askim candles Admin Panel v0.1.0 (Simulated) - Last Updated: {new Date().toLocaleDateString()} (Simulated)
             </footer>
         </div>
@@ -450,16 +449,9 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 }
 
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  // AdminAuthProvider should wrap content that needs admin auth, excluding the login page itself.
-  if (pathname === '/admin/login') { 
-    return <AdminAuthProvider>{children}</AdminAuthProvider>; // Login page needs context for login function
-  }
   return (
     <AdminAuthProvider>
       <AdminLayoutContent>{children}</AdminLayoutContent>
     </AdminAuthProvider>
   );
 }
-
-    
