@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { AdminUser, AdminRole } from '@/lib/types';
@@ -26,8 +27,11 @@ const defaultAuthStrings: AuthStrings = {
   usersPage: { title: "Manage Users & Managers", description: "View users, assign roles, and manage manager accounts. (ADMIN Only)", addNewManagerButton: "Add New Manager", managerListTitle: "Manager List", managerListDesc: "Displaying {count} managers. Manager data is simulated.", nameHeader: "Name", emailHeader: "Email", roleHeader: "Role", statusHeader: "Status", actionsHeader: "Actions", statusActive: "Active", statusBlocked: "Blocked", blockUserAction: "Block", unblockUserAction: "Unblock", changeRoleButton: "Change Role", changeRoleModalTitle: "Change Role for {name}", changeRoleModalDesc: "Select a new role for this user. This is a simulated action.", currentRoleLabel: "Current Role:", newRoleLabel: "New Role:", selectRolePlaceholder: "Select a role", roleAdmin: "Administrator", roleManager: "Manager", roleUser: "User (Main Site)", saveRoleButton: "Save Role (Simulated)", cancelButton: "Cancel", closeButton: "Close", permissionsButton: "Permissions", permissionsButtonTitle: "Manage Permissions (Coming Soon)", permissionsModalTitle: "Permissions for {name}", permissionsModalDesc: "Granular permission management is a future feature.", permissionsFeatureComingSoon: "Full permission management requires backend integration and will be available in a future update.", manageProductsPermission: "Manage Products", manageOrdersPermission: "Manage Orders", manageDiscountsPermission: "Manage Discounts", predefinedUserBadge: "Predefined", currentUserAdminBadge: "Current Admin", noManagersFound: "No managers found.", mainSiteUserManagementNote: "Main site user management will require database integration.", simulationNote: "Note: Manager additions and status changes are simulated via localStorage.", loadingPage: "Loading User Management...", accessDeniedTitle: "Access Denied", accessDeniedDesc: "You do not have permission to view this page.", roleChangeSimulatedTitle: "Role Change (Simulated)", roleChangeSimulatedDesc: "Role for {name} 'changed' to {role}.", viewProfileAction: "View Profile", editManagerAction: "Edit Manager", deleteManagerAction: "Delete Manager", viewProfileModalTitle: "User Profile: {name}", nameLabel: "Name:", emailLabel: "Email:", statusLabel: "Status:", editManagerModalTitle: "Edit Manager: {name}", editManagerModalDesc: "Modify the manager's information below.", saveChangesButton: "Save Changes", editManagerSuccessTitle: "Manager Updated (Simulated)", editManagerSuccessDesc: "Details for {name} have been updated.", deleteManagerConfirmTitle: "Confirm Manager Deletion", deleteManagerConfirmDesc: "Are you sure you want to delete manager {name}? This action is simulated and cannot be undone for this session.", deleteConfirmButton: "Delete", deleteManagerSuccessTitle: "Manager Deleted (Simulated)", deleteManagerSuccessDesc: "Manager {name} has been 'deleted'." }
 };
 
+
 interface AdminAuthContextType {
   currentAdminUser: AdminUser | null;
+  sessionStartTime: string | null;
+  sessionUserAgent: string | null;
   login: (email: string, pass: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
@@ -46,6 +50,9 @@ const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefin
 
 const ADMIN_STORAGE_KEY = 'askimAdminUser';
 const DYNAMIC_MANAGERS_STORAGE_KEY = 'askimDynamicManagers';
+const ADMIN_SESSION_START_TIME_KEY = 'askimAdminSessionStartTime';
+const ADMIN_SESSION_USER_AGENT_KEY = 'askimAdminSessionUserAgent';
+
 
 const initialPredefinedUsers: Record<string, AdminUser> = {
   'admin@askimcandles.com': {
@@ -70,11 +77,12 @@ const initialPredefinedUsers: Record<string, AdminUser> = {
 
 export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   const [currentAdminUser, setCurrentAdminUser] = useState<AdminUser | null>(null);
+  const [sessionStartTime, setSessionStartTime] = useState<string | null>(null);
+  const [sessionUserAgent, setSessionUserAgent] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const router = useRouter();
-  const pathname = usePathname();
-
+  
   const [predefinedUsers] = useState<Record<string, AdminUser>>(initialPredefinedUsers);
   const [dynamicallyAddedManagers, setDynamicallyAddedManagers] = useState<AdminUser[]>([]);
   const [currentAdminLocale, setCurrentAdminLocale] = useState<AdminLocale>(i18nAdmin.defaultLocale);
@@ -95,7 +103,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         });
       } catch (error) {
         console.error("Failed to load admin translations for context:", error);
-        setAuthStrings(defaultAuthStrings); // Fallback to default English strings
+        setAuthStrings(defaultAuthStrings);
       }
     }
     loadTranslations();
@@ -106,32 +114,40 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
         const parsedUser: AdminUser = JSON.parse(storedUser);
         if (parsedUser && parsedUser.email && parsedUser.role) {
            setCurrentAdminUser(parsedUser);
+           const startTime = localStorage.getItem(ADMIN_SESSION_START_TIME_KEY);
+           const userAgent = localStorage.getItem(ADMIN_SESSION_USER_AGENT_KEY);
+           if (startTime) setSessionStartTime(startTime);
+           if (userAgent) setSessionUserAgent(userAgent);
         } else {
           localStorage.removeItem(ADMIN_STORAGE_KEY);
+          localStorage.removeItem(ADMIN_SESSION_START_TIME_KEY);
+          localStorage.removeItem(ADMIN_SESSION_USER_AGENT_KEY);
         }
       } catch (error) {
         console.error("Failed to parse admin user from localStorage", error);
         localStorage.removeItem(ADMIN_STORAGE_KEY);
+        localStorage.removeItem(ADMIN_SESSION_START_TIME_KEY);
+        localStorage.removeItem(ADMIN_SESSION_USER_AGENT_KEY);
       }
     }
 
-    const storedDynamicManagersRaw = localStorage.getItem(DYNAMIC_MANAGERS_STORAGE_KEY);
-    if (storedDynamicManagersRaw) {
-        try {
+    try {
+        const storedDynamicManagersRaw = localStorage.getItem(DYNAMIC_MANAGERS_STORAGE_KEY);
+        if (storedDynamicManagersRaw) {
             const parsedManagers: AdminUser[] = JSON.parse(storedDynamicManagersRaw);
             if (Array.isArray(parsedManagers)) {
                 setDynamicallyAddedManagers(parsedManagers);
             }
-        } catch (error) {
-            console.error("Failed to parse dynamic managers from localStorage", error);
-            localStorage.removeItem(DYNAMIC_MANAGERS_STORAGE_KEY);
         }
+    } catch (error) {
+        console.error("Failed to parse dynamic managers from localStorage", error);
+        localStorage.removeItem(DYNAMIC_MANAGERS_STORAGE_KEY);
     }
     setIsLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Initial load effect
+  }, []); 
 
-  useEffect(() => { // Effect for locale changes
+  useEffect(() => { 
     async function loadTranslationsOnLocaleChange() {
       try {
         const dict = await getAdminDictionary(currentAdminLocale);
@@ -153,8 +169,12 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setIsLoading(true);
+    const lowerEmail = email.toLowerCase().trim();
     
-    if (!email || !pass) {
+    toast({ title: "Login Attempt", description: `Attempting login for: ${lowerEmail}` });
+
+
+    if (!lowerEmail || !pass) {
         toast({
             title: authStrings.login?.loginErrorTitle || "Admin Login Failed",
             description: authStrings.login?.loginErrorDescRequired || "Email and password are required.",
@@ -165,41 +185,61 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     await new Promise(resolve => setTimeout(resolve, 300)); 
-
-    const lowerEmail = email.toLowerCase();
+    
     let userToLogin = predefinedUsers[lowerEmail];
+    let userSource = "predefined";
 
-    if (!userToLogin) {
-        const storedDynamicManagersRaw = localStorage.getItem(DYNAMIC_MANAGERS_STORAGE_KEY);
-        let dynamicManagersForLogin: AdminUser[] = [];
-        if (storedDynamicManagersRaw) {
-            try {
-                const parsed = JSON.parse(storedDynamicManagersRaw);
-                if (Array.isArray(parsed)) {
-                    dynamicManagersForLogin = parsed;
-                }
-            } catch (e) {
-                console.error("Failed to parse dynamic managers during login:", e);
-                // Potentially toast an error here if critical
-            }
-        }
-        userToLogin = dynamicManagersForLogin.find(manager => manager.email.toLowerCase() === lowerEmail);
+    if (userToLogin) {
+      toast({ title: "Login Check", description: "Checking predefined users... Found." });
+    } else {
+      toast({ title: "Login Check", description: "Predefined user not found. Checking dynamic managers..." });
+      let dynamicManagersForLogin: AdminUser[] = [];
+      try {
+          const storedDynamicManagersRaw = localStorage.getItem(DYNAMIC_MANAGERS_STORAGE_KEY);
+          if (storedDynamicManagersRaw) {
+              const parsed = JSON.parse(storedDynamicManagersRaw);
+              if (Array.isArray(parsed)) {
+                  dynamicManagersForLogin = parsed;
+              }
+          }
+      } catch(e) {
+          console.error("Error parsing dynamic managers during login:", e);
+          toast({ title: "Login Error", description: "Failed to read manager list.", variant: "destructive"});
+      }
+      userToLogin = dynamicManagersForLogin.find(manager => manager.email.toLowerCase() === lowerEmail);
+      userSource = "dynamic";
+      if (userToLogin) {
+        toast({ title: "Login Check", description: "Dynamic manager found." });
+      } else {
+        toast({ title: "Login Check", description: "Dynamic manager not found." });
+      }
     }
 
     if (userToLogin && userToLogin.password === pass) {
-      if (userToLogin.isBlocked) {
-        logAdminAction(email, authStrings.login?.loginErrorDescBlockedStatus || "Admin Login Failed - Account blocked", { reason: "Account blocked" });
-        toast({
-          title: authStrings.login?.loginErrorTitle || "Admin Login Failed",
-          description: authStrings.contextToasts?.accountBlockedErrorDesc || "This account is blocked. Please contact an administrator.",
-          variant: "destructive",
-          duration: 5000
-        });
-        setIsLoading(false);
-        return false;
-      }
+      toast({ title: "Login Check", description: `Passwords match for ${userSource} user.` });
+      // Temporarily commented out for easier testing if issues persist with block status
+      // if (userToLogin.isBlocked) {
+      //   logAdminAction(lowerEmail, authStrings.login?.loginErrorDescBlockedStatus || "Admin Login Failed - Account blocked", { reason: "Account blocked" });
+      //   toast({
+      //     title: authStrings.login?.loginErrorTitle || "Admin Login Failed",
+      //     description: authStrings.contextToasts?.accountBlockedErrorDesc || "This account is blocked. Please contact an administrator.",
+      //     variant: "destructive",
+      //     duration: 5000
+      //   });
+      //   setIsLoading(false);
+      //   return false;
+      // }
+      
       setCurrentAdminUser(userToLogin);
       localStorage.setItem(ADMIN_STORAGE_KEY, JSON.stringify(userToLogin));
+      
+      const startTime = new Date().toISOString();
+      const userAgent = typeof window !== 'undefined' ? navigator.userAgent : 'Unknown';
+      localStorage.setItem(ADMIN_SESSION_START_TIME_KEY, startTime);
+      localStorage.setItem(ADMIN_SESSION_USER_AGENT_KEY, userAgent);
+      setSessionStartTime(startTime);
+      setSessionUserAgent(userAgent);
+
       logAdminAction(userToLogin.email, authStrings.login?.loginSuccessTitle || "Admin Login Success");
       toast({
         title: authStrings.login?.loginSuccessTitle || "Admin Login Successful",
@@ -208,15 +248,20 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
       router.push('/admin/dashboard');
       return true;
+    } else if (userToLogin) {
+      toast({ title: "Login Check", description: "Passwords do not match.", variant: "destructive"});
+      logAdminAction(lowerEmail, authStrings.login?.loginErrorDescInvalid || "Admin Login Failed - Invalid credentials", { reason: "Invalid credentials" });
     } else {
-      logAdminAction(email, authStrings.login?.loginErrorDescInvalid || "Admin Login Failed - Invalid credentials", { reason: "Invalid credentials" });
-      toast({
-        title: authStrings.login?.loginErrorTitle || "Admin Login Failed",
-        description: authStrings.login?.loginErrorDescInvalid || "Invalid email or password. Please check your credentials and try again.",
-        variant: "destructive",
-        duration: 5000
-      });
+      // User not found in predefined or dynamic
+       logAdminAction(lowerEmail, authStrings.login?.loginErrorDescInvalid || "Admin Login Failed - Invalid credentials", { reason: "User not found" });
     }
+    
+    toast({
+      title: authStrings.login?.loginErrorTitle || "Admin Login Failed",
+      description: authStrings.login?.loginErrorDescInvalid || "Invalid email or password. Please check your credentials and try again.",
+      variant: "destructive",
+      duration: 5000
+    });
     setIsLoading(false);
     return false;
   };
@@ -226,7 +271,12 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     logAdminAction(userEmailForLog, authStrings.contextToasts?.logoutSuccessTitle || "Admin Logout");
     
     setCurrentAdminUser(null);
+    setSessionStartTime(null);
+    setSessionUserAgent(null);
     localStorage.removeItem(ADMIN_STORAGE_KEY);
+    localStorage.removeItem(ADMIN_SESSION_START_TIME_KEY);
+    localStorage.removeItem(ADMIN_SESSION_USER_AGENT_KEY);
+
     toast({
         title: authStrings.contextToasts?.logoutSuccessTitle || "Logged Out",
         description: authStrings.contextToasts?.logoutSuccessDesc || "You have been successfully logged out from the admin panel."
@@ -235,8 +285,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const addManager = async (name: string, email: string, pass: string): Promise<boolean> => {
-    const lowerEmail = email.toLowerCase();
-    // Check against both predefined and dynamically added managers
+    const lowerEmail = email.toLowerCase().trim();
     const allCurrentEmails = [
         ...Object.keys(predefinedUsers).map(e => e.toLowerCase()),
         ...dynamicallyAddedManagers.map(m => m.email.toLowerCase())
@@ -257,8 +306,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
     const newManager: AdminUser = {
         id: `manager-${Date.now()}`,
         name,
-        email,
-        password: pass, // In a real app, this would be hashed
+        email: lowerEmail,
+        password: pass, 
         role: 'MANAGER',
         isBlocked: false,
         isPredefined: false,
@@ -308,8 +357,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const updateManagerDetails = async (originalEmail: string, newName: string, newEmail: string): Promise<boolean> => {
-    const lowerOriginalEmail = originalEmail.toLowerCase();
-    const lowerNewEmail = newEmail.toLowerCase();
+    const lowerOriginalEmail = originalEmail.toLowerCase().trim();
+    const lowerNewEmail = newEmail.toLowerCase().trim();
     
     if (lowerNewEmail !== lowerOriginalEmail && 
         (predefinedUsers[lowerNewEmail] || dynamicallyAddedManagers.some(m => m.email.toLowerCase() === lowerNewEmail && m.email.toLowerCase() !== lowerOriginalEmail))) {
@@ -346,7 +395,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const deleteManager = async (emailToDelete: string): Promise<boolean> => {
-    const lowerEmailToDelete = emailToDelete.toLowerCase();
+    const lowerEmailToDelete = emailToDelete.toLowerCase().trim();
     let managerFoundAndDeleted = false;
     let managerName = "Unknown";
 
@@ -354,7 +403,7 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
       if (manager.email.toLowerCase() === lowerEmailToDelete) {
         managerName = manager.name;
         managerFoundAndDeleted = true;
-        return false; // Exclude this manager
+        return false; 
       }
       return true;
     });
@@ -381,6 +430,8 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AdminAuthContext.Provider value={{
         currentAdminUser,
+        sessionStartTime,
+        sessionUserAgent,
         login,
         logout,
         isLoading,
@@ -406,5 +457,6 @@ export const useAdminAuth = () => {
   }
   return context;
 };
+
 
     

@@ -400,6 +400,10 @@
     "nameLabel": "Name:",
     "emailLabel": "Email:",
     "roleLabel": "Role:",
+    "sessionStartTimeLabel": "Session Start Time:",
+    "deviceBrowserLabel": "Device/Browser:",
+    "ipAddressLabel": "IP Address:",
+    "ipAddressNote": "N/A (requires backend)",
     "logoutThisDeviceButton": "Log Out From This Device",
     "otherSessionsTitle": "Other Active Sessions",
     "otherSessionsInfo": "Viewing and managing sessions across all devices (e.g., 'Log out everywhere') is a feature that requires backend database integration to track active sessions centrally. This functionality will be implemented once the backend is in place.",
@@ -408,3 +412,5 @@
     "accessDeniedDesc": "You do not have permission to view this page."
   }
 }
+
+    
