@@ -14,6 +14,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Slash } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import type { Locale } from '@/lib/i1n-config';
+import type { Product } from '@/lib/types'; // Ensure Product type is imported
 
 import enMessages from '@/dictionaries/en.json';
 import ruMessages from '@/dictionaries/ru.json';
@@ -31,7 +32,31 @@ const dictionaries: Record<Locale, Dictionary> = {
 
 const getCartDictionary = (locale: Locale): CartPageDictionary => {
   const dict = dictionaries[locale] || dictionaries.en;
-  return dict.cartPage;
+  return dict.cartPage || { // Fallback to ensure dict.cartPage is never undefined
+    home: "Home",
+    shoppingCartBreadcrumb: "Shopping Cart",
+    yourCartTitle: "Your Shopping Cart",
+    itemRemoved: "Item Removed",
+    itemRemovedDesc: "{productName} has been removed from your cart.",
+    cartCleared: "Cart Cleared",
+    cartClearedDesc: "All items have been removed from your cart.",
+    price: "Price:",
+    quantityFor: "Quantity for {productName}",
+    remove: "Remove {productName} from cart",
+    clearCart: "Clear Cart",
+    orderSummary: "Order Summary",
+    subtotal: "Subtotal",
+    shipping: "Shipping",
+    free: "Free",
+    taxes: "Taxes",
+    calculatedAtCheckout: "Calculated at checkout",
+    total: "Total",
+    proceedToCheckout: "Proceed to Checkout",
+    continueShopping: "Continue Shopping",
+    emptyCartTitle: "Your Cart is Empty",
+    emptyCartSubtitle: "Looks like you haven't added anything yet.",
+    startShopping: "Start Shopping"
+  };
 };
 
 
@@ -48,7 +73,7 @@ export default function CartPage() {
     removeFromCart(productId);
     toast({
       title: dictionary.itemRemoved,
-      description: dictionary.itemRemovedDesc.replace('{name}', productName),
+      description: dictionary.itemRemovedDesc.replace('{productName}', productName),
     });
   };
 
@@ -95,9 +120,9 @@ export default function CartPage() {
             const itemName = item.name[locale] || item.name.en || "Item";
             return (
             <Card key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center p-4 gap-4 shadow-sm">
-              <div className="relative w-full sm:w-24 h-32 sm:h-24 aspect-square rounded-md overflow-hidden shrink-0">
+              <div className="relative w-full sm:w-24 h-32 sm:h-24 aspect-square rounded-md overflow-hidden shrink-0 border">
                 <Image 
-                    src={item.mainImage || item.images[0]} 
+                    src={item.mainImage || (item.images && item.images.length > 0 ? item.images[0] : "https://placehold.co/100x100.png?text=No+Image")}
                     alt={itemName} 
                     fill 
                     className="object-cover" 
@@ -108,18 +133,25 @@ export default function CartPage() {
               <div className="flex-grow space-y-1">
                 <Link href={`/${locale}/products/${item.id}`} className="text-lg font-medium hover:text-primary">{itemName}</Link>
                 <p className="text-sm text-muted-foreground">{dictionary.price} {item.price.toLocaleString('en-US')} UZS</p>
+                 {item.stock < 5 && item.stock > 0 && (
+                  <p className="text-xs text-destructive">Only {item.stock} left in stock!</p>
+                )}
+                {item.stock === 0 && (
+                  <p className="text-xs text-destructive">Out of stock</p>
+                )}
               </div>
               <div className="flex items-center space-x-3 shrink-0 mt-2 sm:mt-0">
                 <Input
                   type="number"
                   min="1"
-                  max={item.stock > 0 ? item.stock : 99}
+                  max={item.stock > 0 ? item.stock : undefined} // Set max to stock if available
                   value={item.quantity}
                   onChange={e => updateQuantity(item.id, parseInt(e.target.value))}
                   className="w-20 h-9 text-center"
-                  aria-label={dictionary.quantityFor.replace('{name}', itemName)}
+                  aria-label={dictionary.quantityFor.replace('{productName}', itemName)}
+                  disabled={item.stock === 0}
                 />
-                <Button variant="ghost" size="icon" onClick={() => handleRemove(item.id, item.name)} aria-label={dictionary.remove.replace('{name}', itemName)}>
+                <Button variant="ghost" size="icon" onClick={() => handleRemove(item.id, item.name)} aria-label={dictionary.remove.replace('{productName}', itemName)}>
                   <Trash2 className="h-5 w-5 text-destructive" />
                 </Button>
               </div>
@@ -176,3 +208,5 @@ export default function CartPage() {
     </div>
   );
 }
+
+    

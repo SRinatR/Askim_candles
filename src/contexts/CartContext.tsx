@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { CartItem, Product } from '@/lib/types';
@@ -12,7 +13,7 @@ import ruMessages from '@/dictionaries/ru.json';
 import uzMessages from '@/dictionaries/uz.json';
 
 type FullDictionary = typeof enMessages;
-type CartContextToastsDictionary = FullDictionary['cartContextToasts']; // Assuming toasts are in a top-level key or nested
+type CartContextToastsDictionary = FullDictionary['cartContextToasts'];
 
 const dictionaries: Record<Locale, FullDictionary> = {
   en: enMessages,
@@ -20,8 +21,19 @@ const dictionaries: Record<Locale, FullDictionary> = {
   uz: uzMessages,
 };
 
+// Fallback dictionary for toasts if primary loading fails or keys are missing
+const fallbackCartContextToasts: CartContextToastsDictionary = {
+  errorTitle: "Error",
+  infoTitle: "Info",
+  productOutOfStockToast: "{productName} is out of stock.",
+  stockAvailableToast: "Not enough stock. Quantity updated to {availableStock}.",
+  addedToCartLimitedStockToast: "Not enough stock. Added {availableStock} to cart.",
+  genericError: "An unexpected error occurred."
+};
+
 const getCartContextToastsDictionary = (locale: Locale): CartContextToastsDictionary => {
-  return dictionaries[locale]?.cartContextToasts || dictionaries.en.cartContextToasts;
+  const mainDict = dictionaries[locale] || dictionaries.en;
+  return mainDict?.cartContextToasts || fallbackCartContextToasts;
 };
 
 
@@ -64,24 +76,27 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    if (typeof window !== 'undefined') {
+        localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cartItems));
+    }
   }, [cartItems]);
 
   const addToCart = (product: Product, quantityToAdd: number = 1) => {
+    const productName = product.name[locale] || product.name.en;
     if (!product || product.stock === undefined) {
       console.error("Product data is invalid or stock is undefined", product);
       toast({
-        title: dictionary.errorTitle || "Error",
-        description: dictionary.genericError || "An unexpected error occurred.",
+        title: dictionary.errorTitle,
+        description: dictionary.genericError,
         variant: "destructive",
       });
       return;
     }
     
-    if (product.stock === 0) {
+    if (product.stock <= 0 && !cartItems.find(item => item.id === product.id)) {
       toast({
-        title: dictionary.errorTitle || "Error",
-        description: (dictionary.productOutOfStockToast || "{productName} is out of stock.").replace('{productName}', product.name[locale] || product.name.en),
+        title: dictionary.errorTitle,
+        description: (dictionary.productOutOfStockToast || fallbackCartContextToasts.productOutOfStockToast).replace('{productName}', productName),
         variant: "destructive",
       });
       return;
@@ -96,30 +111,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         if (potentialQuantity > product.stock) {
           finalQuantity = product.stock;
           toast({
-            title: dictionary.infoTitle || "Info",
-            description: (dictionary.stockAvailableToast || "Not enough stock. Quantity updated to {availableStock}.")
-                            .replace('{availableStock}', String(product.stock)),
+            title: dictionary.infoTitle,
+            description: (dictionary.stockAvailableToast || fallbackCartContextToasts.stockAvailableToast).replace('{availableStock}', String(product.stock)),
           });
         } else {
           finalQuantity = potentialQuantity;
         }
         return prevItems.map(item =>
           item.id === product.id
-            ? { ...item, quantity: Math.max(0, finalQuantity) } // Ensure quantity is not negative
+            ? { ...item, quantity: Math.max(0, finalQuantity) } 
             : item
         );
       } else {
         if (quantityToAdd > product.stock) {
           finalQuantity = product.stock;
           toast({
-            title: dictionary.infoTitle || "Info",
-            description: (dictionary.addedToCartLimitedStockToast || "Not enough stock. Added {availableStock} to cart.")
-                            .replace('{availableStock}', String(product.stock)),
+            title: dictionary.infoTitle,
+            description: (dictionary.addedToCartLimitedStockToast || fallbackCartContextToasts.addedToCartLimitedStockToast).replace('{availableStock}', String(product.stock)),
           });
         } else {
           finalQuantity = quantityToAdd;
         }
-        return [...prevItems, { ...product, quantity: Math.max(1, finalQuantity) }]; // Ensure at least 1 item added
+         if (finalQuantity <= 0) return prevItems; // Don't add if resulting quantity is 0 or less
+        return [...prevItems, { ...product, quantity: Math.max(1, finalQuantity) }];
       }
     });
   };
@@ -131,25 +145,32 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const updateQuantity = (productId: string, newQuantity: number) => {
     const itemInCart = cartItems.find(item => item.id === productId);
     if (!itemInCart) return;
+    const productName = itemInCart.name[locale] || itemInCart.name.en;
 
     if (newQuantity <= 0) {
       removeFromCart(productId);
       return;
     }
 
+    let finalQuantity = newQuantity;
     if (newQuantity > itemInCart.stock) {
-      newQuantity = itemInCart.stock;
+      finalQuantity = itemInCart.stock;
       toast({
-        title: dictionary.infoTitle || "Info",
-        description: (dictionary.stockAvailableToast || "Not enough stock. Quantity updated to {availableStock}.")
-                        .replace('{availableStock}', String(itemInCart.stock)),
+        title: dictionary.infoTitle,
+        description: (dictionary.stockAvailableToast || fallbackCartContextToasts.stockAvailableToast).replace('{availableStock}', String(itemInCart.stock)),
       });
     }
+    
+    if (finalQuantity === 0) { // If stock is 0, and user tries to update to 0 (or it was capped to 0)
+        removeFromCart(productId);
+        return;
+    }
+
 
     setCartItems(prevItems =>
       prevItems.map(item =>
-        item.id === productId ? { ...item, quantity: newQuantity } : item
-      )
+        item.id === productId ? { ...item, quantity: finalQuantity } : item
+      ).filter(item => item.quantity > 0) // Ensure items with 0 quantity are removed
     );
   };
 
@@ -174,3 +195,5 @@ export const useCart = () => {
   }
   return context;
 };
+
+    
