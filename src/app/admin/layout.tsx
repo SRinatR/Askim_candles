@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -11,7 +10,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import {
   LayoutDashboard, Package, FileText as ArticlesIcon, Tags, ShoppingCart, Users as ClientsIcon, Megaphone, FileOutput, Landmark, Percent,
   FileText as ContentIcon, Settings, LogOut, Menu, ShieldCheck, UserCog as UserManagementIcon,
-  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Users, ChevronDown, Beaker, Wind
+  PanelLeftOpen, PanelRightOpen, X, Sun, Moon, Globe as GlobeIcon, History, Users as SessionsIcon, ChevronDown, Beaker, Wind
 } from 'lucide-react';
 import { Logo } from '@/components/icons/Logo';
 import { cn } from '@/lib/utils';
@@ -21,7 +20,7 @@ import { i18nAdmin, type AdminLocale } from '@/admin/lib/i18n-config-admin';
 import { getAdminDictionary } from '@/admin/lib/getAdminDictionary';
 import type enAdminMessages from '@/admin/dictionaries/en.json';
 import { useIsMobile } from '@/hooks/use-mobile';
-import '../globals.css'; // Ensure admin panel also gets global styles
+import '../globals.css';
 
 type AdminDictionary = typeof enAdminMessages;
 type AdminLayoutStrings = AdminDictionary['adminLayout'];
@@ -55,10 +54,10 @@ const navItems: NavItem[] = [
   { href: '/admin/finances', labelKey: 'finances', icon: Landmark, managerOrAdmin: true },
   { href: '/admin/discounts', labelKey: 'discounts', icon: Percent, managerOrAdmin: true },
   { href: '/admin/content', labelKey: 'content', icon: ContentIcon, managerOrAdmin: true },
-  { href: '/admin/logs', labelKey: 'logs', icon: History, adminOnly: true },
-  { href: '/admin/sessions', labelKey: 'sessions', icon: Users, adminOnly: true },
-  { href: '/admin/settings', labelKey: 'settings', icon: Settings, adminOnly: true },
   { href: '/admin/users', labelKey: 'management', icon: UserManagementIcon, adminOnly: true },
+  { href: '/admin/logs', labelKey: 'logs', icon: History, adminOnly: true },
+  { href: '/admin/sessions', labelKey: 'sessions', icon: SessionsIcon, adminOnly: true },
+  { href: '/admin/settings', labelKey: 'settings', icon: Settings, adminOnly: true },
 ];
 
 
@@ -99,10 +98,12 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     async function loadDictionary() {
-      const dictModule = await getAdminDictionary(currentLocale);
-      setDictionary(dictModule.adminLayout);
+      if(isClient){
+        const dictModule = await getAdminDictionary(currentLocale);
+        setDictionary(dictModule.adminLayout);
+      }
     }
-    if(isClient) loadDictionary();
+    loadDictionary();
   }, [currentLocale, isClient]);
   
   const toggleDarkMode = () => {
@@ -123,12 +124,14 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [isLoadingAuth, currentAdminUser, pathname, router, isClient]);
 
-  if (!isClient || isLoadingAuth || !dictionary) {
+  if (!isClient || isLoadingAuth || !dictionary ) {
+    if (pathname === '/admin/login') { // Allow login page to render even if dictionary is not fully loaded
+        return <>{children}</>;
+    }
     return <div className="flex h-screen items-center justify-center bg-muted"><p>{dictionary?.loading || "Loading Admin Panel..."}</p></div>;
   }
   
-  // Mobile restriction: If on mobile AND not on the login page, show the restriction message.
-  if (isMobile && pathname !== '/admin/login') {
+  if (isClient && isMobile && pathname !== '/admin/login') {
     return (
         <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background p-8 text-center text-foreground">
             <ShieldCheck className="h-16 w-16 text-primary mb-6" />
@@ -144,6 +147,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
         </div>
     );
   }
+
 
   if (pathname === '/admin/login') { 
     return <>{children}</>;
@@ -176,23 +180,22 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     </DropdownMenu>
   );
 
-  const renderNavItem = (item: NavItem, isMobileNav: boolean, isCollapsedNav: boolean) => {
+  const renderNavItem = (item: NavItem, isMobileNav: boolean, isCollapsedNavDesktop: boolean, isTopLevelAccordionContext: boolean) => {
     const label = dictionary[item.labelKey] || item.labelKey;
     const isActive = pathname === item.href || (item.href !== '/admin/dashboard' && item.href !== '#!' && pathname.startsWith(item.href));
     const isParentOfActive = item.subItems?.some(subItem => pathname.startsWith(subItem.href));
 
-    const commonButtonClasses = "w-full text-sm h-9 flex items-center group hover:bg-muted/80 focus:bg-muted/80 rounded-md transition-colors duration-100 ease-in-out justify-between";
+    const commonButtonClasses = "w-full text-sm h-9 flex items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md transition-colors duration-100 ease-in-out";
     const commonIconClasses = "h-5 w-5 shrink-0";
     const textSpanClasses = "truncate flex-1 text-left";
-    
+
     // Accordion for desktop expanded sidebar
-    if (item.isAccordion && !isMobileNav && !isCollapsedNav) {
+    if (item.isAccordion && !isMobileNav && !isCollapsedNavDesktop && isTopLevelAccordionContext) {
       return (
         <AccordionItem value={item.labelKey} key={item.labelKey} className="border-b-0">
           <AccordionTrigger
             className={cn(
-              commonButtonClasses,
-              "px-2 py-1.5",
+              commonButtonClasses, "py-1.5 px-2 justify-between hover:bg-muted/80 focus:bg-muted/80",
               (isParentOfActive || isActive) && "bg-muted font-semibold"
             )}
           >
@@ -202,7 +205,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             </div>
           </AccordionTrigger>
           <AccordionContent className="pt-0 pb-0 pl-2">
-            <div className="flex flex-col space-y-1 py-1 pl-5 border-l border-muted-foreground/30 ml-2">
+            <div className="flex flex-col space-y-0.5 py-1 pl-5 border-l border-muted-foreground/30 ml-2.5">
               {item.subItems?.filter(subItem => subItem.adminOnly ? isAdmin : (subItem.managerOrAdmin ? (isManager || isAdmin) : true)).map(subItem => {
                 const subLabel = dictionary[subItem.labelKey] || subItem.labelKey;
                 const isSubActive = pathname === subItem.href;
@@ -227,11 +230,11 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       );
     }
     
-    // Dropdown for mobile or collapsed desktop sidebar if subItems exist
-    if (item.subItems && (isMobileNav || (isCollapsedNav && !item.isAccordion) )) {
+    // Dropdown for mobile or collapsed desktop sidebar (if item has subItems and is NOT an accordion in expanded desktop)
+    if (item.subItems && (isMobileNav || (isCollapsedNavDesktop && (!item.isAccordion || !isTopLevelAccordionContext)))) {
        return (
         <DropdownMenu key={item.labelKey}>
-          <TooltipProvider delayDuration={isMobileNav || !isCollapsedNav ? 999999 : 0}>
+          <TooltipProvider delayDuration={isMobileNav || !isCollapsedNavDesktop ? 999999 : 0}>
             <Tooltip>
               <TooltipTrigger asChild>
                 <DropdownMenuTrigger asChild>
@@ -239,26 +242,26 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
                     variant={isActive || isParentOfActive ? 'secondary' : 'ghost'}
                     className={cn(
                       commonButtonClasses, "py-1.5",
-                      isCollapsedNav && !isMobileNav ? "justify-center px-2" : "justify-start px-2",
+                      isCollapsedNavDesktop && !isMobileNav ? "justify-center px-2" : "justify-between px-2",
                       (isActive || isParentOfActive) && "font-semibold"
                     )}
-                    title={isCollapsedNav && !isMobileNav ? label : undefined}
+                    title={isCollapsedNavDesktop && !isMobileNav ? label : undefined}
                   >
-                    <item.icon className={cn(commonIconClasses, isCollapsedNav && !isMobileNav ? "" : "mr-3")} />
-                    {(!isCollapsedNav || isMobileNav) && <span className={textSpanClasses}>{label}</span>}
-                    {(!isCollapsedNav || isMobileNav) && <ChevronDown className="h-4 w-4 ml-auto shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform" />}
+                    <item.icon className={cn(commonIconClasses, isCollapsedNavDesktop && !isMobileNav ? "" : "mr-3")} />
+                    {(!isCollapsedNavDesktop || isMobileNav) && <span className={textSpanClasses}>{label}</span>}
+                    {(!isCollapsedNavDesktop || isMobileNav) && <ChevronDown className="h-4 w-4 ml-auto shrink-0 opacity-50 group-data-[state=open]:rotate-180 transition-transform" />}
                   </Button>
                 </DropdownMenuTrigger>
               </TooltipTrigger>
-              {(isCollapsedNav && !isMobileNav) && (
+              {(isCollapsedNavDesktop && !isMobileNav) && (
                 <TooltipContent side="right" className="bg-foreground text-background ml-2">{label}</TooltipContent>
               )}
             </Tooltip>
           </TooltipProvider>
           <DropdownMenuContent 
-            side={isMobileNav ? "bottom" : (isCollapsedNav ? "right" : "bottom")} 
-            align={isMobileNav ? "center" : (isCollapsedNav ? "start" : "start")} 
-            sideOffset={isMobileNav ? 4 : (isCollapsedNav ? 2 : 8)}
+            side={isMobileNav ? "bottom" : (isCollapsedNavDesktop ? "right" : "bottom")} 
+            align={isMobileNav ? "center" : (isCollapsedNavDesktop ? "start" : "start")} 
+            sideOffset={isMobileNav ? 4 : (isCollapsedNavDesktop ? 2 : 8)}
             className={cn("z-50", isMobileNav ? "w-[calc(100vw-4rem)]" : "min-w-[180px]")}
           >
             {item.subItems?.filter(subItem => subItem.adminOnly ? isAdmin : (subItem.managerOrAdmin ? (isManager || isAdmin) : true)).map(subItem => {
@@ -279,23 +282,23 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
       );
     }
 
-    // Regular Link
+    // Regular Link (no subItems, or accordion in non-accordion context)
     return (
-      <TooltipProvider key={item.labelKey} delayDuration={isMobileNav || !isCollapsedNav ? 999999 : 0}>
+      <TooltipProvider key={item.labelKey} delayDuration={isMobileNav || !isCollapsedNavDesktop ? 999999 : 0}>
         <Tooltip>
           <TooltipTrigger asChild>
             <Link href={item.href} onClick={() => isMobileNav && setIsMobileMenuOpen(false)}>
               <Button
                 variant={isActive ? 'secondary' : 'ghost'}
-                className={cn(commonButtonClasses, "px-2 py-1.5", isCollapsedNav && !isMobileNav ? "justify-center px-2" : "justify-start px-2")}
-                title={isCollapsedNav && !isMobileNav ? label : undefined}
+                className={cn(commonButtonClasses, "px-2 py-1.5", isCollapsedNavDesktop && !isMobileNav ? "justify-center px-2" : "justify-start px-2")}
+                title={isCollapsedNavDesktop && !isMobileNav ? label : undefined}
               >
-                <item.icon className={cn(commonIconClasses, isCollapsedNav && !isMobileNav ? "" : "mr-3")} />
-                {(!isCollapsedNav || isMobileNav) && <span className={textSpanClasses}>{label}</span>}
+                <item.icon className={cn(commonIconClasses, isCollapsedNavDesktop && !isMobileNav ? "" : "mr-3")} />
+                {(!isCollapsedNavDesktop || isMobileNav) && <span className={textSpanClasses}>{label}</span>}
               </Button>
             </Link>
           </TooltipTrigger>
-          {(isCollapsedNav && !isMobileNav) && (
+          {(isCollapsedNavDesktop && !isMobileNav) && (
             <TooltipContent side="right" className="bg-foreground text-background ml-2">{label}</TooltipContent>
           )}
         </Tooltip>
@@ -309,13 +312,13 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
     if (isDesktopExpandedAccordionContext) {
       return (
         <Accordion type="multiple" className="w-full px-2 py-4 space-y-0.5">
-          {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav))}
+          {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav, true))}
         </Accordion>
       );
     }
     return (
       <nav className={cn("flex flex-col space-y-1 py-4", isCollapsedNav ? "px-2 items-center" : "px-2")}>
-        {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav))}
+        {filteredNavItems.map((item) => renderNavItem(item, isMobileNav, isCollapsedNav, false))}
       </nav>
     );
   };
@@ -351,7 +354,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
             <Button
               variant="outline"
               size={isSidebarCollapsed ? "icon" : "sm"}
-              className={cn("flex items-center mx-auto", isSidebarCollapsed ? "h-9 w-9 justify-center" : "w-full h-9 text-sm justify-start")}
+              className={cn("flex items-center", isSidebarCollapsed ? "h-9 w-9 justify-center mx-auto" : "w-full h-9 text-sm justify-start")}
               onClick={logout}
               title={dictionary.logout}
             >
@@ -435,7 +438,7 @@ function AdminLayoutContent({ children }: { children: React.ReactNode }) {
           </div>
         </header>
         
-        <div className="flex flex-col flex-1">
+        <div className="flex flex-col flex-1"> {/* This div will handle the main content and footer spacing */}
             <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
                 {children}
             </main>
